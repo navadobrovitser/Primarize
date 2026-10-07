@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("PrimerizeServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+43cefd81c8e92e157aeec62ef793b0d70175497a")]
 [assembly: System.Reflection.AssemblyProductAttribute("PrimerizeServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("PrimerizeServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

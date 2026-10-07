@@ -2,7 +2,6 @@
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
-using System.Text;
 
 namespace DAL
 {
@@ -16,32 +15,13 @@ namespace DAL
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<AnonymousVote> AnonymousVotes { get; set; }
         public DbSet<UserVote> UserVotes { get; set; }
-        public DbSet<Post> Posts { get; set; }
+        public DbSet<Post> Posts { get; set; } // מתוקן ל-Post (או Posts לפי איך שהגדרת את המחלקה עצמה)
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<Comment> Comments { get; set; }
-        public DbSet<PostComment> PostComments { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            // הגדרת מפתח מורכב עבור הטבלה המקשרת
-            modelBuilder.Entity<PostComment>()
-                .HasKey(pc => new { pc.PostId, pc.CommentId });
-
-            // הגדרת קשר ל-Post עם ציון ה-Navigation Property המתאים
-            modelBuilder.Entity<PostComment>()
-                .HasOne(pc => pc.Post)
-                .WithMany(p => p.PostComments)
-                .HasForeignKey(pc => pc.PostId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // הגדרת קשר ל-Comment עם ציון ה-Navigation Property המתאים
-            modelBuilder.Entity<PostComment>()
-                .HasOne(pc => pc.Comment)
-                .WithMany(c => c.PostComments)
-                .HasForeignKey(pc => pc.CommentId)
-                .OnDelete(DeleteBehavior.Cascade);
 
             // מניעת מחיקה בשרשרת עבור תגובות משתמש
             modelBuilder.Entity<Comment>()
@@ -49,6 +29,13 @@ namespace DAL
                 .WithMany(u => u.Comments)
                 .HasForeignKey(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // הגדרת קשר ישיר בין תגובה לפוסט
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.Post)
+                .WithMany(p => p.Comments)
+                .HasForeignKey(c => c.PostId)
+                .OnDelete(DeleteBehavior.Cascade);
 
             // מניעת מחיקה בשרשרת עבור לייקים
             modelBuilder.Entity<PostLike>()
@@ -67,6 +54,4 @@ namespace DAL
                 .IsUnique();
         }
     }
-    }
-   
-
+}

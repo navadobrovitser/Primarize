@@ -9,6 +9,8 @@ namespace DAL.Entities
     {
         [Key]
         public int CandidateId { get; set; }
+        
+        
 
        
         public int UserId { get; set; }

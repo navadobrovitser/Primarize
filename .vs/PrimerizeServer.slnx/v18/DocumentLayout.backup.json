@@ -3,12 +3,28 @@
   "WorkspaceRootPath": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\",
   "Documents": [
     {
-      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\uservote.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\uservote.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\candidate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\candidate.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\user.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
+      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\uservote.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\uservote.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
       "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\postlike.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
@@ -19,20 +35,12 @@
       "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\postcontenttype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\postcomment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\postcomment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
-      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\post.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
-    },
-    {
       "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\liketype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\liketype.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
     {
-      "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\entities\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
-      "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\entities\\comment.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+      "AbsoluteMoniker": "D:0:0:{E6C3EADF-8B3E-4321-95B1-B19A683709A0}|DTO\\DTO.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dto\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{E6C3EADF-8B3E-4321-95B1-B19A683709A0}|DTO\\DTO.csproj|solutionrelative:dto\\class1.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     }
   ],
   "DocumentGroupContainers": [
@@ -47,19 +55,19 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
-              "Title": "UserVote.cs",
-              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\UserVote.cs",
-              "RelativeDocumentMoniker": "DAL\\Entities\\UserVote.cs",
-              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\UserVote.cs",
-              "RelativeToolTip": "DAL\\Entities\\UserVote.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
+              "Title": "AppDbContext.cs",
+              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\AppDbContext.cs",
+              "RelativeDocumentMoniker": "DAL\\AppDbContext.cs",
+              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\AppDbContext.cs",
+              "RelativeToolTip": "DAL\\AppDbContext.cs",
+              "ViewState": "AgIAAAQAAAAAAAAAAAAAADgAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:58.365Z",
+              "WhenOpened": "2026-10-07T15:17:47.987Z",
               "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 6,
               "Title": "PostLike.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\PostLike.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\PostLike.cs",
@@ -67,11 +75,38 @@
               "RelativeToolTip": "DAL\\Entities\\PostLike.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAABgAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:51.451Z"
+              "WhenOpened": "2026-09-09T20:33:51.451Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
+              "Title": "User.cs",
+              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\User.cs",
+              "RelativeDocumentMoniker": "DAL\\Entities\\User.cs",
+              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\User.cs",
+              "RelativeToolTip": "DAL\\Entities\\User.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAAVAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-06T19:02:43.373Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 5,
+              "Title": "UserVote.cs",
+              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\UserVote.cs",
+              "RelativeDocumentMoniker": "DAL\\Entities\\UserVote.cs",
+              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\UserVote.cs",
+              "RelativeToolTip": "DAL\\Entities\\UserVote.cs",
+              "ViewState": "AgIAAA0AAAAAAAAAAAAAABUAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-09-09T20:33:58.365Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 7,
               "Title": "PostContentType.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\PostContentType.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\PostContentType.cs",
@@ -79,47 +114,25 @@
               "RelativeToolTip": "DAL\\Entities\\PostContentType.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAA0AAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:48.136Z"
+              "WhenOpened": "2026-09-09T20:33:48.136Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
               "DocumentIndex": 1,
-              "Title": "User.cs",
-              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\User.cs",
-              "RelativeDocumentMoniker": "DAL\\Entities\\User.cs",
-              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\User.cs",
-              "RelativeToolTip": "DAL\\Entities\\User.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-06T19:02:43.373Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 4,
-              "Title": "PostComment.cs",
-              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\PostComment.cs",
-              "RelativeDocumentMoniker": "DAL\\Entities\\PostComment.cs",
-              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\PostComment.cs",
-              "RelativeToolTip": "DAL\\Entities\\PostComment.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABYAAAAAAAAAAAAAAA==",
-              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:44.489Z"
-            },
-            {
-              "$type": "Document",
-              "DocumentIndex": 5,
               "Title": "Post.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Post.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\Post.cs",
               "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Post.cs",
               "RelativeToolTip": "DAL\\Entities\\Post.cs",
-              "ViewState": "AgIAAAAAAAAAAAAAAAAAABwAAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAAABQAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:36.599Z"
+              "WhenOpened": "2026-09-09T20:33:36.599Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 8,
               "Title": "LikeType.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\LikeType.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\LikeType.cs",
@@ -127,19 +140,47 @@
               "RelativeToolTip": "DAL\\Entities\\LikeType.cs",
               "ViewState": "AgIAAAAAAAAAAAAAAAAAAAwAAAAAAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:32.726Z"
+              "WhenOpened": "2026-09-09T20:33:32.726Z",
+              "EditorCaption": ""
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 2,
               "Title": "Comment.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Comment.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\Comment.cs",
               "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Comment.cs",
               "RelativeToolTip": "DAL\\Entities\\Comment.cs",
-              "ViewState": "AgIAAAEAAAAAAAAAAAAwwB4AAAAAAAAAAAAAAA==",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAABQAAAABAAAAAAAAAA==",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
-              "WhenOpened": "2026-09-09T20:33:28.703Z"
+              "WhenOpened": "2026-09-09T20:33:28.703Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 3,
+              "Title": "Candidate.cs",
+              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Candidate.cs",
+              "RelativeDocumentMoniker": "DAL\\Entities\\Candidate.cs",
+              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Candidate.cs",
+              "RelativeToolTip": "DAL\\Entities\\Candidate.cs",
+              "ViewState": "AgIAAAMAAAAAAAAAAAAUwBwAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-07T15:07:56.01Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 9,
+              "Title": "Class1.cs",
+              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DTO\\Class1.cs",
+              "RelativeDocumentMoniker": "DTO\\Class1.cs",
+              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DTO\\Class1.cs",
+              "RelativeToolTip": "DTO\\Class1.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-07T15:05:26.997Z",
+              "EditorCaption": ""
             }
           ]
         }

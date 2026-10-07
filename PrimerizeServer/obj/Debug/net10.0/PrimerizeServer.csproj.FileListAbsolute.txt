@@ -334,3 +334,4 @@ C:\Users\משתמש\Desktop\המסמכים שלי\עבודות\סמינר\אתר
 C:\Users\משתמש\Desktop\המסמכים שלי\עבודות\סמינר\אתר שיתופי\PrimerizeServer\PrimerizeServer\PrimerizeServer\obj\Debug\net10.0\PrimerizeServer.pdb
 C:\Users\משתמש\Desktop\המסמכים שלי\עבודות\סמינר\אתר שיתופי\PrimerizeServer\PrimerizeServer\PrimerizeServer\obj\Debug\net10.0\PrimerizeServer.genruntimeconfig.cache
 C:\Users\משתמש\Desktop\המסמכים שלי\עבודות\סמינר\אתר שיתופי\PrimerizeServer\PrimerizeServer\PrimerizeServer\obj\Debug\net10.0\ref\PrimerizeServer.dll
+C:\Users\משתמש\Desktop\המסמכים שלי\עבודות\סמינר\אתר שיתופי\PrimerizeServer\PrimerizeServer\PrimerizeServer\obj\Debug\net10.0\PrimerizeServer.sourcelink.json
