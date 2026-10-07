@@ -3723,23 +3723,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\משתמש\\.nuget\\packages\\": {},
+    "C:\\Users\\user1\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj",
+      "projectUniqueName": "D:\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj",
       "projectName": "DAL",
-      "projectPath": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj",
-      "packagesPath": "C:\\Users\\משתמש\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\DAL\\obj\\",
+      "projectPath": "D:\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj",
+      "packagesPath": "C:\\Users\\user1\\.nuget\\packages\\",
+      "outputPath": "D:\\PrimerizeServer\\PrimerizeServer\\DAL\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\משתמש\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\user1\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3748,6 +3748,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {

@@ -3,6 +3,10 @@
   "WorkspaceRootPath": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\",
   "Documents": [
     {
+      "AbsoluteMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Migrations\\20261007153552_RemovePostCommentAndFixRelations.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{A2FE74E1-B743-11D0-AE1A-00A0C90FFFC3}|\u003CMiscFiles\u003E|solutionrelative:DAL\\Migrations\\20261007153552_RemovePostCommentAndFixRelations.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    },
+    {
       "AbsoluteMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|c:\\users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\primerizeserver\\primerizeserver\\dal\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
       "RelativeMoniker": "D:0:0:{12357D34-2A02-1ECD-BC6C-D84ADDC1A72E}|DAL\\DAL.csproj|solutionrelative:dal\\appdbcontext.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
     },
@@ -55,6 +59,19 @@
             {
               "$type": "Document",
               "DocumentIndex": 0,
+              "Title": "20261007153552_RemovePostCommentAndFixRelations.cs",
+              "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Migrations\\20261007153552_RemovePostCommentAndFixRelations.cs",
+              "RelativeDocumentMoniker": "DAL\\Migrations\\20261007153552_RemovePostCommentAndFixRelations.cs",
+              "ToolTip": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Migrations\\20261007153552_RemovePostCommentAndFixRelations.cs",
+              "RelativeToolTip": "DAL\\Migrations\\20261007153552_RemovePostCommentAndFixRelations.cs",
+              "ViewState": "AgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2026-10-07T15:35:53.374Z",
+              "EditorCaption": ""
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 1,
               "Title": "AppDbContext.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\AppDbContext.cs",
               "RelativeDocumentMoniker": "DAL\\AppDbContext.cs",
@@ -67,7 +84,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 6,
+              "DocumentIndex": 7,
               "Title": "PostLike.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\PostLike.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\PostLike.cs",
@@ -80,7 +97,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 4,
+              "DocumentIndex": 5,
               "Title": "User.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\User.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\User.cs",
@@ -93,7 +110,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 5,
+              "DocumentIndex": 6,
               "Title": "UserVote.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\UserVote.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\UserVote.cs",
@@ -106,7 +123,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 7,
+              "DocumentIndex": 8,
               "Title": "PostContentType.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\PostContentType.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\PostContentType.cs",
@@ -119,7 +136,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 1,
+              "DocumentIndex": 2,
               "Title": "Post.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Post.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\Post.cs",
@@ -132,7 +149,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 8,
+              "DocumentIndex": 9,
               "Title": "LikeType.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\LikeType.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\LikeType.cs",
@@ -145,7 +162,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 2,
+              "DocumentIndex": 3,
               "Title": "Comment.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Comment.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\Comment.cs",
@@ -158,7 +175,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 3,
+              "DocumentIndex": 4,
               "Title": "Candidate.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DAL\\Entities\\Candidate.cs",
               "RelativeDocumentMoniker": "DAL\\Entities\\Candidate.cs",
@@ -171,7 +188,7 @@
             },
             {
               "$type": "Document",
-              "DocumentIndex": 9,
+              "DocumentIndex": 10,
               "Title": "Class1.cs",
               "DocumentMoniker": "C:\\Users\\\u05DE\u05E9\u05EA\u05DE\u05E9\\Desktop\\\u05D4\u05DE\u05E1\u05DE\u05DB\u05D9\u05DD \u05E9\u05DC\u05D9\\\u05E2\u05D1\u05D5\u05D3\u05D5\u05EA\\\u05E1\u05DE\u05D9\u05E0\u05E8\\\u05D0\u05EA\u05E8 \u05E9\u05D9\u05EA\u05D5\u05E4\u05D9\\PrimerizeServer\\PrimerizeServer\\DTO\\Class1.cs",
               "RelativeDocumentMoniker": "DTO\\Class1.cs",

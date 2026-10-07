@@ -1111,6 +1111,19 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
+      "BLL/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "DAL": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/BLL.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/BLL.dll": {}
+        }
+      },
       "DAL/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -3221,6 +3234,11 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "BLL/1.0.0": {
+      "type": "project",
+      "path": "../BLL/BLL.csproj",
+      "msbuildProject": "../BLL/BLL.csproj"
+    },
     "DAL/1.0.0": {
       "type": "project",
       "path": "../DAL/DAL.csproj",
@@ -3229,6 +3247,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
+      "BLL >= 1.0.0",
       "DAL >= 1.0.0",
       "Microsoft.AspNetCore.OpenApi >= 10.0.11",
       "Microsoft.EntityFrameworkCore >= 10.0.11",
@@ -3237,23 +3256,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\משתמש\\.nuget\\packages\\": {},
+    "C:\\Users\\user1\\.nuget\\packages\\": {},
     "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer.csproj",
+      "projectUniqueName": "D:\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer.csproj",
       "projectName": "PrimerizeServer",
-      "projectPath": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer.csproj",
-      "packagesPath": "C:\\Users\\משתמש\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer\\obj\\",
+      "projectPath": "D:\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer.csproj",
+      "packagesPath": "C:\\Users\\user1\\.nuget\\packages\\",
+      "outputPath": "D:\\PrimerizeServer\\PrimerizeServer\\PrimerizeServer\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
       ],
       "configFilePaths": [
-        "C:\\Users\\משתמש\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\user1\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
@@ -3262,6 +3281,7 @@
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
+        "C:\\Program Files\\dotnet\\library-packs": {},
         "https://api.nuget.org/v3/index.json": {}
       },
       "frameworks": {
@@ -3269,8 +3289,11 @@
           "framework": "net10.0",
           "targetAlias": "net10.0",
           "projectReferences": {
-            "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj": {
-              "projectPath": "C:\\Users\\משתמש\\Desktop\\המסמכים שלי\\עבודות\\סמינר\\אתר שיתופי\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj"
+            "D:\\PrimerizeServer\\PrimerizeServer\\BLL\\BLL.csproj": {
+              "projectPath": "D:\\PrimerizeServer\\PrimerizeServer\\BLL\\BLL.csproj"
+            },
+            "D:\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj": {
+              "projectPath": "D:\\PrimerizeServer\\PrimerizeServer\\DAL\\DAL.csproj"
             }
           }
         }
