@@ -1,5 +1,7 @@
 using DAL;
 using Microsoft.EntityFrameworkCore;
+using BLL.IRepository;
+using BLL.Repository;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -9,6 +11,16 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 // 2. רישום ה-AppDbContext במיכל ה-IoC
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
+builder.Services.AddScoped<IPostRepository, PostRepository>();
+builder.Services.AddScoped<ICommentRepository, CommentRepository>();
+builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
+builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
+builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
+
+
 
 // Add services to the container.
 builder.Services.AddControllers();

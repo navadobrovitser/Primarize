@@ -2,6 +2,8 @@
   <Folder Name="/Solution Items/">
     <File Path=".gitignore" />
   </Folder>
+  <Project Path="API/API.csproj" />
+  <Project Path="BLL/BLL.csproj" />
   <Project Path="DAL/DAL.csproj" />
   <Project Path="DTO/DTO.csproj" Id="e6c3eadf-8b3e-4321-95b1-b19a683709a0" />
   <Project Path="PrimerizeServer/PrimerizeServer.csproj" />
