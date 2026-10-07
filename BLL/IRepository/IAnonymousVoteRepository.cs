@@ -20,4 +20,4 @@ namespace BLL.IRepository
             List<AnonymousVote> GetByRandomVoteId(string userRandomVoteId);
         }
     }
-}
+
