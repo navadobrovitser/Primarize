@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using BLL.IRepository;
 using DTO.Voting;
-using System;
 using System.Collections.Generic;
 
 namespace API.Controllers
@@ -9,7 +9,16 @@ namespace API.Controllers
     [ApiController]
     public class VotingController : ControllerBase
     {
-        // 1. Post: שליחת פתק הצבעה מלא (דירוג מועמדים בשיטת IRV)
+        private readonly IUserVoteRepository _userVoteRepository;
+        private readonly ICandidateRepository _candidateRepository;
+
+        public VotingController(IUserVoteRepository userVoteRepository, ICandidateRepository candidateRepository)
+        {
+            _userVoteRepository = userVoteRepository;
+            _candidateRepository = candidateRepository;
+        }
+
+        // 1. Post: שליחת פתק הצבעה
         [HttpPost("cast")]
         public ActionResult CastVote([FromBody] CastVoteDto model)
         {
@@ -18,17 +27,21 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
+            // כאן אפשר להוסיף לוגיקה לבדיקה אם המשתמש כבר הצביע באמצעות _userVoteRepository.HasVoted(...)
+
             return Ok(new { message = "ההצבעה נקלטה בהצלחה!", data = model });
         }
 
-        // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה (האם המשתמש כבר הצביע)
+        // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
         [HttpGet("status/{userId}")]
         public ActionResult<VoteStatusDto> GetVoteStatus(int userId)
         {
+            bool hasVoted = _userVoteRepository.HasVoted(userId);
+
             return Ok(new VoteStatusDto
             {
-                HasVoted = false,
-                VoteDate = null
+                HasVoted = hasVoted,
+                VoteDate = null // אפשר לעדכן בהתאם לנתוני ה-DB אם צריך
             });
         }
 
@@ -36,9 +49,11 @@ namespace API.Controllers
         [HttpGet("results")]
         public ActionResult<ElectionResultsDto> GetElectionResults()
         {
+            int totalVotes = _userVoteRepository.CountVotes();
+
             var results = new ElectionResultsDto
             {
-                TotalVoters = 0,
+                TotalVoters = totalVotes,
                 Results = new List<CandidateResultDto>()
             };
             return Ok(results);

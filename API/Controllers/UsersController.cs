@@ -1,6 +1,8 @@
-﻿using DTO.Users;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
+using BLL.IRepository;
+using DTO.Users;
+using System.Collections.Generic;
+using AutoMapper;
 
 namespace API.Controllers
 {
@@ -8,24 +10,38 @@ namespace API.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        // 1. Get: מחזיר את כל המשתמשים (רשימה)
+        private readonly IUserRepository _userRepository;
+        private readonly IMapper _mapper;
+
+        public UsersController(IUserRepository userRepository, IMapper mapper)
+        {
+            _userRepository = userRepository;
+            _mapper = mapper;
+        }
+
+        // 1. Get: מחזיר את כל המשתמשים
         [HttpGet]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
-            // בינתיים אנחנו שמים רשימה ריקה או דמה, עד שחברה שלך תעלה את ה-BLL
-            var users = new List<UserDto>();
-            return Ok(users);
+            var users = _userRepository.GetAll();
+            var dtos = _mapper.Map<IEnumerable<UserDto>>(users);
+            return Ok(dtos);
         }
 
-        // 2. Get לפי ID: מחזיר משתמש בודד לפי מזהה
+        // 2. Get לפי ID: מחזיר משתמש בודד
         [HttpGet("{id}")]
         public ActionResult<UserDto> GetUserById(int id)
         {
-            // בדיקת דמה עד לחיבור ה-BLL
-            return Ok(new UserDto { UserId = id, Name = "משתמש לדוגמה", Email = "test@example.com" });
+            var user = _userRepository.GetById(id);
+            if (user == null)
+            {
+                return NotFound(new { message = "המשתמש לא נמצא" });
+            }
+            var dto = _mapper.Map<UserDto>(user);
+            return Ok(dto);
         }
 
-        // 3. Post: הוספת משתמש חדש (הרשמה)
+        // 3. Post: הרשמת משתמש חדש
         [HttpPost]
         public ActionResult RegisterUser([FromBody] RegisterUserDto model)
         {
@@ -34,7 +50,9 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
-            // כאן בהמשך נקרא ללוגיקה של ה-BLL
+            var user = _mapper.Map<DAL.Entities.User>(model);
+            _userRepository.Add(user);
+
             return Ok(new { message = "המשתמש נוצר בהצלחה!", data = model });
         }
     }

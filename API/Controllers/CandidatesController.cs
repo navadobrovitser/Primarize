@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using BLL.IRepository;
 using DTO.Candidates;
 using System.Collections.Generic;
+using AutoMapper;
 
 namespace API.Controllers
 {
@@ -8,25 +10,35 @@ namespace API.Controllers
     [ApiController]
     public class CandidatesController : ControllerBase
     {
-        // 1. Get: מחזיר את כל המועמדים (למסך הבחירות / רשימה)
+        private readonly ICandidateRepository _candidateRepository;
+        private readonly IMapper _mapper;
+
+        public CandidatesController(ICandidateRepository candidateRepository, IMapper mapper)
+        {
+            _candidateRepository = candidateRepository;
+            _mapper = mapper;
+        }
+
+        // 1. Get: מחזיר את כל המועמדים דרך ה-BLL
         [HttpGet]
         public ActionResult<IEnumerable<CandidateListItemDto>> GetAllCandidates()
         {
-            var candidates = new List<CandidateListItemDto>();
-            return Ok(candidates);
+            var candidates = _candidateRepository.GetAll();
+            var dtos = _mapper.Map<IEnumerable<CandidateListItemDto>>(candidates);
+            return Ok(dtos);
         }
 
         // 2. Get לפי ID: מחזיר פרטים מלאים של מועמד בודד
         [HttpGet("{id}")]
         public ActionResult<CandidateDto> GetCandidateById(int id)
         {
-            return Ok(new CandidateDto
+            var candidate = _candidateRepository.GetById(id);
+            if (candidate == null)
             {
-                CandidateId = id,
-                UserId = 1,
-                Name = "מועמד לדוגמה",
-                Slogan = "השינוי מתחיל כאן"
-            });
+                return NotFound(new { message = "המועמד לא נמצא" });
+            }
+            var dto = _mapper.Map<CandidateDto>(candidate);
+            return Ok(dto);
         }
 
         // 3. Post: הוספת מועמד חדש
@@ -38,9 +50,10 @@ namespace API.Controllers
                 return BadRequest(ModelState);
             }
 
+            var candidate = _mapper.Map<DAL.Entities.Candidate>(model);
+            _candidateRepository.Add(candidate);
+
             return Ok(new { message = "המועמד נוצר בהצלחה!", data = model });
         }
     }
 }
-
-
