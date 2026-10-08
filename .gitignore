@@ -7,5 +7,6 @@ obj/
 *.userosscache
 *.sln.docstates
 
+
 # NuGet Packages
-packages/git checkout main
+packages/
