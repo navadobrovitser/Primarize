@@ -1,7 +1,7 @@
 using BLL.IRepository;
 using BLL.Repository;
 using BLL.Mapping;
-using BLL.service;
+using BLL.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
