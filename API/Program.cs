@@ -15,8 +15,14 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
 builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
 builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
+<<<<<<< HEAD
 //builder.Services.AddScoped<FileService>();//
 //builder.Services.AddAutoMapper(typeof(MappingProfile));///אין לי מושג למה אדום
+=======
+builder.Services.AddAutoMapper(cfg => {
+    cfg.AddProfile<BLL.Mapping.MappingProfile>();
+}); 
+>>>>>>> e2c07e12b27c73ebb747d6db51164dd270d4724f
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
