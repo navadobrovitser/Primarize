@@ -1,0 +1,6 @@
+@PrimerizeServer_HostAddress = http://localhost:5215
+
+GET {{PrimerizeServer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
