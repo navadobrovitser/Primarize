@@ -1,11 +1,14 @@
 ﻿
+using System.Collections.Generic;
+using System.Text;
+
 using System;
 using System.IO;
 namespace BLL.service
 {
    
- public class FileService
-        {
+ public class FileService{
+        
             private readonly string _imagesFolder = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "images");
 
             // השירות מקבל Stream רגיל ושם מקורי, ולא IFormFile
@@ -31,5 +34,5 @@ namespace BLL.service
             }
         }
     }
-}
-}
+
+
