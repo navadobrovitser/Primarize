@@ -1,4 +1,5 @@
 ﻿using DAL.Entities;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -9,9 +10,9 @@ namespace BLL.IRepository
     {
         Candidate? GetById(int id);
         List<Candidate> GetAll();
-        void Add(Candidate candidate);
+       Candidate Add(Candidate candidate,  IFormFile? imageFile,IFormFile? videoFile);
         void Delete(int id);
-        void Update(Candidate candidate);
+        void Update(Candidate candidate, IFormFile? newImageFile);
 
         // extra functions
         Candidate? GetByUserId(int userId);

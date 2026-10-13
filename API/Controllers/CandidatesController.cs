@@ -3,6 +3,8 @@ using BLL.IRepository;
 using DTO.Candidates;
 using System.Collections.Generic;
 using AutoMapper;
+using Microsoft.AspNetCore.Http;
+using System;
 
 namespace API.Controllers
 {
@@ -44,21 +46,31 @@ namespace API.Controllers
             return Ok(dto);
         }
 
-        // 3. Post: הוספת מועמד חדש כאשר נתוני הניתוב הם מחרוזות
+        // 3. Post: הוספת מועמד חדש כולל קבצים (תמונה וסרטון)
         [HttpPost]
-        public ActionResult CreateCandidate([FromBody] CreateCandidateDto model)
+        public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            // מיפוי הנתונים מה-DTO (כולל מחרוזות הניתובים) לישות ה-Candidate ושמירה
-            var candidate = _mapper.Map<DAL.Entities.Candidate>(model);
+            try
+            {
+                // מיפוי הנתונים הבסיסיים לישות ה-Candidate
+                var candidate = _mapper.Map<DAL.Entities.Candidate>(model);
 
-            _candidateRepository.Add(candidate);
+                // שליחה לריפוזיטורי יחד עם קובץ התמונה וקובץ הסרטון מתוך ה-DTO
+                // (בהנחה שה-DTO כולל ImageFile ו-VideoFile מסוג IFormFile)
+                _candidateRepository.Add(candidate, model.ImageFile, model.VideoFile);
 
-            return Ok(new { message = "המועמד נוצר בהצלחה!", data = candidate });
+                return Ok(new { message = "המועמד נוצר בהצלחה!", data = candidate });
+            }
+            catch (ArgumentException ex)
+            {
+                // טיפול בשגיאות הקשורות לסוג קובץ לא חוקי או גודל חריג
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }

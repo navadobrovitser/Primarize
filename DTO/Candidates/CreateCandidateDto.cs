@@ -11,7 +11,9 @@ namespace DTO.Candidates
         public string Resume { get; set; }
         public string ?ProfileImageUrl { get; set; }
         public string ?ExplanationVideoUrl { get; set; }
+        // שדות הקבצים חובה להגדיר
+        public IFormFile? ImageFile { get; set; }
+        public IFormFile? VideoFile { get; set; }
 
-      
     }
 }

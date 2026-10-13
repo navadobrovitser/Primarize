@@ -40,7 +40,10 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.CandidateId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore())
-                .ForMember(dest => dest.Posts, opt => opt.Ignore());
+                .ForMember(dest => dest.Posts, opt => opt.Ignore())
+                .ForMember(dest => dest.ProfileImageUrl, opt => opt.Ignore())// חובה: מנוהל ידנית דרך שירות התמונות[cite: 1]
+                 .ForMember(dest => dest.ExplanationVideoUrl, opt => opt.Ignore());
+            
 
             // Post
             CreateMap<Post, PostDto>()

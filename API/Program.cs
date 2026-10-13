@@ -19,7 +19,10 @@ builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
 builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
 builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<BLL.Mapping.MappingProfile>();
-builder.Services.AddScoped<FileService>();
+    var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
+    Directory.CreateDirectory(imagesFolder);
+
+    builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
 }); 
 var app = builder.Build();
 
