@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -8,5 +9,7 @@ namespace DTO.Posts
     {
         public string Content { get; set; }
         public string ContentType { get; set; }
+        // שדה חדש לקליטת קובץ המדיה מהקליינט
+        public IFormFile? MediaFile { get; set; }
     }
 }

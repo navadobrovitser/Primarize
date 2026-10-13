@@ -21,6 +21,8 @@ builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<BLL.Mapping.MappingProfile>();
     var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
     Directory.CreateDirectory(imagesFolder);
+    builder.Services.AddScoped<IImageService>(provider =>
+    new ImageService(Path.Combine(builder.Environment.ContentRootPath, "../Images")));
 
     builder.Services.AddSingleton<IImageService>(new ImageService(imagesFolder));
 }); 
