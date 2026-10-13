@@ -4,7 +4,7 @@ using BLL.Mapping;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
+//בלי
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -15,6 +15,7 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
 builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
 builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
+//builder.Services.AddScoped<FileService>();//
 //builder.Services.AddAutoMapper(typeof(MappingProfile));///אין לי מושג למה אדום
 var app = builder.Build();
 
