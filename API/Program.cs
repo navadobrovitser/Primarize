@@ -38,6 +38,17 @@ builder.Services.AddAutoMapper(cfg => {
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 104857600; // 100MB (או כל גודל אחר שתרצי בבייטים)
+});
+
+// אם את משתמשת ב-IIS:
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 104857600; // 100MB
+});
+
 var app = builder.Build();
 
 // הגדרת תיקיית הקבצים הסטטיים לגישה לדפדפן
