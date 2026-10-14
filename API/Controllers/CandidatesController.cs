@@ -48,6 +48,7 @@ namespace API.Controllers
 
         // 3. Post: הוספת מועמד חדש כולל קבצים (תמונה וסרטון)
         [HttpPost]
+     
         public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
         {
             if (!ModelState.IsValid)
@@ -60,8 +61,11 @@ namespace API.Controllers
                 // מיפוי הנתונים הבסיסיים לישות ה-Candidate
                 var candidate = _mapper.Map<DAL.Entities.Candidate>(model);
 
+                // כאן התיקון הנדרש: שיוך מזהה המשתמש באופן ידני 
+                // (לצורכי בדיקה כרגע, יש להציב את ה-UserId של המשתמש שיצרת קודם במסד הנתונים, למשל 1)
+                candidate.UserId = 1;
+
                 // שליחה לריפוזיטורי יחד עם קובץ התמונה וקובץ הסרטון מתוך ה-DTO
-                // (בהנחה שה-DTO כולל ImageFile ו-VideoFile מסוג IFormFile)
                 _candidateRepository.Add(candidate, model.ImageFile, model.VideoFile);
 
                 return Ok(new { message = "המועמד נוצר בהצלחה!", data = candidate });
