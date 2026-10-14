@@ -8,11 +8,14 @@ using Microsoft.Extensions.FileProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
+// הוספת שירותים למיכל ה-DI
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
-builder.Services.AddOpenApi();
 
+// הגדרת תמיכה ב-Swagger (Swashbuckle)
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+
+// רישום הריפוזיטוריז
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -26,7 +29,7 @@ var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRoot
 Directory.CreateDirectory(imagesFolder);
 builder.Services.AddScoped<IImageService>(provider => new ImageService(imagesFolder));
 
-// רישום ה-AutoMapper בצורה נפרדת ותקינה
+// רישום ה-AutoMapper
 builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<BLL.Mapping.MappingProfile>();
 });
@@ -48,7 +51,12 @@ app.UseStaticFiles(new StaticFileOptions
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+    {
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Primerize API V1");
+        c.RoutePrefix = string.Empty; // מגדיר את ה-Swagger שיופיע ישירות בכתובת הבסיס בהרצת השרת
+    });
 }
 
 app.UseHttpsRedirection();
