@@ -4,7 +4,7 @@ namespace BLL.IServices
 {
     public interface IVotingService
     {
-        //bool CastVote(CastVoteDto model);
+        bool CastVote(int userId, CastVoteDto model);
         VoteStatusDto GetVoteStatus(int userId);
         ElectionResultsDto GetElectionResults();
     }

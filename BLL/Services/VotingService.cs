@@ -1,4 +1,5 @@
 ﻿using BLL.IServices;
+using DAL.Entities;
 using DAL.IRepository;
 using DTO.Voting;
 using System;
@@ -17,14 +18,22 @@ namespace BLL.Services
             _candidateRepository = candidateRepository;
         }
 
-        //public bool CastVote(CastVoteDto model)
-        //{
-        //    if (_userVoteRepository.HasVoted(model.))
-        //    {
-        //        throw new InvalidOperationException("המשתמש כבר ביצע הצבעה בעבר.");
-        //    }
-        //    return true;
-        //}
+        public bool CastVote(int userId, CastVoteDto model)
+        {
+            if (_userVoteRepository.HasVoted(userId))
+            {
+                throw new InvalidOperationException("המשתמש כבר ביצע הצבעה בעבר.");
+            }
+
+            var newVote = new UserVote
+            {
+                UserId = userId,
+                VoteDate = DateTime.UtcNow
+            };
+
+            _userVoteRepository.Add(newVote);
+            return true;
+        }
 
         public VoteStatusDto GetVoteStatus(int userId)
         {
@@ -34,7 +43,7 @@ namespace BLL.Services
             return new VoteStatusDto
             {
                 HasVoted = hasVoted,
-                VoteDate = vote != null ? DateTime.Now : null
+                VoteDate = vote?.VoteDate
             };
         }
 

@@ -18,23 +18,23 @@ namespace API.Controllers
 
         // 1. Post: שליחת פתק הצבעה
         [HttpPost("cast")]
-        //public ActionResult CastVote([FromBody] CastVoteDto model)
-        //{
-        //    if (!ModelState.IsValid)
-        //    {
-        //        return BadRequest(ModelState);
-        //    }
+        public IActionResult CastVote([FromQuery] int userId, [FromBody] CastVoteDto model)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-        //    try
-        //    {
-        //        _votingService.CastVote(model);
-        //        return Ok(new { message = "ההצבעה נקלטה בהצלחה!", data = model });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
+            try
+            {
+                _votingService.CastVote(userId, model);
+                return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
         // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
         [HttpGet("status/{userId}")]
