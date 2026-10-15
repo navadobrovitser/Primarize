@@ -1,9 +1,9 @@
 ﻿using DAL.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace BLL.IRepository
+
+using System.Collections.Generic;
+
+namespace DAL.IRepository
 {
     public interface IUserVoteRepository
     {
@@ -12,8 +12,6 @@ namespace BLL.IRepository
         void Add(UserVote userVote);
         void Delete(int id);
         void Update(UserVote userVote);
-
-        // extra functions
         UserVote? GetByUserId(int userId);
         bool HasVoted(int userId);
         int CountVotes();

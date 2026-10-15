@@ -1,9 +1,7 @@
 ﻿using DAL.Entities;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace BLL.IRepository
+namespace DAL.IRepository
 {
     public interface ICommentRepository
     {
@@ -12,8 +10,6 @@ namespace BLL.IRepository
         void Add(Comment comment);
         void Delete(int id);
         void Update(Comment comment);
-
-        // extra functions
         List<Comment> GetByPostId(int postId);
         List<Comment> GetByUserId(int userId);
     }

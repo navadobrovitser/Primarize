@@ -1,9 +1,7 @@
 ﻿using DAL.Entities;
-using System;
 using System.Collections.Generic;
-using System.Text;
 
-namespace BLL.IRepository
+namespace DAL.IRepository
 {
     public interface IPostLikeRepository
     {
@@ -12,8 +10,6 @@ namespace BLL.IRepository
         void Add(PostLike postLike);
         void Delete(int id);
         void Update(PostLike postLike);
-
-        // extra functions
         PostLike? GetByUserAndPost(int userId, int postId);
         List<PostLike> GetByPostId(int postId);
         int CountByType(int postId, LikeType type);

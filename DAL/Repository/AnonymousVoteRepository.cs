@@ -1,12 +1,10 @@
-﻿using System;
+﻿using DAL.Entities;
+using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using BLL.IRepository;
-using DAL;
-using DAL.Entities;
-using Microsoft.EntityFrameworkCore;
-namespace BLL.Repository
+
+namespace DAL.Repository
 {
     public class AnonymousVoteRepository : IAnonymousVoteRepository
     {

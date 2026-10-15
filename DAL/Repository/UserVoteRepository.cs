@@ -1,11 +1,10 @@
-﻿using BLL.IRepository;
-using DAL;
-using DAL.Entities;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using DAL.Entities;
+using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
-namespace BLL.Repository
+using System.Collections.Generic;
+using System.Linq;
+
+namespace DAL.Repository
 {
     public class UserVoteRepository : IUserVoteRepository
     {

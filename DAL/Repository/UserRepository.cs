@@ -1,14 +1,11 @@
-﻿using System;
+﻿using DAL.Entities;
+using DAL.IRepository;
 using System.Collections.Generic;
-using System.Linq;              
-using System.Text;
-using BLL.IRepository;
-using DAL;
-using DAL.Entities;             
-using Microsoft.EntityFrameworkCore;
-namespace BLL.Repository
+using System.Linq;
+
+namespace DAL.Repository
 {
-    public class UserRepository:IUserRepository
+    public class UserRepository : IUserRepository
     {
         private readonly AppDbContext _context;
 
@@ -60,5 +57,3 @@ namespace BLL.Repository
         }
     }
 }
-   
-
