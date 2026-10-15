@@ -24,7 +24,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<CandidateDto> GetCandidateById(int id)
+        public ActionResult<CandidateDto> GetCandidateById(string id)
         {
             var candidate = _candidateService.GetCandidateById(id);
             if (candidate == null) return NotFound(new { message = "המועמד לא נמצא" });
@@ -38,8 +38,7 @@ namespace API.Controllers
 
             try
             {
-                int currentUserId = 1; // יש להחליף במזהה המשתמש המחובר בפועל
-                var result = _candidateService.CreateCandidate(model, currentUserId);
+                var result = _candidateService.CreateCandidate(model);
                 return Ok(new { message = "המועמד נוצר בהצלחה!", data = result });
             }
             catch (ArgumentException ex)
@@ -49,7 +48,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult UpdateCandidate(int id, [FromForm] CreateCandidateDto model)
+        public ActionResult UpdateCandidate(string id, [FromForm] UpdateCandidateDto model)
         {
             try
             {
@@ -63,7 +62,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteCandidate(int id)
+        public ActionResult DeleteCandidate(string id) // שינוי מ-int ל-string
         {
             try
             {

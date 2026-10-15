@@ -5,7 +5,7 @@ namespace DAL.IRepository
 {
     public interface ICandidateRepository
     {
-        Candidate? GetById(int id);
+        Candidate? GetByUserIdentityNumber(string idNumber);
         List<Candidate> GetAll();
         Candidate Add(Candidate candidate);
         void Delete(int id);

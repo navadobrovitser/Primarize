@@ -25,19 +25,19 @@ namespace BLL.Services
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
 
-        public UserDto? GetUserById(int id)
+        public UserDto? GetUserById(string id) // שינוי מ-int ל-string
         {
-            var user = _userRepository.GetById(id);
+            var user = _userRepository.GetByIdNumber(id); // קריאה לפונקציה שמחפשת לפי שדה ה-Id (תעודת זהות)
             if (user == null) return null;
             return _mapper.Map<UserDto>(user);
         }
-
         public UserDto RegisterUser(RegisterUserDto model)
         {
-            var existingUser = _userRepository.GetByEmail(model.Email);
+            // בדיקה האם קיים משתמש עם תעודת זהות (Id) זו כבר במערכת
+            var existingUser = _userRepository.GetByIdNumber(model.Id);
             if (existingUser != null)
             {
-                throw new ArgumentException("משתמש עם כתובת דוא\"ל זו כבר קיים במערכת.");
+                throw new ArgumentException("משתמש עם מספר תעודת זהות זה כבר קיים במערכת.");
             }
 
             var user = _mapper.Map<User>(model);
@@ -46,9 +46,9 @@ namespace BLL.Services
             return _mapper.Map<UserDto>(user);
         }
 
-        public void UpdateUser(int id, RegisterUserDto model)
+        public void UpdateUser(string id, RegisterUserDto model)
         {
-            var user = _userRepository.GetById(id);
+            var user = _userRepository.GetByIdNumber(id); // חיפוש לפי תעודת זהות
             if (user == null)
             {
                 throw new KeyNotFoundException("המשתמש לא נמצא.");
@@ -58,14 +58,14 @@ namespace BLL.Services
             _userRepository.Update(user);
         }
 
-        public void DeleteUser(int id)
+        public void DeleteUser(string id)
         {
-            var user = _userRepository.GetById(id);
+            var user = _userRepository.GetByIdNumber(id); // חיפוש לפי תעודת זהות
             if (user == null)
             {
                 throw new KeyNotFoundException("המשתמש לא נמצא.");
             }
-            _userRepository.Delete(id);
+            _userRepository.Delete(id); // שולח את ה-string לפונקציית המחיקה שיצרנו
         }
     }
 }

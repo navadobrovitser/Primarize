@@ -8,9 +8,10 @@ namespace DAL.IRepository
         User? GetById(int id);
         List<User> GetAll();
         void Add(User user);
-        void Delete(int id);
+        void Delete(string idNumber);
         void Update(User user);
         User? GetByEmail(string email);
         User? GetByEmailAndPassword(string email, string password);
+        public User? GetByIdNumber(string idNumber);
     }
 }

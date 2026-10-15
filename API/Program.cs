@@ -1,6 +1,7 @@
-using BLL.IRepository;
+using DAL.IRepository;
+using BLL.IServices;
 using BLL.Mapping;
-using BLL.Repository;
+using DAL.Repository;
 using BLL.Services;
 using DAL;
 using Microsoft.EntityFrameworkCore;
@@ -16,13 +17,23 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // רישום הריפוזיטוריז
+
+// רישום ה-Repositories
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
 builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
 builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
 builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
+builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
+
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<ICandidateService, CandidateService>();
+builder.Services.AddScoped<IPostService, PostService>();
+builder.Services.AddScoped<ICommentService, CommentService>();
+builder.Services.AddScoped<IVotingService, VotingService>();
+builder.Services.AddScoped<IAnonymousVoteService, AnonymousVoteService>();
+builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 
 // הגדרת תיקיית המדיה והזרקת השירות בצורה נקייה
 var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));

@@ -9,14 +9,13 @@ using System.Collections.Generic;
 using System.Text;
 using AutoMapper;
 using System.Linq;
+
 namespace BLL.Mapping
 {
-
     public class MappingProfile : Profile
     {
         public MappingProfile()
         {
-
             // User
             CreateMap<User, UserDto>();
             CreateMap<User, UserSummaryDto>();
@@ -30,20 +29,23 @@ namespace BLL.Mapping
             // Candidate
             CreateMap<Candidate, CandidateDto>()
                 .ForMember(dest => dest.Name,
-                    opt => opt.MapFrom(src => src.User.Name));
+                    opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.Id,
+                    opt => opt.MapFrom(src => src.User.Id)); // הוספת שורת המיפוי הזו עבור תעודת הזהות
 
             CreateMap<Candidate, CandidateListItemDto>()
                 .ForMember(dest => dest.Name,
-                    opt => opt.MapFrom(src => src.User.Name));
+                    opt => opt.MapFrom(src => src.User.Name))
+                .ForMember(dest => dest.Id,
+                    opt => opt.MapFrom(src => src.User.Id)); // הוספת שורת המיפוי הזו עבור תעודת הזהות
 
             CreateMap<CreateCandidateDto, Candidate>()
                 .ForMember(dest => dest.CandidateId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
                 .ForMember(dest => dest.User, opt => opt.Ignore())
                 .ForMember(dest => dest.Posts, opt => opt.Ignore())
-                .ForMember(dest => dest.ProfileImageUrl, opt => opt.Ignore())// חובה: מנוהל ידנית דרך שירות התמונות[cite: 1]
-                 .ForMember(dest => dest.ExplanationVideoUrl, opt => opt.Ignore());
-            
+                .ForMember(dest => dest.ProfileImageUrl, opt => opt.Ignore()) // חובה: מנוהל ידנית דרך שירות התמונות[cite: 1]
+                .ForMember(dest => dest.ExplanationVideoUrl, opt => opt.Ignore());
 
             // Post
             CreateMap<Post, PostDto>()
@@ -66,6 +68,13 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.Comments, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt,
                     opt => opt.MapFrom(src => DateTime.UtcNow));
+            CreateMap<UpdateCandidateDto, Candidate>()
+                .ForMember(dest => dest.CandidateId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.Posts, opt => opt.Ignore())
+                .ForMember(dest => dest.ProfileImageUrl, opt => opt.Ignore())
+                .ForMember(dest => dest.ExplanationVideoUrl, opt => opt.Ignore());
 
             CreateMap<UpdatePostDto, Post>()
                 .ForMember(dest => dest.PostId, opt => opt.Ignore())

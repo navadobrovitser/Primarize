@@ -6,9 +6,9 @@ namespace BLL.IServices
     public interface IUserService
     {
         IEnumerable<UserDto> GetAllUsers();
-        UserDto? GetUserById(int id);
+        UserDto? GetUserById(string id);
         UserDto RegisterUser(RegisterUserDto model);
-        void UpdateUser(int id, RegisterUserDto model);
-        void DeleteUser(int id);
+        void UpdateUser(string id, RegisterUserDto model);
+        void DeleteUser(string id);
     }
 }

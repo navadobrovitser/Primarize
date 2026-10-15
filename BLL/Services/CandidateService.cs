@@ -33,25 +33,34 @@ namespace BLL.Services
             return _mapper.Map<IEnumerable<CandidateListItemDto>>(candidates);
         }
 
-        public CandidateDto? GetCandidateById(int id)
+        public CandidateDto? GetCandidateById(string id)
         {
-            var candidate = _candidateRepository.GetById(id);
+            var candidate = _candidateRepository.GetByUserIdentityNumber(id);
             if (candidate == null) return null;
 
             return _mapper.Map<CandidateDto>(candidate);
         }
 
-        public CandidateDto CreateCandidate(CreateCandidateDto model, int userId)
+        public CandidateDto CreateCandidate(CreateCandidateDto model)
         {
-            // חוק עסקי: כל מועמד חייב להיות משתמש קיים במערכת
-            var user = _userRepository.GetById(userId);
+            // חיפוש המשתמש לפי תעודת הזהות (Id) שנשלחה ב-DTO
+            var user = _userRepository.GetByIdNumber(model.Id);
             if (user == null)
             {
-                throw new ArgumentException("המשתמש המשויך למועמד אינו קיים במערכת.");
+                throw new ArgumentException("המשתמש עם מספר תעודת הזהות הזה אינו קיים במערכת, ולכן לא ניתן להגדירו כמועמד.");
+            }
+
+            // בדיקה חדשה: האם כבר קיים מועמד רשום במערכת עבור משתמש זה
+            var existingCandidate = _candidateRepository.GetByUserId(user.UserId);
+            if (existingCandidate != null)
+            {
+                throw new ArgumentException("כבר קיים מועמד רשום במערכת עבור תעודת זהות זו.");
             }
 
             var candidate = _mapper.Map<Candidate>(model);
-            candidate.UserId = userId;
+
+            // שיוך ה-UserId המספרי שנמצא אל המועמד
+            candidate.UserId = user.UserId;
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
@@ -67,9 +76,9 @@ namespace BLL.Services
             return _mapper.Map<CandidateDto>(createdCandidate);
         }
 
-        public void UpdateCandidate(int id, CreateCandidateDto model)
+        public void UpdateCandidate(string id, UpdateCandidateDto model)
         {
-            var candidate = _candidateRepository.GetById(id);
+            var candidate = _candidateRepository.GetByUserIdentityNumber(id);
             if (candidate == null)
             {
                 throw new KeyNotFoundException("המועמד לא נמצא.");
@@ -89,15 +98,15 @@ namespace BLL.Services
 
             _candidateRepository.Update(candidate);
         }
-
-        public void DeleteCandidate(int id)
+        public void DeleteCandidate(string id)
         {
-            var candidate = _candidateRepository.GetById(id);
+            var candidate = _candidateRepository.GetByUserIdentityNumber(id);
             if (candidate == null)
             {
                 throw new KeyNotFoundException("המועמד לא נמצא.");
             }
-            _candidateRepository.Delete(id);
+            // מחיקה לפי מזהה המועמד (CandidateId) של הרשומה שנמצאה
+            _candidateRepository.Delete(candidate.CandidateId);
         }
     }
 }
