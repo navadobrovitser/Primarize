@@ -1,14 +1,15 @@
-﻿using DAL.Entities;
+﻿using AutoMapper;
+using DAL.Entities;
 using DTO.Candidates;
+using DTO.Comment;
 using DTO.Likes;
 using DTO.Posts;
 using DTO.Users;
 using DTO.Voting;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using AutoMapper;
 using System.Linq;
+using System.Text;
 namespace BLL.Mapping
 {
 
@@ -83,6 +84,23 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.Type,
                     opt => opt.MapFrom(src =>
                         Enum.Parse<LikeType>(src.Type, true)));
+
+
+            // Comment
+            CreateMap<CreateCommentDto, Comment>()
+                .ForMember(dest => dest.CommentId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore()) // מנוהל ידנית בבקר (כמו במועמדים)
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow));
+
+            CreateMap<UpdateCommentDto, Comment>()
+                .ForMember(dest => dest.CommentId, opt => opt.Ignore())
+                .ForMember(dest => dest.PostId, opt => opt.Ignore())
+                .ForMember(dest => dest.UserId, opt => opt.Ignore())
+                .ForMember(dest => dest.User, opt => opt.Ignore())
+                .ForMember(dest => dest.Post, opt => opt.Ignore())
+                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
         }
     }
 }
