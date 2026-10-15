@@ -111,6 +111,10 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.User, opt => opt.Ignore())
                 .ForMember(dest => dest.Post, opt => opt.Ignore())
                 .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
+
+            CreateMap<Comment, CommentDto>()
+.ForMember(dest => dest.UserName,
+    opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
         }
     }
 }

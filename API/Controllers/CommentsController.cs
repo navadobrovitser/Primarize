@@ -70,29 +70,25 @@ public class CommentsController : ControllerBase
         return Ok(new { message = "התגובה נמחקה בהצלחה!" });
     }
 
-    [HttpPut("{id}")]
-    public IActionResult UpdateComment(int id, [FromBody] UpdateCommentDto dto)
+    // קבלת רשימת כל התגובות במערכת
+    [HttpGet]
+    public IActionResult GetAllComments()
     {
-        if (!ModelState.IsValid)
-        {
-            return BadRequest(ModelState);
-        }
+        var comments = _commentRepository.GetAll();
+        var commentDtos = _mapper.Map<List<CommentDto>>(comments);
+        return Ok(commentDtos);
+    }
 
-        // שליפת התגובה הקיימת ממסד הנתונים
-        var existingComment = _commentRepository.GetById(id);
-        if (existingComment == null)
+    [HttpGet("{id}")]
+    public IActionResult GetCommentById(int id)
+    {
+        var comment = _commentRepository.GetById(id);
+        if (comment == null)
         {
             return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
         }
 
-        // עדכון הנתונים באמצעות ה-Mapping שהוגדר או עדכון ישיר של השדה
-        _mapper.Map(dto, existingComment);
-
-        // לחלופין, אם מעדיפים עדכון ידני ישיר:
-        // existingComment.Content = dto.Content;
-
-        _commentRepository.Update(existingComment);
-
-        return Ok(new { message = "התגובה עודכנה בהצלחה!", data = existingComment });
+        var commentDto = _mapper.Map<CommentDto>(comment);
+        return Ok(commentDto);
     }
 }
