@@ -24,7 +24,7 @@ namespace API.Controllers
         }
 
         [HttpGet("{id}")]
-        public ActionResult<UserDto> GetUserById(int id)
+        public ActionResult<UserDto> GetUserById(string id) // שינוי מ-int ל-string
         {
             var user = _userService.GetUserById(id);
             if (user == null) return NotFound(new { message = "המשתמש לא נמצא" });
@@ -48,7 +48,7 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult UpdateUser(int id, [FromBody] RegisterUserDto model)
+        public ActionResult UpdateUser(string id, [FromBody] RegisterUserDto model) // שינוי ל-string
         {
             try
             {
@@ -62,7 +62,7 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteUser(int id)
+        public ActionResult DeleteUser(string id) // שינוי ל-string
         {
             try
             {

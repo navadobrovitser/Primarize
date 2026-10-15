@@ -30,16 +30,15 @@ namespace DAL.Repository
             _context.SaveChanges();
         }
 
-        public void Delete(int id)
+        public void Delete(string idNumber)
         {
-            var user = _context.Users.Find(id);
+            var user = GetByIdNumber(idNumber);
             if (user != null)
             {
                 _context.Users.Remove(user);
                 _context.SaveChanges();
             }
         }
-
         public void Update(User user)
         {
             _context.Users.Update(user);
@@ -50,9 +49,11 @@ namespace DAL.Repository
         {
             return _context.Users.FirstOrDefault(u => u.Email == email);
         }
-        public User? GetById(string id)
+       
+
+        public User? GetByIdNumber(string idNumber)
         {
-            return _context.Users.FirstOrDefault(u => u.Email == id);
+            return _context.Users.FirstOrDefault(u => u.Id == idNumber);
         }
 
         public User? GetByEmailAndPassword(string email, string password)

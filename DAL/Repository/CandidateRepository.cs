@@ -15,12 +15,12 @@ namespace DAL.Repository
             _context = context;
         }
 
-        public Candidate? GetById(int id)
+        public Candidate? GetByUserIdentityNumber(string idNumber)
         {
             return _context.Candidates
                 .Include(c => c.User)
                 .Include(c => c.Posts)
-                .FirstOrDefault(c => c.CandidateId == id);
+                .FirstOrDefault(c => c.User.Id == idNumber);
         }
 
         public List<Candidate> GetAll()
