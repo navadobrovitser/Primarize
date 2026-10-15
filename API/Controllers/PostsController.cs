@@ -60,5 +60,23 @@ namespace API.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
+
+        [HttpPut("{id}")]
+        public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
+        {
+            try
+            {
+                _postService.UpdatePost(id, model);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
+        }
     }
 }

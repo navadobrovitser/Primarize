@@ -1,4 +1,5 @@
-﻿using DAL.Entities;
+﻿using AutoMapper;
+using DAL.Entities;
 using DTO.Candidates;
 using DTO.Likes;
 using DTO.Posts;
@@ -6,9 +7,8 @@ using DTO.Users;
 using DTO.Voting;
 using System;
 using System.Collections.Generic;
-using System.Text;
-using AutoMapper;
 using System.Linq;
+using System.Text;
 
 namespace BLL.Mapping
 {
@@ -62,12 +62,12 @@ namespace BLL.Mapping
 
             CreateMap<CreatePostDto, Post>()
                 .ForMember(dest => dest.PostId, opt => opt.Ignore())
-                .ForMember(dest => dest.CandidateId, opt => opt.Ignore())
                 .ForMember(dest => dest.Candidate, opt => opt.Ignore())
                 .ForMember(dest => dest.PostLikes, opt => opt.Ignore())
                 .ForMember(dest => dest.Comments, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt,
-                    opt => opt.MapFrom(src => DateTime.UtcNow));
+                .ForMember(dest => dest.CreatedAt, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.ContentType, opt => opt.MapFrom(src => Enum.Parse<PostContentType>(src.ContentType, true)));
+
             CreateMap<UpdateCandidateDto, Candidate>()
                 .ForMember(dest => dest.CandidateId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
@@ -77,13 +77,14 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.ExplanationVideoUrl, opt => opt.Ignore());
 
             CreateMap<UpdatePostDto, Post>()
-                .ForMember(dest => dest.PostId, opt => opt.Ignore())
-                .ForMember(dest => dest.CandidateId, opt => opt.Ignore())
-                .ForMember(dest => dest.Candidate, opt => opt.Ignore())
-                .ForMember(dest => dest.PostLikes, opt => opt.Ignore())
-                .ForMember(dest => dest.Comments, opt => opt.Ignore())
-                .ForMember(dest => dest.CreatedAt, opt => opt.Ignore());
-
+                     .ForMember(dest => dest.PostId, opt => opt.Ignore())
+                     .ForMember(dest => dest.CandidateId, opt => opt.Ignore()) // שורה זו מבטיחה שזהות המועמד תישאר ללא שינוי
+                     .ForMember(dest => dest.Candidate, opt => opt.Ignore())
+                     .ForMember(dest => dest.PostLikes, opt => opt.Ignore())
+                     .ForMember(dest => dest.Comments, opt => opt.Ignore())
+                     .ForMember(dest => dest.CreatedAt, opt => opt.Ignore())
+                     .ForMember(dest => dest.ContentType,
+                         opt => opt.MapFrom(src => Enum.Parse<PostContentType>(src.ContentType, true)));
             // Like
             CreateMap<SetPostLikeDto, PostLike>()
                 .ForMember(dest => dest.PostLikeId, opt => opt.Ignore())
