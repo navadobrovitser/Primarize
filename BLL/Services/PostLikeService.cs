@@ -1,5 +1,8 @@
 ﻿using BLL.IServices;
+using DAL.Entities;
 using DAL.IRepository;
+using AutoMapper;
+using DTO.Likes;
 using System.Collections.Generic;
 
 namespace BLL.Services
@@ -7,25 +10,53 @@ namespace BLL.Services
     public class PostLikeService : IPostLikeService
     {
         private readonly IPostLikeRepository _postLikeRepository;
+        private readonly IMapper _mapper;
 
-        public PostLikeService(IPostLikeRepository postLikeRepository)
+        public PostLikeService(IPostLikeRepository postLikeRepository, IMapper mapper)
         {
             _postLikeRepository = postLikeRepository;
+            _mapper = mapper;
         }
 
-        public IEnumerable<object> GetAllLikes()
+        public IEnumerable<PostLikeDto> GetAllLikes()
         {
-            return _postLikeRepository.GetAll();
+            var likes = _postLikeRepository.GetAll();
+            return _mapper.Map<IEnumerable<PostLikeDto>>(likes);
         }
 
-        public void AddLike(int userId, int postId)
+        public IEnumerable<PostLikeDto> GetLikesByPostId(int postId)
         {
-            // לוגיקת הוספת לייק
+            var likes = _postLikeRepository.GetByPostId(postId);
+            return _mapper.Map<IEnumerable<PostLikeDto>>(likes);
+        }
+
+        public void AddLike(int userId, int postId, LikeType type)
+        {
+            var existingLike = _postLikeRepository.GetByUserAndPost(userId, postId);
+            if (existingLike != null)
+            {
+                existingLike.Type = type;
+                _postLikeRepository.Update(existingLike);
+            }
+            else
+            {
+                var newLike = new PostLike
+                {
+                    UserId = userId,
+                    PostId = postId,
+                    Type = type
+                };
+                _postLikeRepository.Add(newLike);
+            }
         }
 
         public void RemoveLike(int userId, int postId)
         {
-            // לוגיקת הסרת לייק
+            var existingLike = _postLikeRepository.GetByUserAndPost(userId, postId);
+            if (existingLike != null)
+            {
+                _postLikeRepository.Delete(existingLike.PostLikeId);
+            }
         }
     }
 }

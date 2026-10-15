@@ -86,6 +86,7 @@ namespace BLL.Mapping
                      .ForMember(dest => dest.ContentType,
                          opt => opt.MapFrom(src => Enum.Parse<PostContentType>(src.ContentType, true)));
             // Like
+            // Like
             CreateMap<SetPostLikeDto, PostLike>()
                 .ForMember(dest => dest.PostLikeId, opt => opt.Ignore())
                 .ForMember(dest => dest.UserId, opt => opt.Ignore())
@@ -93,6 +94,11 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.Type,
                     opt => opt.MapFrom(src =>
                         Enum.Parse<LikeType>(src.Type, true)));
+
+            // הוספת המיפוי החדש עבור שליפה:
+            CreateMap<PostLike, PostLikeDto>()
+                .ForMember(dest => dest.Type,
+                    opt => opt.MapFrom(src => src.Type.ToString()));
         }
     }
 }
