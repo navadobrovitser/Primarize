@@ -115,6 +115,21 @@ namespace BLL.Mapping
             CreateMap<Comment, CommentDto>()
 .ForMember(dest => dest.UserName,
     opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
+
+
+
+
+
+
+
+            // מיפוי לשליפה (Entity -> DTO) - AutoMapper ממפה לבד את כל השדות התואמים
+            CreateMap<AnonymousVote, AnonymousVoteDto>();
+
+            // מיפוי להוספה (DTO -> Entity) - התעלמות משדות שנוצרים אוטומטית או מנווטים
+            CreateMap<CreateAnonymousVoteDto, AnonymousVote>()
+                .ForMember(dest => dest.AnonymousVoteId, opt => opt.Ignore())
+                .ForMember(dest => dest.VoteTime, opt => opt.MapFrom(src => DateTime.UtcNow))
+                .ForMember(dest => dest.Candidate, opt => opt.Ignore());
         }
     }
 }
