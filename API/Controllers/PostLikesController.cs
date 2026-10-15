@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
+using BLL.IServices;
 using System.Collections.Generic;
 
 namespace API.Controllers
@@ -8,21 +8,19 @@ namespace API.Controllers
     [ApiController]
     public class PostLikesController : ControllerBase
     {
-        private readonly IPostLikeRepository _postLikeRepository;
+        private readonly IPostLikeService _postLikeService;
 
-        public PostLikesController(IPostLikeRepository postLikeRepository)
+        public PostLikesController(IPostLikeService postLikeService)
         {
-            _postLikeRepository = postLikeRepository;
+            _postLikeService = postLikeService;
         }
 
         // Get: מחזיר את כל הלייקים במערכת
         [HttpGet]
         public ActionResult<IEnumerable<object>> GetAllLikes()
         {
-            var likes = _postLikeRepository.GetAll();
+            var likes = _postLikeService.GetAllLikes();
             return Ok(likes);
         }
-
-        // אפשר להוסיף כאן מתודות נוספות במידת הצורך לפי מה שהחברה הגדירה ב-BLL
     }
 }

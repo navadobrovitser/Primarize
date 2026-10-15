@@ -50,6 +50,10 @@ namespace DAL.Repository
         {
             return _context.Users.FirstOrDefault(u => u.Email == email);
         }
+        public User? GetById(string id)
+        {
+            return _context.Users.FirstOrDefault(u => u.Email == id);
+        }
 
         public User? GetByEmailAndPassword(string email, string password)
         {

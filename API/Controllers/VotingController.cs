@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
+using BLL.IServices;
 using DTO.Voting;
-using System.Collections.Generic;
+using System;
 
 namespace API.Controllers
 {
@@ -9,53 +9,46 @@ namespace API.Controllers
     [ApiController]
     public class VotingController : ControllerBase
     {
-        private readonly IUserVoteRepository _userVoteRepository;
-        private readonly ICandidateRepository _candidateRepository;
+        private readonly IVotingService _votingService;
 
-        public VotingController(IUserVoteRepository userVoteRepository, ICandidateRepository candidateRepository)
+        public VotingController(IVotingService votingService)
         {
-            _userVoteRepository = userVoteRepository;
-            _candidateRepository = candidateRepository;
+            _votingService = votingService;
         }
 
         // 1. Post: שליחת פתק הצבעה
         [HttpPost("cast")]
-        public ActionResult CastVote([FromBody] CastVoteDto model)
-        {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+        //public ActionResult CastVote([FromBody] CastVoteDto model)
+        //{
+        //    if (!ModelState.IsValid)
+        //    {
+        //        return BadRequest(ModelState);
+        //    }
 
-            // כאן אפשר להוסיף לוגיקה לבדיקה אם המשתמש כבר הצביע באמצעות _userVoteRepository.HasVoted(...)
-
-            return Ok(new { message = "ההצבעה נקלטה בהצלחה!", data = model });
-        }
+        //    try
+        //    {
+        //        _votingService.CastVote(model);
+        //        return Ok(new { message = "ההצבעה נקלטה בהצלחה!", data = model });
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+        //}
 
         // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
         [HttpGet("status/{userId}")]
         public ActionResult<VoteStatusDto> GetVoteStatus(int userId)
         {
-            bool hasVoted = _userVoteRepository.HasVoted(userId);
-
-            return Ok(new VoteStatusDto
-            {
-                HasVoted = hasVoted,
-                VoteDate = null // אפשר לעדכן בהתאם לנתוני ה-DB אם צריך
-            });
+            var status = _votingService.GetVoteStatus(userId);
+            return Ok(status);
         }
 
         // 3. Get: הצגת תוצאות הבחירות הכלליות
         [HttpGet("results")]
         public ActionResult<ElectionResultsDto> GetElectionResults()
         {
-            int totalVotes = _userVoteRepository.CountVotes();
-
-            var results = new ElectionResultsDto
-            {
-                TotalVoters = totalVotes,
-                Results = new List<CandidateResultDto>()
-            };
+            var results = _votingService.GetElectionResults();
             return Ok(results);
         }
     }

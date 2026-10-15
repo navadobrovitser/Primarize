@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
+using BLL.IServices;
 using System.Collections.Generic;
 
 namespace API.Controllers
@@ -8,18 +8,18 @@ namespace API.Controllers
     [ApiController]
     public class AnonymousVotesController : ControllerBase
     {
-        private readonly IAnonymousVoteRepository _anonymousVoteRepository;
+        private readonly IAnonymousVoteService _anonymousVoteService;
 
-        public AnonymousVotesController(IAnonymousVoteRepository anonymousVoteRepository)
+        public AnonymousVotesController(IAnonymousVoteService anonymousVoteService)
         {
-            _anonymousVoteRepository = anonymousVoteRepository;
+            _anonymousVoteService = anonymousVoteService;
         }
 
         // Get: מחזיר את כל ההצבעות האנונימיות
         [HttpGet]
         public ActionResult<IEnumerable<object>> GetAllAnonymousVotes()
         {
-            var votes = _anonymousVoteRepository.GetAll();
+            var votes = _anonymousVoteService.GetAllAnonymousVotes();
             return Ok(votes);
         }
     }

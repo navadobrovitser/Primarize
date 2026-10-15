@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
+using BLL.IServices;
 using System.Collections.Generic;
-using AutoMapper;
 
 namespace API.Controllers
 {
@@ -9,28 +8,26 @@ namespace API.Controllers
     [ApiController]
     public class CommentsController : ControllerBase
     {
-        private readonly ICommentRepository _commentRepository;
-        private readonly IMapper _mapper;
+        private readonly ICommentService _commentService;
 
-        public CommentsController(ICommentRepository commentRepository, IMapper mapper)
+        public CommentsController(ICommentService commentService)
         {
-            _commentRepository = commentRepository;
-            _mapper = mapper;
+            _commentService = commentService;
         }
 
         // 1. Get: מחזיר את כל התגובות
         [HttpGet]
         public ActionResult<IEnumerable<object>> GetAllComments()
         {
-            var comments = _commentRepository.GetAll();
+            var comments = _commentService.GetAllComments();
             return Ok(comments);
         }
 
-        // 2. Get לפי ID של פוסט או תגובה (תלוי איך הוגדר ב-BLL, נניח לפי ID של תגובה)
+        // 2. Get לפי ID של תגובה
         [HttpGet("{id}")]
         public ActionResult GetCommentById(int id)
         {
-            var comment = _commentRepository.GetById(id);
+            var comment = _commentService.GetCommentById(id);
             if (comment == null)
             {
                 return NotFound(new { message = "התגובה לא נמצאה" });

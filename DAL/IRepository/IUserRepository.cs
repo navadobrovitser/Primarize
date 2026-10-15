@@ -12,5 +12,7 @@ namespace DAL.IRepository
         void Update(User user);
         User? GetByEmail(string email);
         User? GetByEmailAndPassword(string email, string password);
+        User? GetById(string id);
+
     }
 }

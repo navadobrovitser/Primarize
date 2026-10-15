@@ -17,14 +17,14 @@ namespace BLL.Services
             _candidateRepository = candidateRepository;
         }
 
-        public bool CastVote(CastVoteDto model)
-        {
-            if (_userVoteRepository.HasVoted(model.UserId))
-            {
-                throw new InvalidOperationException("המשתמש כבר ביצע הצבעה בעבר.");
-            }
-            return true;
-        }
+        //public bool CastVote(CastVoteDto model)
+        //{
+        //    if (_userVoteRepository.HasVoted(model.))
+        //    {
+        //        throw new InvalidOperationException("המשתמש כבר ביצע הצבעה בעבר.");
+        //    }
+        //    return true;
+        //}
 
         public VoteStatusDto GetVoteStatus(int userId)
         {
