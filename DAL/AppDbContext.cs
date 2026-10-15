@@ -23,6 +23,10 @@ namespace DAL
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<User>()
+    .HasIndex(u => u.Id)
+    .IsUnique();
+
             // מניעת מחיקה בשרשרת עבור תגובות משתמש
             modelBuilder.Entity<Comment>()
                 .HasOne(c => c.User)

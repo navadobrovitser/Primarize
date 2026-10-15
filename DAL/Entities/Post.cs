@@ -11,6 +11,8 @@ namespace DAL.Entities
 
         public int CandidateId { get; set; }
         public string Content { get; set; } = string.Empty;
+        // שדה חדש לשמירת שם קובץ המדיה (תמונה או וידאו)
+        public string? MediaUrl { get; set; }
         public PostContentType ContentType { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
