@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
+using BLL.IServices;
 using DTO.Candidates;
 using System.Collections.Generic;
-using AutoMapper;
-using Microsoft.AspNetCore.Http;
 using System;
 
 namespace API.Controllers
@@ -12,68 +10,69 @@ namespace API.Controllers
     [ApiController]
     public class CandidatesController : ControllerBase
     {
-        private readonly ICandidateRepository _candidateRepository;
-        private readonly IMapper _mapper;
+        private readonly ICandidateService _candidateService;
 
-        // בנאי המזריק את השירותים הנדרשים
-        public CandidatesController(
-            ICandidateRepository candidateRepository,
-            IMapper mapper)
+        public CandidatesController(ICandidateService candidateService)
         {
-            _candidateRepository = candidateRepository;
-            _mapper = mapper;
+            _candidateService = candidateService;
         }
 
-        // 1. Get: מחזיר את כל המועמדים
         [HttpGet]
         public ActionResult<IEnumerable<CandidateListItemDto>> GetAllCandidates()
         {
-            var candidates = _candidateRepository.GetAll();
-            var dtos = _mapper.Map<IEnumerable<CandidateListItemDto>>(candidates);
-            return Ok(dtos);
+            return Ok(_candidateService.GetAllCandidates());
         }
 
-        // 2. Get לפי ID: מחזיר פרטי מועמד בודד
         [HttpGet("{id}")]
         public ActionResult<CandidateDto> GetCandidateById(int id)
         {
-            var candidate = _candidateRepository.GetById(id);
-            if (candidate == null)
-            {
-                return NotFound(new { message = "המועמד לא נמצא" });
-            }
-            var dto = _mapper.Map<CandidateDto>(candidate);
-            return Ok(dto);
+            var candidate = _candidateService.GetCandidateById(id);
+            if (candidate == null) return NotFound(new { message = "המועמד לא נמצא" });
+            return Ok(candidate);
         }
 
-        // 3. Post: הוספת מועמד חדש כולל קבצים (תמונה וסרטון)
         [HttpPost]
-     
         public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                // מיפוי הנתונים הבסיסיים לישות ה-Candidate
-                var candidate = _mapper.Map<DAL.Entities.Candidate>(model);
-
-                // כאן התיקון הנדרש: שיוך מזהה המשתמש באופן ידני 
-                // (לצורכי בדיקה כרגע, יש להציב את ה-UserId של המשתמש שיצרת קודם במסד הנתונים, למשל 1)
-                candidate.UserId = 1;
-
-                // שליחה לריפוזיטורי יחד עם קובץ התמונה וקובץ הסרטון מתוך ה-DTO
-                _candidateRepository.Add(candidate, model.ImageFile, model.VideoFile);
-
-                return Ok(new { message = "המועמד נוצר בהצלחה!", data = candidate });
+                int currentUserId = 1; // יש להחליף במזהה המשתמש המחובר בפועל
+                var result = _candidateService.CreateCandidate(model, currentUserId);
+                return Ok(new { message = "המועמד נוצר בהצלחה!", data = result });
             }
             catch (ArgumentException ex)
             {
-                // טיפול בשגיאות הקשורות לסוג קובץ לא חוקי או גודל חריג
                 return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpPut("{id}")]
+        public ActionResult UpdateCandidate(int id, [FromForm] CreateCandidateDto model)
+        {
+            try
+            {
+                _candidateService.UpdateCandidate(id, model);
+                return Ok(new { message = "המועמד עודכן בהצלחה!" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id}")]
+        public ActionResult DeleteCandidate(int id)
+        {
+            try
+            {
+                _candidateService.DeleteCandidate(id);
+                return Ok(new { message = "המועמד נמחק בהצלחה!" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
             }
         }
     }

@@ -1,8 +1,8 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
+using BLL.IServices;
 using DTO.Users;
 using System.Collections.Generic;
-using AutoMapper;
+using System;
 
 namespace API.Controllers
 {
@@ -10,50 +10,69 @@ namespace API.Controllers
     [ApiController]
     public class UsersController : ControllerBase
     {
-        private readonly IUserRepository _userRepository;
-        private readonly IMapper _mapper;
+        private readonly IUserService _userService;
 
-        public UsersController(IUserRepository userRepository, IMapper mapper)
+        public UsersController(IUserService userService)
         {
-            _userRepository = userRepository;
-            _mapper = mapper;
+            _userService = userService;
         }
 
-        // 1. Get: מחזיר את כל המשתמשים
         [HttpGet]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
-            var users = _userRepository.GetAll();
-            var dtos = _mapper.Map<IEnumerable<UserDto>>(users);
-            return Ok(dtos);
+            return Ok(_userService.GetAllUsers());
         }
 
-        // 2. Get לפי ID: מחזיר משתמש בודד
         [HttpGet("{id}")]
         public ActionResult<UserDto> GetUserById(int id)
         {
-            var user = _userRepository.GetById(id);
-            if (user == null)
-            {
-                return NotFound(new { message = "המשתמש לא נמצא" });
-            }
-            var dto = _mapper.Map<UserDto>(user);
-            return Ok(dto);
+            var user = _userService.GetUserById(id);
+            if (user == null) return NotFound(new { message = "המשתמש לא נמצא" });
+            return Ok(user);
         }
 
-        // 3. Post: הרשמת משתמש חדש
         [HttpPost]
         public ActionResult RegisterUser([FromBody] RegisterUserDto model)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            try
             {
-                return BadRequest(ModelState);
+                var result = _userService.RegisterUser(model);
+                return Ok(new { message = "המשתמש נוצר בהצלחה!", data = result });
             }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
-            var user = _mapper.Map<DAL.Entities.User>(model);
-            _userRepository.Add(user);
+        [HttpPut("{id}")]
+        public ActionResult UpdateUser(int id, [FromBody] RegisterUserDto model)
+        {
+            try
+            {
+                _userService.UpdateUser(id, model);
+                return Ok(new { message = "המשתמש עודכן בהצלחה!" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
 
-            return Ok(new { message = "המשתמש נוצר בהצלחה!", data = model });
+        [HttpDelete("{id}")]
+        public ActionResult DeleteUser(int id)
+        {
+            try
+            {
+                _userService.DeleteUser(id);
+                return Ok(new { message = "המשתמש נמחק בהצלחה!" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
     }
 }

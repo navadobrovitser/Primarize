@@ -1,9 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IRepository;
-using BLL.Services;
+using BLL.IServices;
 using DTO.Posts;
 using System.Collections.Generic;
-using AutoMapper;
 using System;
 
 namespace API.Controllers
@@ -12,78 +10,55 @@ namespace API.Controllers
     [ApiController]
     public class PostsController : ControllerBase
     {
-        private readonly IPostRepository _postRepository;
-        private readonly IImageService _imageService;
-        private readonly IMapper _mapper;
+        private readonly IPostService _postService;
 
-        public PostsController(IPostRepository postRepository, IImageService imageService, IMapper mapper)
+        public PostsController(IPostService postService)
         {
-            _postRepository = postRepository;
-            _imageService = imageService;
-            _mapper = mapper;
+            _postService = postService;
         }
 
-        // 1. Get: מחזיר את כל הפוסטים
         [HttpGet]
         public ActionResult<IEnumerable<PostDto>> GetAllPosts()
         {
-            var posts = _postRepository.GetAll();
-            var dtos = _mapper.Map<IEnumerable<PostDto>>(posts);
-            return Ok(dtos);
+            return Ok(_postService.GetAllPosts());
         }
 
-        // 2. Get לפי ID: מחזיר פוסט בודד לפי מזהה
         [HttpGet("{id}")]
         public ActionResult<PostDto> GetPostById(int id)
         {
-            var post = _postRepository.GetById(id);
-            if (post == null)
-            {
-                return NotFound(new { message = "הפוסט לא נמצא" });
-            }
-            var dto = _mapper.Map<PostDto>(post);
-            return Ok(dto);
+            var post = _postService.GetPostById(id);
+            if (post == null) return NotFound(new { message = "הפוסט לא נמצא" });
+            return Ok(post);
         }
 
-        // 3. Post: יצירת פוסט חדש כולל תמיכה בקובצי מדיה
         [HttpPost]
         public ActionResult CreatePost([FromForm] CreatePostDto model)
         {
-            if (!ModelState.IsValid)
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+
+            try
             {
-                return BadRequest(ModelState);
+                var result = _postService.CreatePost(model);
+                return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
             }
-
-            var post = _mapper.Map<DAL.Entities.Post>(model);
-
-            // אם המשתמש צירף קובץ מדיה, נטפל בו לפי סוג התוכן
-            if (model.MediaFile != null && model.MediaFile.Length > 0)
+            catch (ArgumentException ex)
             {
-                try
-                {
-                    string savedFileName;
-
-                    // בדיקה האם מדובר בסרטון או בתמונה לפי ה-ContentType
-                    if (model.ContentType == "Video" || model.ContentType == "3")
-                    {
-                        savedFileName = _imageService.SaveVideo(model.MediaFile);
-                    }
-                    else
-                    {
-                        savedFileName = _imageService.Save(model.MediaFile);
-                    }
-
-                    post.MediaUrl = savedFileName;
-                }
-                catch (ArgumentException ex)
-                {
-                    return BadRequest(new { message = ex.Message });
-                }
+                return BadRequest(new { message = ex.Message });
             }
+        }
 
-            _postRepository.Add(post);
-
-            return Ok(new { message = "הפוסט נוצר בהצלחה!", data = model });
+        [HttpDelete("{id}")]
+        public ActionResult DeletePost(int id)
+        {
+            try
+            {
+                _postService.DeletePost(id);
+                return Ok(new { message = "הפוסט נמחק בהצלחה!" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
         }
     }
 }
