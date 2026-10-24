@@ -13,11 +13,7 @@ namespace DAL.Entities
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        /// <summary>
-        /// /להוסיף מס פון
-        /// מגדר
-        /// </summary>
-        /// 
+        public string Role { get; set; } = "User";
         public string Phone { get; set; }
         public string Gender { get; set; }
         public DateTime PartyJoinDate { get; set; }
