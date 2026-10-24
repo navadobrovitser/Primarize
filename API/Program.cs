@@ -6,9 +6,18 @@ using BLL.Services;
 using DAL;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using System.Text;
+using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing. " +
+        "Set it with User Secrets or an environment variable.");
+
+builder.Services.AddDbContext<AppDbContext>(o => o.UseSqlServer(connStr));
 // הוספת שירותים למיכל ה-DI
 builder.Services.AddControllers();
 
