@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IServices;
+﻿using BLL.IServices;
+using DTO.Security;
 using DTO.Users;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
@@ -73,6 +74,30 @@ namespace API.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+        }
+
+
+
+        // POST api/user/register
+        [HttpPost("register")]
+        public IActionResult Register(RegisterDto dto)
+        {
+            if (!_userService.Register(dto))
+                return Conflict("Email is already registered.");
+
+            // ההרשמה רק יוצרת את המשתמש. את הטוקן מקבלים בהתחברות
+            return Ok();
+        }
+
+        // POST api/user/login
+        [HttpPost("login")]
+        public ActionResult<AuthResponseDto> Login(LoginDto dto)
+        {
+            var result = _userService.Login(dto);
+            if (result is null)
+                return Unauthorized("Wrong email or password.");
+
+            return Ok(result);
         }
     }
 }

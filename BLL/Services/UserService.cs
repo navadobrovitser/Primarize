@@ -17,6 +17,7 @@ namespace BLL.Services
         private readonly ITokenService _tokens;
         private readonly IPasswordHasher<User> _hasher;
 
+
         public UserService(
             IUserRepository userRepository,
             IMapper mapper,
@@ -80,22 +81,14 @@ namespace BLL.Services
             _userRepository.Delete(id);
         }
 
-        // --- מתודות האבטחה והאימות החדשות ---
-
-        public bool Register(RegisterUserDto dto)
+        public bool Register(RegisterDto dto)
         {
             var email = dto.Email.Trim().ToLowerInvariant();
-
-            // בדיקה האם המשתמש כבר קיים לפי אימייל או תעודת זהות
-            var existingUserByEmail = _userRepository.GetByEmail(email);
-            if (existingUserByEmail != null)
+            if (_userRepository.GetByEmail(email)!=null)
                 return false;
 
-            var user = _mapper.Map<User>(dto);
-            user.Email = email;
-            user.Role = "User"; // התפקיד נקבע בשרת
-
-            // הצפנת הסיסמה לפני השמירה
+            // התפקיד נקבע בשרת, לא מגיע מהלקוח
+            var user = new User { Email = email, Role = "User" };
             user.Password = _hasher.HashPassword(user, dto.Password);
 
             _userRepository.Add(user);
@@ -109,12 +102,10 @@ namespace BLL.Services
             if (user is null)
                 return null;
 
-            // אימות הסיסמה המוצפנת
             var result = _hasher.VerifyHashedPassword(user, user.Password, dto.Password);
             if (result == PasswordVerificationResult.Failed)
                 return null;
 
-            // הנפקת הטוקן במידה והסיסמה נכונה
             return _tokens.CreateToken(user);
         }
     }

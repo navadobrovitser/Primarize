@@ -1,13 +1,16 @@
-using DAL.IRepository;
 using BLL.IServices;
 using BLL.Mapping;
-using DAL.Repository;
 using BLL.Services;
 using DAL;
+using DAL.Entities;
+using DAL.IRepository;
+using DAL.Repository;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
-using System.Text;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -43,6 +46,44 @@ builder.Services.AddScoped<ICommentService, CommentService>();
 builder.Services.AddScoped<IVotingService, VotingService>();
 builder.Services.AddScoped<IAnonymousVoteService, AnonymousVoteService>();
 builder.Services.AddScoped<IPostLikeService, PostLikeService>();
+
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+    throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization();
+
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+
+
+
+
+
 
 // הגדרת תיקיית המדיה והזרקת השירות בצורה נקייה
 var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
@@ -91,6 +132,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseAuthentication();//חשוב קודם כל השורה הזו- לדעת מי אתה ורק אחר כך לדעת את היכולות
 app.UseAuthorization();
 app.MapControllers();
 app.Run();
