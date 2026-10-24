@@ -2,7 +2,9 @@
 using BLL.IServices;
 using DAL.Entities;
 using DAL.IRepository;
+using DTO.Security;
 using DTO.Users;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 
@@ -12,12 +14,22 @@ namespace BLL.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ITokenService _tokens;
+        private readonly IPasswordHasher<User> _hasher;
 
-        public UserService(IUserRepository userRepository, IMapper mapper)
+        public UserService(
+            IUserRepository userRepository,
+            IMapper mapper,
+            ITokenService tokens,
+            IPasswordHasher<User> hasher)
         {
             _userRepository = userRepository;
             _mapper = mapper;
+            _tokens = tokens;
+            _hasher = hasher;
         }
+
+        // --- מתודות ה-CRUD הקיימות ---
 
         public IEnumerable<UserDto> GetAllUsers()
         {
@@ -25,15 +37,15 @@ namespace BLL.Services
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
 
-        public UserDto? GetUserById(string id) // שינוי מ-int ל-string
+        public UserDto? GetUserById(string id)
         {
-            var user = _userRepository.GetByIdNumber(id); // קריאה לפונקציה שמחפשת לפי שדה ה-Id (תעודת זהות)
+            var user = _userRepository.GetByIdNumber(id);
             if (user == null) return null;
             return _mapper.Map<UserDto>(user);
         }
+
         public UserDto RegisterUser(RegisterUserDto model)
         {
-            // בדיקה האם קיים משתמש עם תעודת זהות (Id) זו כבר במערכת
             var existingUser = _userRepository.GetByIdNumber(model.Id);
             if (existingUser != null)
             {
@@ -48,7 +60,7 @@ namespace BLL.Services
 
         public void UpdateUser(string id, RegisterUserDto model)
         {
-            var user = _userRepository.GetByIdNumber(id); // חיפוש לפי תעודת זהות
+            var user = _userRepository.GetByIdNumber(id);
             if (user == null)
             {
                 throw new KeyNotFoundException("המשתמש לא נמצא.");
@@ -60,12 +72,50 @@ namespace BLL.Services
 
         public void DeleteUser(string id)
         {
-            var user = _userRepository.GetByIdNumber(id); // חיפוש לפי תעודת זהות
+            var user = _userRepository.GetByIdNumber(id);
             if (user == null)
             {
                 throw new KeyNotFoundException("המשתמש לא נמצא.");
             }
-            _userRepository.Delete(id); // שולח את ה-string לפונקציית המחיקה שיצרנו
+            _userRepository.Delete(id);
+        }
+
+        // --- מתודות האבטחה והאימות החדשות ---
+
+        public bool Register(RegisterUserDto dto)
+        {
+            var email = dto.Email.Trim().ToLowerInvariant();
+
+            // בדיקה האם המשתמש כבר קיים לפי אימייל או תעודת זהות
+            var existingUserByEmail = _userRepository.GetByEmail(email);
+            if (existingUserByEmail != null)
+                return false;
+
+            var user = _mapper.Map<User>(dto);
+            user.Email = email;
+            user.Role = "User"; // התפקיד נקבע בשרת
+
+            // הצפנת הסיסמה לפני השמירה
+            user.Password = _hasher.HashPassword(user, dto.Password);
+
+            _userRepository.Add(user);
+            return true;
+        }
+
+        public AuthResponseDto? Login(LoginDto dto)
+        {
+            var email = dto.Email.Trim().ToLowerInvariant();
+            var user = _userRepository.GetByEmail(email);
+            if (user is null)
+                return null;
+
+            // אימות הסיסמה המוצפנת
+            var result = _hasher.VerifyHashedPassword(user, user.Password, dto.Password);
+            if (result == PasswordVerificationResult.Failed)
+                return null;
+
+            // הנפקת הטוקן במידה והסיסמה נכונה
+            return _tokens.CreateToken(user);
         }
     }
 }
