@@ -2,6 +2,7 @@
 using BLL.IServices;
 using DTO.Voting;
 using System;
+using Microsoft.AspNetCore.Authorization;
 
 namespace API.Controllers
 {
@@ -18,6 +19,7 @@ namespace API.Controllers
 
         // 1. Post: שליחת פתק הצבעה
         [HttpPost("cast")]
+        [AllowAnonymous]//לא לשכוח לטפל בזה שכל אחד יכול להצביע פעם אחת בלבד
         public IActionResult CastVote([FromQuery] int userId, [FromBody] CastVoteDto model)
         {
             if (!ModelState.IsValid)
@@ -38,6 +40,8 @@ namespace API.Controllers
 
         // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
         [HttpGet("status/{userId}")]
+        [Authorize(Roles = "Admin")]
+
         public ActionResult<VoteStatusDto> GetVoteStatus(int userId)
         {
             var status = _votingService.GetVoteStatus(userId);
@@ -46,6 +50,7 @@ namespace API.Controllers
 
         // 3. Get: הצגת תוצאות הבחירות הכלליות
         [HttpGet("results")]
+        [AllowAnonymous]
         public ActionResult<ElectionResultsDto> GetElectionResults()
         {
             var results = _votingService.GetElectionResults();

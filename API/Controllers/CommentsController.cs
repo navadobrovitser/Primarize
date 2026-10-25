@@ -1,8 +1,9 @@
-﻿using AutoMapper;
+﻿using API.Extensions;
+using AutoMapper;
 using DAL.Entities;
 using DAL.IRepository;
-using Microsoft.AspNetCore.Mvc;
 using DTO.Comment;
+using Microsoft.AspNetCore.Mvc;
 [Route("api/[controller]")]
 [ApiController]
 public class CommentsController : ControllerBase
@@ -46,6 +47,13 @@ public class CommentsController : ControllerBase
         {
             return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
         }
+        int currentUserId = User.GetUserId();
+
+        // בדיקת בעלות: האם המשתמש המחובר הוא כותב התגובה?
+        if (existingComment.UserId != currentUserId)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה לערוך תגובה זו." });
+        }
 
         // עדכון תוכן התגובה בלבד (או שדות רלוונטיים נוספים)
         existingComment.Content = dto.Content;
@@ -64,13 +72,20 @@ public class CommentsController : ControllerBase
         {
             return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
         }
+        int currentUserId = User.GetUserId();
 
+        // מותר למחוק רק אם המשתמש הוא כותב התגובה OR מנהל
+        bool isAdmin = User.IsInRole("Admin");
+        if (existingComment.UserId != currentUserId && !isAdmin)
+        {
+            return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה למחוק תגובה זו." });
+        }
         _commentRepository.Delete(id);
 
         return Ok(new { message = "התגובה נמחקה בהצלחה!" });
     }
 
-    // קבלת רשימת כל התגובות במערכת
+    // קבלת רשימת כל התגובות במערכת----מי אמר שצריך, נא לבדוק את זה
     [HttpGet]
     public IActionResult GetAllComments()
     {

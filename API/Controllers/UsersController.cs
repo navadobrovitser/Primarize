@@ -1,6 +1,8 @@
-﻿using BLL.IServices;
+﻿using API.Extensions;
+using BLL.IServices;
 using DTO.Security;
 using DTO.Users;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
@@ -19,12 +21,16 @@ namespace API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Admin")]
+
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
             return Ok(_userService.GetAllUsers());
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public ActionResult<UserDto> GetUserById(string id) // שינוי מ-int ל-string
         {
             var user = _userService.GetUserById(id);
@@ -33,6 +39,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [AllowAnonymous]
         public ActionResult RegisterUser([FromBody] RegisterUserDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -49,10 +56,16 @@ namespace API.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult UpdateUser(string id, [FromBody] RegisterUserDto model) // שינוי ל-string
+        public ActionResult UpdateUser(string id, [FromBody] RegisterUserDto model)
         {
             try
             {
+                string currentUserId = User.GetUserId().ToString();
+                bool isAdmin = User.IsInRole("Admin");
+                if (id != currentUserId && !isAdmin)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה לעדכן משתמש זה." });
+                }
                 _userService.UpdateUser(id, model);
                 return Ok(new { message = "המשתמש עודכן בהצלחה!" });
             }
@@ -60,13 +73,23 @@ namespace API.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpDelete("{id}")]
-        public ActionResult DeleteUser(string id) // שינוי ל-string
+        public ActionResult DeleteUser(string id)
         {
             try
             {
+                string currentUserId = User.GetUserId().ToString();
+                bool isAdmin = User.IsInRole("Admin");
+                if (id != currentUserId && !isAdmin)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה למחוק משתמש זה." });
+                }
                 _userService.DeleteUser(id);
                 return Ok(new { message = "המשתמש נמחק בהצלחה!" });
             }
@@ -74,12 +97,17 @@ namespace API.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
 
 
         // POST api/user/register
         [HttpPost("register")]
+        [AllowAnonymous]
         public IActionResult Register(RegisterDto dto)
         {
             if (!_userService.Register(dto))
@@ -91,6 +119,7 @@ namespace API.Controllers
 
         // POST api/user/login
         [HttpPost("login")]
+        [AllowAnonymous]
         public ActionResult<AuthResponseDto> Login(LoginDto dto)
         {
             var result = _userService.Login(dto);

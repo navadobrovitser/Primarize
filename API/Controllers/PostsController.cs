@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
 using DTO.Posts;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
@@ -32,6 +34,8 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Candidate")]
+
         public ActionResult CreatePost([FromForm] CreatePostDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -48,10 +52,27 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin,Candidate")]//רק למי ששיך
+
+        [HttpDelete("{id}")]
         public ActionResult DeletePost(int id)
         {
             try
             {
+                var post = _postService.GetPostById(id);
+                if (post == null)
+                {
+                    return NotFound(new { message = "הפוסט המבוקש לא נמצא." });
+                }
+
+                int currentUserId = User.GetUserId();
+                bool isAdmin = User.IsInRole("Admin");
+
+                if (post.CandidateId != currentUserId && !isAdmin)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה למחוק פוסט זה." });
+                }
+
                 _postService.DeletePost(id);
                 return Ok(new { message = "הפוסט נמחק בהצלחה!" });
             }
@@ -59,13 +80,29 @@ namespace API.Controllers
             {
                 return NotFound(new { message = ex.Message });
             }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Candidate")]//רק למי ששיך
+
         public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
         {
             try
             {
+                var existingPost = _postService.GetPostById(id);
+                if (existingPost == null)
+                {
+                    return NotFound(new { message = "הפוסט המבוקש לא נמצא." });
+                }
+                int currentUserId = User.GetUserId();
+                if (existingPost.CandidateId != currentUserId)
+                {
+                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה לערוך פוסט זה." });
+                }
                 _postService.UpdatePost(id, model);
                 return NoContent();
             }

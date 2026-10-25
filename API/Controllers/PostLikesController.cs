@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
-using System.Collections.Generic;
-using DTO.Likes;
 using DAL.Entities;
+using DTO.Likes;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
@@ -36,6 +38,7 @@ namespace API.Controllers
 
         // POST: api/PostLikes
         [HttpPost]
+
         public IActionResult AddLike([FromQuery] int userId, [FromBody] SetPostLikeDto dto)
         {
             if (!Enum.TryParse<LikeType>(dto.Type, true, out var likeType))
@@ -48,11 +51,25 @@ namespace API.Controllers
         }
 
         // DELETE: api/PostLikes
+        // DELETE: api/PostLikes
         [HttpDelete]
-        public IActionResult RemoveLike([FromQuery] int userId, [FromQuery] int postId)
+        public IActionResult RemoveLike([FromQuery] int postId)
         {
-            _postLikeService.RemoveLike(userId, postId);
-            return Ok(new { message = "הלייק הוסר בהצלחה" });
+            try
+            {
+                int currentUserId = User.GetUserId();
+                _postLikeService.RemoveLike(currentUserId, postId);
+
+                return Ok(new { message = "הלייק הוסר בהצלחה" });
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
         }
     }
 }
