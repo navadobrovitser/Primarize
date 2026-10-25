@@ -73,5 +73,15 @@ namespace DAL.Repository
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
         }
+
+        public Post? GetOwned(int id, int candidateId)
+        {
+            return _context.Posts
+                .Include(p => p.Candidate)
+                .Include(p => p.PostLikes)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .FirstOrDefault(p => p.PostId == id && p.CandidateId == candidateId);
+        }
     }
 }

@@ -76,9 +76,10 @@ namespace BLL.Services
             return _mapper.Map<CandidateDto>(createdCandidate);
         }
 
-        public void UpdateCandidate(string id, UpdateCandidateDto model)
+        public void UpdateCandidate(int currentUserId, UpdateCandidateDto model)
         {
-            var candidate = _candidateRepository.GetByUserIdentityNumber(id);
+            // חיפוש המועמד ששייך למשתמש המחובר מהטוקן
+            var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
                 throw new KeyNotFoundException("המועמד לא נמצא.");
@@ -98,14 +99,14 @@ namespace BLL.Services
 
             _candidateRepository.Update(candidate);
         }
-        public void DeleteCandidate(string id)
+        public void DeleteCandidate(int currentUserId)
         {
-            var candidate = _candidateRepository.GetByUserIdentityNumber(id);
+            var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
                 throw new KeyNotFoundException("המועמד לא נמצא.");
             }
-            // מחיקה לפי מזהה המועמד (CandidateId) של הרשומה שנמצאה
+
             _candidateRepository.Delete(candidate.CandidateId);
         }
     }

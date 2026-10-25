@@ -25,7 +25,7 @@ namespace API.Controllers
             return Ok(_postService.GetAllPosts());
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
         public ActionResult<PostDto> GetPostById(int id)
         {
             var post = _postService.GetPostById(id);
@@ -35,14 +35,15 @@ namespace API.Controllers
 
         [HttpPost]
         [Authorize(Roles = "Admin,Candidate")]
-
         public ActionResult CreatePost([FromForm] CreatePostDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             try
             {
-                var result = _postService.CreatePost(model);
+                // מזהה היוצר נלקח מהטוקן
+                int currentUserId = User.GetUserId();
+                var result = _postService.CreatePost(model, currentUserId);
                 return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
             }
             catch (ArgumentException ex)
@@ -51,29 +52,38 @@ namespace API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Candidate")]//רק למי ששיך
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,Candidate")]
+        public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
+        {
+            try
+            {
+                int currentUserId = User.GetUserId();
 
-        [HttpDelete("{id}")]
+                // העדכון מתבצע רק אם הפוסט שייך למשתמש המחובר (נבדק ב-Service באמצעות GetOwned)
+                _postService.UpdatePost(id, model, currentUserId);
+                return NoContent();
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin,Candidate")]
         public ActionResult DeletePost(int id)
         {
             try
             {
-                var post = _postService.GetPostById(id);
-                if (post == null)
-                {
-                    return NotFound(new { message = "הפוסט המבוקש לא נמצא." });
-                }
-
                 int currentUserId = User.GetUserId();
-                bool isAdmin = User.IsInRole("Admin");
 
-                if (post.CandidateId != currentUserId && !isAdmin)
-                {
-                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה למחוק פוסט זה." });
-                }
-
-                _postService.DeletePost(id);
+                // המחיקה מתבצעת רק אם הפוסט שייך למשתמש המחובר (נבדק ב-Service באמצעות GetOwned)
+                _postService.DeletePost(id, currentUserId);
                 return Ok(new { message = "הפוסט נמחק בהצלחה!" });
             }
             catch (KeyNotFoundException ex)
@@ -86,34 +96,12 @@ namespace API.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Candidate")]//רק למי ששיך
-
-        public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
+        // קבלת הפוסטים של המשתמש המחובר
+        [HttpGet("my-posts")]
+        public ActionResult<IEnumerable<PostDto>> GetMyPosts()
         {
-            try
-            {
-                var existingPost = _postService.GetPostById(id);
-                if (existingPost == null)
-                {
-                    return NotFound(new { message = "הפוסט המבוקש לא נמצא." });
-                }
-                int currentUserId = User.GetUserId();
-                if (existingPost.CandidateId != currentUserId)
-                {
-                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה לערוך פוסט זה." });
-                }
-                _postService.UpdatePost(id, model);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            int currentUserId = User.GetUserId();
+            return Ok(_postService.GetPostsByCandidateId(currentUserId));
         }
     }
 }

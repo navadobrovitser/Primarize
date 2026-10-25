@@ -37,21 +37,24 @@ namespace API.Controllers
         }
 
         // POST: api/PostLikes
+        // הוספת לייק - מזהה המשתמש מגיע אך ורק מהטוקן!
         [HttpPost]
-
-        public IActionResult AddLike([FromQuery] int userId, [FromBody] SetPostLikeDto dto)
+        public IActionResult AddLike([FromBody] SetPostLikeDto dto)
         {
             if (!Enum.TryParse<LikeType>(dto.Type, true, out var likeType))
             {
                 return BadRequest("סוג לייק שגוי.");
             }
 
-            _postLikeService.AddLike(userId, dto.PostId, likeType);
+            // מזהה המשתמש המחובר מהטוקן
+            int currentUserId = User.GetUserId();
+
+            _postLikeService.AddLike(currentUserId, dto.PostId, likeType);
             return Ok(new { message = "הלייק נוסף בהצלחה" });
         }
 
         // DELETE: api/PostLikes
-        // DELETE: api/PostLikes
+        // הסרת לייק - מזהה המשתמש מגיע אך ורק מהטוקן!
         [HttpDelete]
         public IActionResult RemoveLike([FromQuery] int postId)
         {

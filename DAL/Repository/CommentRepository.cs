@@ -67,5 +67,17 @@ namespace DAL.Repository
                 .Where(c => c.UserId == userId)
                 .ToList();
         }
+        public Comment? GetOwned(int commentId, int userId)
+        {
+            return _context.Comments
+                .FirstOrDefault(c => c.CommentId == commentId && c.UserId == userId);
+        }
+
+        public List<Comment> GetByUser(int userId)
+        {
+            return _context.Comments
+                .Where(c => c.UserId == userId)
+                .ToList();
+        }
     }
 }

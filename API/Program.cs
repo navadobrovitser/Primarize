@@ -49,9 +49,24 @@ builder.Services.AddScoped<IAnonymousVoteService, AnonymousVoteService>();
 builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 
 
+//var jwtKey = builder.Configuration["Jwt:Key"];
+//if (string.IsNullOrWhiteSpace(jwtKey))
+//    throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
+// קריאת המפתח מקובץ ההגדרות appsettings.json
+
+
+// הקריאה הזו תבדוק אוטומטית גם את משתנה הסביבה Jwt__Key במערכת
 var jwtKey = builder.Configuration["Jwt:Key"];
+
 if (string.IsNullOrWhiteSpace(jwtKey))
-    throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
+{
+    throw new InvalidOperationException("Jwt:Key is missing. Please verify the environment variable Jwt__Key is configured properly.");
+}
+
+
+
+
+
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)

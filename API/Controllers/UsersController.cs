@@ -22,7 +22,6 @@ namespace API.Controllers
 
         [HttpGet]
         [Authorize(Roles = "Admin")]
-
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
             return Ok(_userService.GetAllUsers());
@@ -30,8 +29,7 @@ namespace API.Controllers
 
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
-
-        public ActionResult<UserDto> GetUserById(string id) // שינוי מ-int ל-string
+        public ActionResult<UserDto> GetUserById(string id)
         {
             var user = _userService.GetUserById(id);
             if (user == null) return NotFound(new { message = "המשתמש לא נמצא" });
@@ -55,18 +53,14 @@ namespace API.Controllers
             }
         }
 
-        [HttpPut("{id}")]
-        public ActionResult UpdateUser(string id, [FromBody] RegisterUserDto model)
+        // עדכון המשתמש המחובר - מזהה המשתמש נלקח אך ורק מהטוקן
+        [HttpPut]
+        public ActionResult UpdateUser([FromBody] RegisterUserDto model)
         {
             try
             {
-                string currentUserId = User.GetUserId().ToString();
-                bool isAdmin = User.IsInRole("Admin");
-                if (id != currentUserId && !isAdmin)
-                {
-                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה לעדכן משתמש זה." });
-                }
-                _userService.UpdateUser(id, model);
+                int currentUserId = User.GetUserId();
+                _userService.UpdateUser(currentUserId, model);
                 return Ok(new { message = "המשתמש עודכן בהצלחה!" });
             }
             catch (KeyNotFoundException ex)
@@ -79,18 +73,14 @@ namespace API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public ActionResult DeleteUser(string id)
+        // מחיקת המשתמש המחובר - מזהה המשתמש נלקח אך ורק מהטוקן
+        [HttpDelete]
+        public ActionResult DeleteUser()
         {
             try
             {
-                string currentUserId = User.GetUserId().ToString();
-                bool isAdmin = User.IsInRole("Admin");
-                if (id != currentUserId && !isAdmin)
-                {
-                    return StatusCode(StatusCodes.Status403Forbidden, new { message = "אינך מורשה למחוק משתמש זה." });
-                }
-                _userService.DeleteUser(id);
+                int currentUserId = User.GetUserId();
+                _userService.DeleteUser(currentUserId);
                 return Ok(new { message = "המשתמש נמחק בהצלחה!" });
             }
             catch (KeyNotFoundException ex)
@@ -103,8 +93,6 @@ namespace API.Controllers
             }
         }
 
-
-
         // POST api/user/register
         [HttpPost("register")]
         [AllowAnonymous]
@@ -113,7 +101,6 @@ namespace API.Controllers
             if (!_userService.Register(dto))
                 return Conflict("Email is already registered.");
 
-            // ההרשמה רק יוצרת את המשתמש. את הטוקן מקבלים בהתחברות
             return Ok();
         }
 

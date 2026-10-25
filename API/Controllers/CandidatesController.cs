@@ -1,13 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization; // חובה להוסיף עבור ההרשאות
 using BLL.IServices;
 using DTO.Candidates;
 using System.Collections.Generic;
 using System;
+using API.Extensions;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+   
     public class CandidatesController : ControllerBase
     {
         private readonly ICandidateService _candidateService;
@@ -18,6 +21,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
+
         public ActionResult<IEnumerable<CandidateListItemDto>> GetAllCandidates()
         {
             return Ok(_candidateService.GetAllCandidates());
@@ -32,6 +36,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin,Candidate")]
         public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -47,12 +52,20 @@ namespace API.Controllers
             }
         }
 
+
+
+
+
+
         [HttpPut("{id}")]
-        public ActionResult UpdateCandidate(string id, [FromForm] UpdateCandidateDto model)
+        // PUT: api/Candidates
+        [HttpPut]
+        public ActionResult UpdateCandidate([FromForm] UpdateCandidateDto model)
         {
             try
             {
-                _candidateService.UpdateCandidate(id, model);
+                int currentUserId = User.GetUserId();
+                _candidateService.UpdateCandidate(currentUserId, model);
                 return Ok(new { message = "המועמד עודכן בהצלחה!" });
             }
             catch (KeyNotFoundException ex)
@@ -61,12 +74,14 @@ namespace API.Controllers
             }
         }
 
-        [HttpDelete("{id}")]
-        public ActionResult DeleteCandidate(string id) // שינוי מ-int ל-string
+        // DELETE: api/Candidates
+        [HttpDelete]
+        public ActionResult DeleteCandidate()
         {
             try
             {
-                _candidateService.DeleteCandidate(id);
+                int currentUserId = User.GetUserId();
+                _candidateService.DeleteCandidate(currentUserId);
                 return Ok(new { message = "המועמד נמחק בהצלחה!" });
             }
             catch (KeyNotFoundException ex)

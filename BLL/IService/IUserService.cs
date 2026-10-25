@@ -9,9 +9,9 @@ namespace BLL.IServices
         IEnumerable<UserDto> GetAllUsers();
         UserDto? GetUserById(string id);
         UserDto RegisterUser(RegisterUserDto model);
-        void UpdateUser(string id, RegisterUserDto model);
-        void DeleteUser(string id);
 
+        void UpdateUser(int currentUserId, RegisterUserDto model);
+        void DeleteUser(int currentUserId);
 
         bool Register(RegisterDto dto);
         AuthResponseDto? Login(LoginDto dto);

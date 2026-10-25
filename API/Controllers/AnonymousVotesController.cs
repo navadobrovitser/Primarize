@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using BLL.IServices;
+﻿using BLL.IServices;
 using DTO.Voting;
-using System.Collections.Generic;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
@@ -19,6 +20,8 @@ namespace API.Controllers
 
         // GET: api/AnonymousVotes
         [HttpGet]
+        [Authorize(Roles = "Admin")]//לוודא שאכן אנו מאשרות אפילו למנהל להציץ בזה
+
         public ActionResult<IEnumerable<AnonymousVoteDto>> GetAllAnonymousVotes()
         {
             var votes = _anonymousVoteService.GetAllAnonymousVotes();
@@ -27,6 +30,8 @@ namespace API.Controllers
 
         // GET: api/AnonymousVotes/{id}
         [HttpGet("{id}")]
+        [Authorize(Roles = "Admin")]
+
         public ActionResult<AnonymousVoteDto> GetAnonymousVoteById(int id)
         {
             var vote = _anonymousVoteService.GetById(id);

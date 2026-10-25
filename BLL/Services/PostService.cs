@@ -41,42 +41,45 @@ namespace BLL.Services
             return _mapper.Map<PostDto>(post);
         }
 
-        public PostDto CreatePost(CreatePostDto model)
+        // 1. תיקון יצירת פוסט עם מזהה המועמד מהטוקן
+        public PostDto CreatePost(CreatePostDto model, int currentUserId)
         {
-            // בדיקה שהמועמד קיים במסד הנתונים לפי מזהה המועמד
-            var candidate = _candidateRepository.GetAll()
-                .FirstOrDefault(c => c.CandidateId == model.CandidateId);
-
+            var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                throw new KeyNotFoundException("המועמד המבוקש אינו קיים במערכת, ולכן לא ניתן ליצור עבורו פוסט.");
+                throw new KeyNotFoundException("המועמד המבוקש אינו קיים במערכת.");
             }
 
             var post = _mapper.Map<Post>(model);
+            post.CandidateId = candidate.CandidateId;
 
             if (model.MediaFile != null && model.MediaFile.Length > 0)
             {
                 post.MediaUrl = _imageService.Save(model.MediaFile);
             }
 
-            // הוספה לבסיס הנתונים (מכיוון ש-Add מחזיר void, נשתמש באובייקט post הישיר)
             _postRepository.Add(post);
 
             return _mapper.Map<PostDto>(post);
         }
 
-        public void UpdatePost(int id, UpdatePostDto model)
+        // 2. תיקון עדכון פוסט עם בדיקת GetOwned
+        public void UpdatePost(int id, UpdatePostDto model, int currentUserId)
         {
-            var post = _postRepository.GetById(id);
-            if (post == null)
+            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            if (candidate == null)
             {
-                throw new KeyNotFoundException("הפוסט לא נמצא.");
+                throw new KeyNotFoundException("המועמד לא נמצא.");
             }
 
-            // מיפוי הנתונים החדשים אל הפוסט הקיים (CandidateId נשאר ללא שינוי הודות להגדרת ה-Mapping)
+            var post = _postRepository.GetOwned(id, candidate.CandidateId);
+            if (post == null)
+            {
+                throw new KeyNotFoundException("הפוסט לא נמצא או שאינו שייך למועמד.");
+            }
+
             _mapper.Map(model, post);
 
-            // טיפול בקובץ מדיה חדש אם הועלה
             if (model.MediaFile != null && model.MediaFile.Length > 0)
             {
                 post.MediaUrl = _imageService.Save(model.MediaFile);
@@ -85,14 +88,35 @@ namespace BLL.Services
             _postRepository.Update(post);
         }
 
-        public void DeletePost(int id)
+        // 3. תיקון מחיקת פוסט עם בדיקת GetOwned
+        public void DeletePost(int id, int currentUserId)
         {
-            var post = _postRepository.GetById(id);
+            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            if (candidate == null)
+            {
+                throw new KeyNotFoundException("המועמד לא נמצא.");
+            }
+
+            var post = _postRepository.GetOwned(id, candidate.CandidateId);
             if (post == null)
             {
-                throw new KeyNotFoundException("הפוסט לא נמצא.");
+                throw new KeyNotFoundException("הפוסט לא נמצא או שאינו שייך למועמד.");
             }
+
             _postRepository.Delete(id);
+        }
+
+        // 4. הוספת המתודה לקבלת פוסטים לפי מזהה המועמד
+        public IEnumerable<PostDto> GetPostsByCandidateId(int currentUserId)
+        {
+            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            if (candidate == null)
+            {
+                return new List<PostDto>();
+            }
+
+            var posts = _postRepository.GetByCandidateId(candidate.CandidateId);
+            return _mapper.Map<IEnumerable<PostDto>>(posts);
         }
     }
 }

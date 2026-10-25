@@ -1,0 +1,8 @@
+# Use this workspace to collaborate
+workspace:
+  id: d994e573-8992-44c1-82d7-d39c2d27039a
+
+localResources:
+  specs:
+    - ../API/obj/Debug/net10.0/EndpointInfo/API.json
+    - ../PrimerizeServer/obj/Debug/net10.0/EndpointInfo/PrimerizeServer.json

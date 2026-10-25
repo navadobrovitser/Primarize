@@ -17,7 +17,6 @@ namespace BLL.Services
         private readonly ITokenService _tokens;
         private readonly IPasswordHasher<User> _hasher;
 
-
         public UserService(
             IUserRepository userRepository,
             IMapper mapper,
@@ -29,8 +28,6 @@ namespace BLL.Services
             _tokens = tokens;
             _hasher = hasher;
         }
-
-        // --- מתודות ה-CRUD הקיימות ---
 
         public IEnumerable<UserDto> GetAllUsers()
         {
@@ -59,9 +56,10 @@ namespace BLL.Services
             return _mapper.Map<UserDto>(user);
         }
 
-        public void UpdateUser(string id, RegisterUserDto model)
+        // עדכון משתמש לפי מזהה המשתמש המחובר מהטוקן
+        public void UpdateUser(int currentUserId, RegisterUserDto model)
         {
-            var user = _userRepository.GetByIdNumber(id);
+            var user = _userRepository.GetOwned(currentUserId);
             if (user == null)
             {
                 throw new KeyNotFoundException("המשתמש לא נמצא.");
@@ -71,23 +69,24 @@ namespace BLL.Services
             _userRepository.Update(user);
         }
 
-        public void DeleteUser(string id)
+        // מחיקת משתמש לפי מזהה המשתמש המחובר מהטוקן
+        public void DeleteUser(int currentUserId)
         {
-            var user = _userRepository.GetByIdNumber(id);
+            var user = _userRepository.GetOwned(currentUserId);
             if (user == null)
             {
                 throw new KeyNotFoundException("המשתמש לא נמצא.");
             }
-            _userRepository.Delete(id);
+
+            _userRepository.Delete(user.Id);
         }
 
         public bool Register(RegisterDto dto)
         {
             var email = dto.Email.Trim().ToLowerInvariant();
-            if (_userRepository.GetByEmail(email)!=null)
+            if (_userRepository.GetByEmail(email) != null)
                 return false;
 
-            // התפקיד נקבע בשרת, לא מגיע מהלקוח
             var user = new User { Email = email, Role = "User" };
             user.Password = _hasher.HashPassword(user, dto.Password);
 

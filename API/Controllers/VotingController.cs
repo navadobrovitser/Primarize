@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
 using DTO.Voting;
-using System;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System;
 
 namespace API.Controllers
 {
@@ -17,10 +18,9 @@ namespace API.Controllers
             _votingService = votingService;
         }
 
-        // 1. Post: שליחת פתק הצבעה
+        // 1. שליחת פתק הצבעה - מזהה המשתמש נלקח אך ורק מהטוקן
         [HttpPost("cast")]
-        [AllowAnonymous]//לא לשכוח לטפל בזה שכל אחד יכול להצביע פעם אחת בלבד
-        public IActionResult CastVote([FromQuery] int userId, [FromBody] CastVoteDto model)
+        public IActionResult CastVote([FromBody] CastVoteDto model)
         {
             if (!ModelState.IsValid)
             {
@@ -29,7 +29,10 @@ namespace API.Controllers
 
             try
             {
-                _votingService.CastVote(userId, model);
+                // חילוץ מזהה המשתמש המחובר מהטוקן בלבד
+                int currentUserId = User.GetUserId();
+
+                _votingService.CastVote(currentUserId, model);
                 return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
             }
             catch (Exception ex)
@@ -38,17 +41,16 @@ namespace API.Controllers
             }
         }
 
-        // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
-        [HttpGet("status/{userId}")]
-        [Authorize(Roles = "Admin")]
-
-        public ActionResult<VoteStatusDto> GetVoteStatus(int userId)
+        // 2. בדיקת סטטוס הצבעה של המשתמש המחובר
+        [HttpGet("status")]
+        public ActionResult<VoteStatusDto> GetMyVoteStatus()
         {
-            var status = _votingService.GetVoteStatus(userId);
+            int currentUserId = User.GetUserId();
+            var status = _votingService.GetVoteStatus(currentUserId);
             return Ok(status);
         }
 
-        // 3. Get: הצגת תוצאות הבחירות הכלליות
+        // 3. הצגת תוצאות הבחירות הכלליות - פתוח לכולם
         [HttpGet("results")]
         [AllowAnonymous]
         public ActionResult<ElectionResultsDto> GetElectionResults()
