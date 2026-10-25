@@ -21,7 +21,8 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        //[Authorize(Roles = "Admin")]
+        [AllowAnonymous]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
             return Ok(_userService.GetAllUsers());

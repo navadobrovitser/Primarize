@@ -94,18 +94,19 @@ namespace BLL.Services
             var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                throw new KeyNotFoundException("המועמד לא נמצא.");
+                // משתמש רגיל שאינו מועמד - לא מוצא את הפוסט
+                throw new KeyNotFoundException("הפוסט לא נמצא.");
             }
 
             var post = _postRepository.GetOwned(id, candidate.CandidateId);
             if (post == null)
             {
-                throw new KeyNotFoundException("הפוסט לא נמצא או שאינו שייך למועמד.");
+                // מועמד שמנסה למחוק פוסט שלא שייך לו - לא מוצא את הפוסט
+                throw new KeyNotFoundException("הפוסט לא נמצא.");
             }
 
             _postRepository.Delete(id);
         }
-
         // 4. הוספת המתודה לקבלת פוסטים לפי מזהה המועמד
         public IEnumerable<PostDto> GetPostsByCandidateId(int currentUserId)
         {

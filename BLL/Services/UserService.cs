@@ -87,12 +87,21 @@ namespace BLL.Services
             if (_userRepository.GetByEmail(email) != null)
                 return false;
 
-            var user = new User { Email = email, Role = "User" };
+            var user = new User
+            {
+                Email = email,
+                Role = "User",
+                Gender = "",
+                Phone = "",
+                Id = ""
+            };
+
             user.Password = _hasher.HashPassword(user, dto.Password);
 
             _userRepository.Add(user);
             return true;
         }
+        
 
         public AuthResponseDto? Login(LoginDto dto)
         {

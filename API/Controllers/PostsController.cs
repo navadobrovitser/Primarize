@@ -75,14 +75,12 @@ namespace API.Controllers
         }
 
         [HttpDelete("{id:int}")]
-        [Authorize(Roles = "Admin,Candidate")]
+        [Authorize] // מאפשר לכל משתמש מחובר להגיע למתודה
         public ActionResult DeletePost(int id)
         {
             try
             {
                 int currentUserId = User.GetUserId();
-
-                // המחיקה מתבצעת רק אם הפוסט שייך למשתמש המחובר (נבדק ב-Service באמצעות GetOwned)
                 _postService.DeletePost(id, currentUserId);
                 return Ok(new { message = "הפוסט נמחק בהצלחה!" });
             }
