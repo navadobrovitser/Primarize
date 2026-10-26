@@ -41,7 +41,7 @@ namespace BLL.Services
             if (user == null) return null;
             return _mapper.Map<UserDto>(user);
         }
-
+        //יתכן ואפשר למחוק- לבדוק את העניין
         public UserDto RegisterUser(RegisterUserDto model)
         {
             var existingUser = _userRepository.GetByIdNumber(model.Id);
@@ -81,7 +81,7 @@ namespace BLL.Services
             _userRepository.Delete(user.Id);
         }
 
-        public bool Register(RegisterDto dto)
+        public bool Register(RegisterUserDto dto)
         {
             var email = dto.Email.Trim().ToLowerInvariant();
             if (_userRepository.GetByEmail(email) != null)
@@ -91,9 +91,9 @@ namespace BLL.Services
             {
                 Email = email,
                 Role = "User",
-                Gender = "",
-                Phone = "",
-                Id = ""
+                Gender = dto.Gender,
+                Phone = dto.Phone,
+                Id = dto.Id
             };
 
             user.Password = _hasher.HashPassword(user, dto.Password);

@@ -38,7 +38,7 @@ namespace API.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous]
+        [AllowAnonymous]//נראלי אפשר למחוק לבדוק בוודאות
         public ActionResult RegisterUser([FromBody] RegisterUserDto model)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
@@ -97,7 +97,7 @@ namespace API.Controllers
         // POST api/user/register
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register(RegisterDto dto)
+        public IActionResult Register(RegisterUserDto dto)
         {
             if (!_userService.Register(dto))
                 return Conflict("Email is already registered.");
