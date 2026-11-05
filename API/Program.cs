@@ -5,16 +5,32 @@ using DAL;
 using DAL.Entities;
 using DAL.IRepository;
 using DAL.Repository;
+using GenerativeAI.Microsoft;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
+using OpenAI;
+using System.ClientModel;
 using System.Text;
 using API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+var apiKey = builder.Configuration["Gemini:ApiKey"]
+      ?? throw new InvalidOperationException("Gemini:ApiKey is missing");
+
+IChatClient innerClient = new GenerativeAIChatClient(apiKey, "gemini-2.5-flash-lite");
+
+    
+    
+builder.Services.AddChatClient(innerClient)
+    .UseFunctionInvocation();   // מריץ את הכלים שהמודל מבקש
+
+builder.Services.AddScoped<IAgentService, AgentService>();
+Console.WriteLine($"Key starts with: {apiKey[..4]}, length: {apiKey.Length}");
 
 // 1. קריאת מחרוזת החיבור ורישום ה-DbContext (פעם אחת בלבד)
 var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
