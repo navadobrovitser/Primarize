@@ -1,18 +1,16 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace DTO.Security
 {
-    
-        public class RegisterDto
-        {
-            [Required, EmailAddress]
-            public string Email { get; set; } = "";
+    public class RegisterDto
+    {
+        [Required(ErrorMessage = "כתובת אימייל היא שדה חובה")]
+        [EmailAddress(ErrorMessage = "כתובת האימייל אינה תקינה")]
+        public string Email { get; set; } = "";
 
-            [Required, MinLength(8)]
-            public string Password { get; set; } = "";
-        }
+        [Required(ErrorMessage = "סיסמה היא שדה חובה")]
+        [MinLength(8, ErrorMessage = "הסיסמה חייבת להכיל לפחות 8 תווים")]
+        public string Password { get; set; } = "";
     }
-
+}

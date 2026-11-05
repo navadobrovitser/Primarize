@@ -1,16 +1,15 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace DTO.Security
 {
     public class LoginDto
     {
-        [Required, EmailAddress]
+        [Required(ErrorMessage = "כתובת אימייל היא שדה חובה")]
+        [EmailAddress(ErrorMessage = "כתובת האימייל אינה תקינה")]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessage = "סיסמה היא שדה חובה")]
         public string Password { get; set; } = "";
     }
 }

@@ -28,6 +28,7 @@ builder.Services.AddControllers(options =>
 {
     options.Filters.Add<GlobalExceptionFilter>();
 });
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

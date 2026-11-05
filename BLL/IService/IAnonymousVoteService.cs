@@ -6,7 +6,7 @@ namespace BLL.IServices
     public interface IAnonymousVoteService
     {
         IEnumerable<AnonymousVoteDto> GetAllAnonymousVotes();
-        AnonymousVoteDto? GetById(int id);
+        AnonymousVoteDto GetById(int id);
         void AddAnonymousVote(CreateAnonymousVoteDto model);
     }
 }
