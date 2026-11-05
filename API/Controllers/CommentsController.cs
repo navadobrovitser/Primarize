@@ -1,104 +1,78 @@
 ﻿using API.Extensions;
-using AutoMapper;
-using DAL.Entities;
-using DAL.IRepository;
+using BLL.IServices;
 using DTO.Comment;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class CommentsController : ControllerBase
     {
-        private readonly ICommentRepository _commentRepository;
-        private readonly IMapper _mapper;
+        private readonly ICommentService _commentService;
 
-        public CommentsController(ICommentRepository commentRepository, IMapper mapper)
+        public CommentsController(ICommentService commentService)
         {
-            _commentRepository = commentRepository;
-            _mapper = mapper;
+            _commentService = commentService;
         }
 
-        // הוספת תגובה - ה-UserId נלקח אך ורק מהטוקן
+        // GET: api/Comments
+        [HttpGet]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<CommentDto>> GetAllComments()
+        {
+            var comments = _commentService.GetAllComments();
+            return Ok(comments);
+        }
+
+        // GET: api/Comments/{id}
+        [HttpGet("{id:int}")]
+        [AllowAnonymous]
+        public ActionResult<CommentDto> GetCommentById(int id)
+        {
+            var comment = _commentService.GetCommentById(id);
+            return Ok(comment);
+        }
+
+        // GET: api/Comments/post/{postId}
+        [HttpGet("post/{postId:int}")]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<CommentDto>> GetCommentsByPostId(int postId)
+        {
+            var comments = _commentService.GetCommentsByPostId(postId);
+            return Ok(comments);
+        }
+
+        // POST: api/Comments
         [HttpPost]
-        public IActionResult CreateComment([FromBody] CreateCommentDto dto)
+        public ActionResult<CommentDto> CreateComment([FromBody] CreateCommentDto dto)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            var comment = _mapper.Map<Comment>(dto);
-
-            // מזהה המשתמש מגיע מהטוקן
-            comment.UserId = User.GetUserId();
-            comment.CreatedAt = DateTime.UtcNow;
-
-            _commentRepository.Add(comment);
-
-            return Ok(new { message = "התגובה נוספה בהצלחה!", data = comment });
+            int currentUserId = User.GetUserId();
+            var result = _commentService.AddComment(dto, currentUserId);
+            return Ok(new { message = "התגובה נוספה בהצלחה!", data = result });
         }
 
-        // עדכון תגובה - סינון לפי מזהה התגובה וגם מזהה הבעלים ב-Repository
+        // PUT: api/Comments/{id}
         [HttpPut("{id:int}")]
         public IActionResult UpdateComment(int id, [FromBody] UpdateCommentDto dto)
         {
             int currentUserId = User.GetUserId();
-
-            // חיפוש תגובה שהיא גם לפי ה-ID וגם שייכת למשתמש המחובר
-            var existingComment = _commentRepository.GetOwned(id, currentUserId);
-            if (existingComment == null)
-            {
-                return NotFound(new { message = "התגובה לא נמצאה." });
-            }
-
-            existingComment.Content = dto.Content;
-            _commentRepository.Update(existingComment);
-
+            _commentService.UpdateComment(id, dto, currentUserId);
             return Ok(new { message = "התגובה עודכנה בהצלחה!" });
         }
 
-        // מחיקת תגובה - סינון לפי מזהה התגובה וגם מזהה הבעלים ב-Repository
+        // DELETE: api/Comments/{id}
         [HttpDelete("{id:int}")]
         public IActionResult DeleteComment(int id)
         {
             int currentUserId = User.GetUserId();
+            string currentUserRole = User.GetUserRole(); // או העברת Role במידה וקיים Extension method מתאים
 
-            var existingComment = _commentRepository.GetOwned(id, currentUserId);
-            if (existingComment == null)
-            {
-                return NotFound(new { message = "התגובה לא נמצאה." });
-            }
-
-            _commentRepository.Delete(id);
-
+            _commentService.DeleteComment(id, currentUserId, currentUserRole);
             return Ok(new { message = "התגובה נמחקה בהצלחה!" });
-        }
-
-        // קבלת כל התגובות של המשתמש המחובר
-        [HttpGet("user-comments")]
-        public IActionResult GetMyComments()
-        {
-            int currentUserId = User.GetUserId();
-            var comments = _commentRepository.GetByUser(currentUserId);
-            var commentDtos = _mapper.Map<List<CommentDto>>(comments);
-            return Ok(commentDtos);
-        }
-
-        [HttpGet("{id:int}")]
-        public IActionResult GetCommentById(int id)
-        {
-            var comment = _commentRepository.GetById(id);
-            if (comment == null)
-            {
-                return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
-            }
-
-            var commentDto = _mapper.Map<CommentDto>(comment);
-            return Ok(commentDto);
         }
     }
 }

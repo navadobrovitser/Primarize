@@ -3,7 +3,6 @@ using BLL.IServices;
 using DTO.Posts;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 
 namespace API.Controllers
@@ -19,87 +18,61 @@ namespace API.Controllers
             _postService = postService;
         }
 
+        // GET: api/Posts
         [HttpGet]
         public ActionResult<IEnumerable<PostDto>> GetAllPosts()
         {
-            return Ok(_postService.GetAllPosts());
+            var posts = _postService.GetAllPosts();
+            return Ok(posts);
         }
 
+        // GET: api/Posts/5
         [HttpGet("{id:int}")]
         public ActionResult<PostDto> GetPostById(int id)
         {
+            // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
             var post = _postService.GetPostById(id);
-            if (post == null) return NotFound(new { message = "הפוסט לא נמצא" });
             return Ok(post);
         }
 
+        // POST: api/Posts
         [HttpPost]
         [Authorize(Roles = "Admin,Candidate")]
         public ActionResult CreatePost([FromForm] CreatePostDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            try
-            {
-                // מזהה היוצר נלקח מהטוקן
-                int currentUserId = User.GetUserId();
-                var result = _postService.CreatePost(model, currentUserId);
-                return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            var result = _postService.CreatePost(model, currentUserId);
+            return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
         }
 
+        // PUT: api/Posts/5
         [HttpPut("{id:int}")]
         [Authorize(Roles = "Admin,Candidate")]
         public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
         {
-            try
-            {
-                int currentUserId = User.GetUserId();
-
-                // העדכון מתבצע רק אם הפוסט שייך למשתמש המחובר (נבדק ב-Service באמצעות GetOwned)
-                _postService.UpdatePost(id, model, currentUserId);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _postService.UpdatePost(id, model, currentUserId);
+            return NoContent();
         }
 
+        // DELETE: api/Posts/5
         [HttpDelete("{id:int}")]
-        [Authorize] // מאפשר לכל משתמש מחובר להגיע למתודה
+        [Authorize]
         public ActionResult DeletePost(int id)
         {
-            try
-            {
-                int currentUserId = User.GetUserId();
-                _postService.DeletePost(id, currentUserId);
-                return Ok(new { message = "הפוסט נמחק בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _postService.DeletePost(id, currentUserId);
+            return Ok(new { message = "הפוסט נמחק בהצלחה!" });
         }
 
-        // קבלת הפוסטים של המשתמש המחובר
+        // GET: api/Posts/my-posts
         [HttpGet("my-posts")]
+        [Authorize]
         public ActionResult<IEnumerable<PostDto>> GetMyPosts()
         {
             int currentUserId = User.GetUserId();
-            return Ok(_postService.GetPostsByCandidateId(currentUserId));
+            var posts = _postService.GetPostsByCandidateId(currentUserId);
+            return Ok(posts);
         }
     }
 }

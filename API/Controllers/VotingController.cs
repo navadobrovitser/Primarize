@@ -3,7 +3,6 @@ using BLL.IServices;
 using DTO.Voting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 
 namespace API.Controllers
 {
@@ -18,31 +17,19 @@ namespace API.Controllers
             _votingService = votingService;
         }
 
-        // 1. שליחת פתק הצבעה - מזהה המשתמש נלקח אך ורק מהטוקן
+        // 1. שליחת פתק הצבעה - מזהה המשתמש נלקח מהטוקן
         [HttpPost("cast")]
+        [Authorize]
         public IActionResult CastVote([FromBody] CastVoteDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                // חילוץ מזהה המשתמש המחובר מהטוקן בלבד
-                int currentUserId = User.GetUserId();
-
-                _votingService.CastVote(currentUserId, model);
-                return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _votingService.CastVote(currentUserId, model);
+            return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
         }
 
         // 2. בדיקת סטטוס הצבעה של המשתמש המחובר
         [HttpGet("status")]
+        [Authorize]
         public ActionResult<VoteStatusDto> GetMyVoteStatus()
         {
             int currentUserId = User.GetUserId();

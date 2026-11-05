@@ -4,7 +4,6 @@ using DTO.Security;
 using DTO.Users;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using System.Collections.Generic;
 
 namespace API.Controllers
@@ -20,100 +19,62 @@ namespace API.Controllers
             _userService = userService;
         }
 
+        // GET: api/Users
         [HttpGet]
-        //[Authorize(Roles = "Admin")]
-        [AllowAnonymous]
+        [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
-            return Ok(_userService.GetAllUsers());
+            var users = _userService.GetAllUsers();
+            return Ok(users);
         }
 
+        // GET: api/Users/id
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
         public ActionResult<UserDto> GetUserById(string id)
         {
+            // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
             var user = _userService.GetUserById(id);
-            if (user == null) return NotFound(new { message = "המשתמש לא נמצא" });
             return Ok(user);
         }
 
-        //[HttpPost]
-        //[AllowAnonymous]//נראלי אפשר למחוק לבדוק בוודאות
-        //public ActionResult RegisterUser([FromBody] RegisterUserDto model)
-        //{
-        //    if (!ModelState.IsValid) return BadRequest(ModelState);
-
-        //    try
-        //    {
-        //        var result = _userService.RegisterUser(model);
-        //        return Ok(new { message = "המשתמש נוצר בהצלחה!", data = result });
-        //    }
-        //    catch (ArgumentException ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
-
-        // עדכון המשתמש המחובר - מזהה המשתמש נלקח אך ורק מהטוקן
+        // PUT: api/Users
         [HttpPut]
+        [Authorize]
         public ActionResult UpdateUser([FromBody] RegisterUserDto model)
         {
-            try
-            {
-                int currentUserId = User.GetUserId();
-                _userService.UpdateUser(currentUserId, model);
-                return Ok(new { message = "המשתמש עודכן בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _userService.UpdateUser(currentUserId, model);
+            return Ok(new { message = "המשתמש עודכן בהצלחה!" });
         }
 
-        // מחיקת המשתמש המחובר - מזהה המשתמש נלקח אך ורק מהטוקן
+        // DELETE: api/Users
         [HttpDelete]
+        [Authorize]
         public ActionResult DeleteUser()
         {
-            try
-            {
-                int currentUserId = User.GetUserId();
-                _userService.DeleteUser(currentUserId);
-                return Ok(new { message = "המשתמש נמחק בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _userService.DeleteUser(currentUserId);
+            return Ok(new { message = "המשתמש נמחק בהצלחה!" });
         }
 
-        // POST api/user/register
+        // POST: api/Users/register
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register(RegisterUserDto dto)
+        public IActionResult Register([FromBody] RegisterUserDto dto)
         {
-            if (!_userService.Register(dto))
-                return Conflict("Email is already registered.");
-
-            return Ok();
+            // במידה והמייל קיים, ה-Service זורק ConflictException וה-Filter מחזיר 409
+            _userService.Register(dto);
+            return Ok(new { message = "הרישום בוצע בהצלחה!" });
         }
 
-        // POST api/user/login
+        // POST: api/Users/login
         [HttpPost("login")]
         [AllowAnonymous]
-        public ActionResult<AuthResponseDto> Login(LoginDto dto)
+        public ActionResult<AuthResponseDto> Login([FromBody] LoginDto dto)
         {
+            // במידה והפרטים שגויים, ה-Service זורק BusinessRuleException וה-Filter מחזיר 400
             var result = _userService.Login(dto);
-            if (result is null)
-                return Unauthorized("Wrong email or password.");
-
             return Ok(result);
         }
     }

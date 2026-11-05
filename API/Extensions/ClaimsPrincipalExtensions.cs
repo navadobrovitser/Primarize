@@ -13,5 +13,9 @@ namespace API.Extensions // התאימי את שם ה-Namespace לפרויקט �
 
             return id;
         }
+        public static string GetUserRole(this ClaimsPrincipal user)
+        {
+            return user.FindFirst(ClaimTypes.Role)?.Value ?? "";
+        }
     }
 }
