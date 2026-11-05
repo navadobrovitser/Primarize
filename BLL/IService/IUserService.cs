@@ -8,7 +8,7 @@ namespace BLL.IServices
     {
         IEnumerable<UserDto> GetAllUsers();
         UserDto? GetUserById(string id);
-        UserDto RegisterUser(RegisterUserDto model);
+        //UserDto RegisterUser(RegisterUserDto model);
 
         void UpdateUser(int currentUserId, RegisterUserDto model);
         void DeleteUser(int currentUserId);

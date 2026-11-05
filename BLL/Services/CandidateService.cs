@@ -3,6 +3,7 @@ using BLL.IServices;
 using DAL.Entities;
 using DAL.IRepository;
 using DTO.Candidates;
+using BLL.Exceptions;
 using System;
 using System.Collections.Generic;
 
@@ -33,11 +34,13 @@ namespace BLL.Services
             return _mapper.Map<IEnumerable<CandidateListItemDto>>(candidates);
         }
 
-        public CandidateDto? GetCandidateById(string id)
+        public CandidateDto GetCandidateById(string id)
         {
             var candidate = _candidateRepository.GetByUserIdentityNumber(id);
-            if (candidate == null) return null;
-
+            if (candidate == null)
+            {
+                throw new NotFoundException($"Candidate with identity number {id} was not found");
+            }
             return _mapper.Map<CandidateDto>(candidate);
         }
 
@@ -47,14 +50,14 @@ namespace BLL.Services
             var user = _userRepository.GetByIdNumber(model.Id);
             if (user == null)
             {
-                throw new ArgumentException("המשתמש עם מספר תעודת הזהות הזה אינו קיים במערכת, ולכן לא ניתן להגדירו כמועמד.");
+                throw new BusinessRuleException("המשתמש עם מספר תעודת הזהות הזה אינו קיים במערכת, ולכן לא ניתן להגדירו כמועמד.");
             }
 
             // בדיקה חדשה: האם כבר קיים מועמד רשום במערכת עבור משתמש זה
             var existingCandidate = _candidateRepository.GetByUserId(user.UserId);
             if (existingCandidate != null)
             {
-                throw new ArgumentException("כבר קיים מועמד רשום במערכת עבור תעודת זהות זו.");
+                throw new ConflictException("כבר קיים מועמד רשום במערכת עבור תעודת זהות זו.");
             }
 
             var candidate = _mapper.Map<Candidate>(model);
@@ -82,7 +85,7 @@ namespace BLL.Services
             var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                throw new KeyNotFoundException("המועמד לא נמצא.");
+                throw new NotFoundException("המועמד לא נמצא.");
             }
 
             _mapper.Map(model, candidate);
@@ -104,7 +107,7 @@ namespace BLL.Services
             var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                throw new KeyNotFoundException("המועמד לא נמצא.");
+                throw new NotFoundException("המועמד לא נמצא.");
             }
 
             _candidateRepository.Delete(candidate.CandidateId);

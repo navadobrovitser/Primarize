@@ -37,22 +37,22 @@ namespace API.Controllers
             return Ok(user);
         }
 
-        [HttpPost]
-        [AllowAnonymous]//נראלי אפשר למחוק לבדוק בוודאות
-        public ActionResult RegisterUser([FromBody] RegisterUserDto model)
-        {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+        //[HttpPost]
+        //[AllowAnonymous]//נראלי אפשר למחוק לבדוק בוודאות
+        //public ActionResult RegisterUser([FromBody] RegisterUserDto model)
+        //{
+        //    if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            try
-            {
-                var result = _userService.RegisterUser(model);
-                return Ok(new { message = "המשתמש נוצר בהצלחה!", data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-        }
+        //    try
+        //    {
+        //        var result = _userService.RegisterUser(model);
+        //        return Ok(new { message = "המשתמש נוצר בהצלחה!", data = result });
+        //    }
+        //    catch (ArgumentException ex)
+        //    {
+        //        return BadRequest(new { message = ex.Message });
+        //    }
+        //}
 
         // עדכון המשתמש המחובר - מזהה המשתמש נלקח אך ורק מהטוקן
         [HttpPut]

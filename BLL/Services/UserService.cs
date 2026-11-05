@@ -42,19 +42,19 @@ namespace BLL.Services
             return _mapper.Map<UserDto>(user);
         }
         //יתכן ואפשר למחוק- לבדוק את העניין
-        public UserDto RegisterUser(RegisterUserDto model)
-        {
-            var existingUser = _userRepository.GetByIdNumber(model.Id);
-            if (existingUser != null)
-            {
-                throw new ArgumentException("משתמש עם מספר תעודת זהות זה כבר קיים במערכת.");
-            }
+        //public UserDto RegisterUser(RegisterUserDto model)
+        //{
+        //    var existingUser = _userRepository.GetByIdNumber(model.Id);
+        //    if (existingUser != null)
+        //    {
+        //        throw new ArgumentException("משתמש עם מספר תעודת זהות זה כבר קיים במערכת.");
+        //    }
 
-            var user = _mapper.Map<User>(model);
-            _userRepository.Add(user);
+        //    var user = _mapper.Map<User>(model);
+        //    _userRepository.Add(user);
 
-            return _mapper.Map<UserDto>(user);
-        }
+        //    return _mapper.Map<UserDto>(user);
+        //}
 
         // עדכון משתמש לפי מזהה המשתמש המחובר מהטוקן
         public void UpdateUser(int currentUserId, RegisterUserDto model)

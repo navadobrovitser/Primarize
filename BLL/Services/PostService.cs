@@ -6,6 +6,7 @@ using DTO.Posts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using BLL.Exceptions; // הוספת ה-using לחריגות שלנו
 
 namespace BLL.Services
 {
@@ -34,20 +35,24 @@ namespace BLL.Services
             return _mapper.Map<IEnumerable<PostDto>>(posts);
         }
 
-        public PostDto? GetPostById(int id)
+        // 1. שליפת פוסט לפי מזהה - זריקת NotFoundException במקום null
+        public PostDto GetPostById(int id)
         {
             var post = _postRepository.GetById(id);
-            if (post == null) return null;
+            if (post == null)
+            {
+                throw new NotFoundException($"Post with id {id} was not found");
+            }
             return _mapper.Map<PostDto>(post);
         }
 
-        // 1. תיקון יצירת פוסט עם מזהה המועמד מהטוקן
+        // 2. יצירת פוסט - זריקת NotFoundException במידה והמועמד לא קיים במערכת
         public PostDto CreatePost(CreatePostDto model, int currentUserId)
         {
             var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                throw new KeyNotFoundException("המועמד המבוקש אינו קיים במערכת.");
+                throw new NotFoundException("המועמד המבוקש אינו קיים במערכת.");
             }
 
             var post = _mapper.Map<Post>(model);
@@ -63,19 +68,19 @@ namespace BLL.Services
             return _mapper.Map<PostDto>(post);
         }
 
-        // 2. תיקון עדכון פוסט עם בדיקת GetOwned
+        // 3. עדכון פוסט - זריקת NotFoundException
         public void UpdatePost(int id, UpdatePostDto model, int currentUserId)
         {
             var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                throw new KeyNotFoundException("המועמד לא נמצא.");
+                throw new NotFoundException("המועמד לא נמצא.");
             }
 
             var post = _postRepository.GetOwned(id, candidate.CandidateId);
             if (post == null)
             {
-                throw new KeyNotFoundException("הפוסט לא נמצא או שאינו שייך למועמד.");
+                throw new NotFoundException("הפוסט לא נמצא או שאינו שייך למועמד.");
             }
 
             _mapper.Map(model, post);
@@ -88,26 +93,25 @@ namespace BLL.Services
             _postRepository.Update(post);
         }
 
-        // 3. תיקון מחיקת פוסט עם בדיקת GetOwned
+        // 4. מחיקת פוסט - זריקת NotFoundException
         public void DeletePost(int id, int currentUserId)
         {
             var candidate = _candidateRepository.GetByUserId(currentUserId);
             if (candidate == null)
             {
-                // משתמש רגיל שאינו מועמד - לא מוצא את הפוסט
-                throw new KeyNotFoundException("הפוסט לא נמצא.");
+                throw new NotFoundException("הפוסט לא נמצא.");
             }
 
             var post = _postRepository.GetOwned(id, candidate.CandidateId);
             if (post == null)
             {
-                // מועמד שמנסה למחוק פוסט שלא שייך לו - לא מוצא את הפוסט
-                throw new KeyNotFoundException("הפוסט לא נמצא.");
+                throw new NotFoundException("הפוסט לא נמצא.");
             }
 
             _postRepository.Delete(id);
         }
-        // 4. הוספת המתודה לקבלת פוסטים לפי מזהה המועמד
+
+        // 5. קבלת פוסטים לפי מזהה המועמד
         public IEnumerable<PostDto> GetPostsByCandidateId(int currentUserId)
         {
             var candidate = _candidateRepository.GetByUserId(currentUserId);
