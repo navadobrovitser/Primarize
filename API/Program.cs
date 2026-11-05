@@ -23,8 +23,6 @@ var apiKey = builder.Configuration["Gemini:ApiKey"]
 
 IChatClient innerClient = new GenerativeAIChatClient(apiKey, "gemini-2.5-flash-lite");
 
-    
-    
 builder.Services.AddChatClient(innerClient)
     .UseFunctionInvocation();   // מריץ את הכלים שהמודל מבקש
 
@@ -37,7 +35,12 @@ var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connStr));
+// הוספת זיכרון מטמון (Memory Cache)
+builder.Services.AddMemoryCache();
 
+// רישום השירותים שלנו
+builder.Services.AddScoped<EmailService>();
+builder.Services.AddScoped<AuthService>();
 // 2. הוספת קונטרולרים ו-Swagger
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
