@@ -60,5 +60,9 @@ namespace DAL.Repository
         {
             return _context.Users.FirstOrDefault(u => u.Email == email && u.Password == password);
         }
+        public User? GetOwned(int userId)
+        {
+            return _context.Users.FirstOrDefault(u => u.UserId == userId);
+        }
     }
 }

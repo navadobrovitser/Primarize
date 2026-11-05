@@ -12,5 +12,7 @@ namespace DAL.IRepository
         void Update(Comment comment);
         List<Comment> GetByPostId(int postId);
         List<Comment> GetByUserId(int userId);
+        Comment? GetOwned(int commentId, int userId);
+        List<Comment> GetByUser(int userId);
     }
 }

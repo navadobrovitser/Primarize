@@ -1,14 +1,17 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
-using System.Collections.Generic;
-using DTO.Likes;
 using DAL.Entities;
+using DTO.Likes;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Collections.Generic;
 
 namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class PostLikesController : ControllerBase
     {
         private readonly IPostLikeService _postLikeService;
@@ -20,6 +23,7 @@ namespace API.Controllers
 
         // GET: api/PostLikes
         [HttpGet]
+        [AllowAnonymous]
         public ActionResult<IEnumerable<PostLikeDto>> GetAllLikes()
         {
             var likes = _postLikeService.GetAllLikes();
@@ -28,6 +32,7 @@ namespace API.Controllers
 
         // GET: api/PostLikes/post/5
         [HttpGet("post/{postId}")]
+        [AllowAnonymous]
         public ActionResult<IEnumerable<PostLikeDto>> GetLikesByPostId(int postId)
         {
             var likes = _postLikeService.GetLikesByPostId(postId);
@@ -36,22 +41,25 @@ namespace API.Controllers
 
         // POST: api/PostLikes
         [HttpPost]
-        public IActionResult AddLike([FromQuery] int userId, [FromBody] SetPostLikeDto dto)
+        public IActionResult AddLike([FromBody] SetPostLikeDto dto)
         {
             if (!Enum.TryParse<LikeType>(dto.Type, true, out var likeType))
             {
-                return BadRequest("סוג לייק שגוי.");
+                return BadRequest(new { message = "סוג לייק שגוי." });
             }
 
-            _postLikeService.AddLike(userId, dto.PostId, likeType);
+            int currentUserId = User.GetUserId();
+            _postLikeService.AddLike(currentUserId, dto.PostId, likeType);
             return Ok(new { message = "הלייק נוסף בהצלחה" });
         }
 
         // DELETE: api/PostLikes
         [HttpDelete]
-        public IActionResult RemoveLike([FromQuery] int userId, [FromQuery] int postId)
+        public IActionResult RemoveLike([FromQuery] int postId)
         {
-            _postLikeService.RemoveLike(userId, postId);
+            int currentUserId = User.GetUserId();
+            _postLikeService.RemoveLike(currentUserId, postId);
+
             return Ok(new { message = "הלייק הוסר בהצלחה" });
         }
     }

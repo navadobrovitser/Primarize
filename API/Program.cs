@@ -1,24 +1,54 @@
-using DAL.IRepository;
 using BLL.IServices;
 using BLL.Mapping;
-using DAL.Repository;
 using BLL.Services;
 using DAL;
+using DAL.Entities;
+using DAL.IRepository;
+using DAL.Repository;
+using GenerativeAI.Microsoft;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.AI;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.IdentityModel.Tokens;
+using OpenAI;
+using System.ClientModel;
+using System.Text;
+using API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
+var apiKey = builder.Configuration["Gemini:ApiKey"]
+      ?? throw new InvalidOperationException("Gemini:ApiKey is missing");
 
-// הוספת שירותים למיכל ה-DI
-builder.Services.AddControllers();
+IChatClient innerClient = new GenerativeAIChatClient(apiKey, "gemini-2.5-flash-lite");
 
-// הגדרת תמיכה ב-Swagger (Swashbuckle)
+    
+    
+builder.Services.AddChatClient(innerClient)
+    .UseFunctionInvocation();   // מריץ את הכלים שהמודל מבקש
+
+builder.Services.AddScoped<IAgentService, AgentService>();
+Console.WriteLine($"Key starts with: {apiKey[..4]}, length: {apiKey.Length}");
+
+// 1. קריאת מחרוזת החיבור ורישום ה-DbContext (פעם אחת בלבד)
+var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(connStr));
+
+// 2. הוספת קונטרולרים ו-Swagger
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<GlobalExceptionFilter>();
+});
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// רישום הריפוזיטוריז
-
-// רישום ה-Repositories
+// 3. רישום ה-Repositories וה-Services (ללא כפילויות)
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -35,26 +65,59 @@ builder.Services.AddScoped<IVotingService, VotingService>();
 builder.Services.AddScoped<IAnonymousVoteService, AnonymousVoteService>();
 builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 
-// הגדרת תיקיית המדיה והזרקת השירות בצורה נקייה
+builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
+
+// 4. הגדרת אימות (Authentication) והרשאות (Authorization)
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey))
+{
+    throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
+}
+
+builder.Services
+    .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+
+            ValidateAudience = true,
+            ValidAudience = builder.Configuration["Jwt:Audience"],
+
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.Zero,
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
+        };
+    });
+
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder()
+        .RequireAuthenticatedUser()
+        .Build();
+});
+
+// 5. הגדרת שירות תמונות ומדיה
 var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
 Directory.CreateDirectory(imagesFolder);
 builder.Services.AddScoped<IImageService>(provider => new ImageService(imagesFolder));
 
-// רישום ה-AutoMapper
+// 6. רישום AutoMapper
 builder.Services.AddAutoMapper(cfg => {
     cfg.AddProfile<BLL.Mapping.MappingProfile>();
 });
 
-// רישום ה-DbContext למסד הנתונים
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
+// 7. הגדרות גודל בקשה ל-Kestrel ו-IIS
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 104857600; // 100MB (או כל גודל אחר שתרצי בבייטים)
+    options.Limits.MaxRequestBodySize = 104857600; // 100MB
 });
 
-// אם את משתמשת ב-IIS:
 builder.Services.Configure<IISServerOptions>(options =>
 {
     options.MaxRequestBodySize = 104857600; // 100MB
@@ -62,7 +125,7 @@ builder.Services.Configure<IISServerOptions>(options =>
 
 var app = builder.Build();
 
-// הגדרת תיקיית הקבצים הסטטיים לגישה לדפדפן
+// 8. הגדרת קבצים סטטיים
 var imagesFolderFullPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -70,18 +133,22 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Images"
 });
 
-// Configure the HTTP request pipeline.
+// 9. צינור העיבוד (Pipeline)
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI(c =>
     {
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Primerize API V1");
-        c.RoutePrefix = string.Empty; // מגדיר את ה-Swagger שיופיע ישירות בכתובת הבסיס בהרצת השרת
+        c.RoutePrefix = string.Empty;
     });
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
+
 app.Run();

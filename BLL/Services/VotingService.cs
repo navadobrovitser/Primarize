@@ -4,6 +4,7 @@ using DAL.IRepository;
 using DTO.Voting;
 using System;
 using System.Collections.Generic;
+using BLL.Exceptions; // הוספת ה-using לחריגות שלנו
 
 namespace BLL.Services
 {
@@ -18,11 +19,12 @@ namespace BLL.Services
             _candidateRepository = candidateRepository;
         }
 
+        // ביצוע הצבעה - זריקת ConflictException במידה והמשתמש כבר הצביע
         public bool CastVote(int userId, CastVoteDto model)
         {
             if (_userVoteRepository.HasVoted(userId))
             {
-                throw new InvalidOperationException("המשתמש כבר ביצע הצבעה בעבר.");
+                throw new ConflictException("המשתמש כבר ביצע הצבעה בעבר.");
             }
 
             var newVote = new UserVote
@@ -35,10 +37,16 @@ namespace BLL.Services
             return true;
         }
 
+        // בדיקת סטטוס הצבעה
         public VoteStatusDto GetVoteStatus(int userId)
         {
             bool hasVoted = _userVoteRepository.HasVoted(userId);
             var vote = _userVoteRepository.GetByUserId(userId);
+
+            if (hasVoted && vote == null)
+            {
+                throw new NotFoundException($"פרטי ההצבעה עבור משתמש {userId} לא נמצאו.");
+            }
 
             return new VoteStatusDto
             {
@@ -47,6 +55,7 @@ namespace BLL.Services
             };
         }
 
+        // שליפת תוצאות הבחירות
         public ElectionResultsDto GetElectionResults()
         {
             int totalVotes = _userVoteRepository.CountVotes();

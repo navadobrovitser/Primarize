@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
+using DTO.Security;
 using DTO.Users;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System;
 
 namespace API.Controllers
 {
@@ -17,62 +19,63 @@ namespace API.Controllers
             _userService = userService;
         }
 
+        // GET: api/Users
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
-            return Ok(_userService.GetAllUsers());
+            var users = _userService.GetAllUsers();
+            return Ok(users);
         }
 
+        // GET: api/Users/id
         [HttpGet("{id}")]
-        public ActionResult<UserDto> GetUserById(string id) // שינוי מ-int ל-string
+        [Authorize(Roles = "Admin")]
+        public ActionResult<UserDto> GetUserById(string id)
         {
+            // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
             var user = _userService.GetUserById(id);
-            if (user == null) return NotFound(new { message = "המשתמש לא נמצא" });
             return Ok(user);
         }
 
-        [HttpPost]
-        public ActionResult RegisterUser([FromBody] RegisterUserDto model)
+        // PUT: api/Users
+        [HttpPut]
+        [Authorize]
+        public ActionResult UpdateUser([FromBody] RegisterUserDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            try
-            {
-                var result = _userService.RegisterUser(model);
-                return Ok(new { message = "המשתמש נוצר בהצלחה!", data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _userService.UpdateUser(currentUserId, model);
+            return Ok(new { message = "המשתמש עודכן בהצלחה!" });
         }
 
-        [HttpPut("{id}")]
-        public ActionResult UpdateUser(string id, [FromBody] RegisterUserDto model) // שינוי ל-string
+        // DELETE: api/Users
+        [HttpDelete]
+        [Authorize]
+        public ActionResult DeleteUser()
         {
-            try
-            {
-                _userService.UpdateUser(id, model);
-                return Ok(new { message = "המשתמש עודכן בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _userService.DeleteUser(currentUserId);
+            return Ok(new { message = "המשתמש נמחק בהצלחה!" });
         }
 
-        [HttpDelete("{id}")]
-        public ActionResult DeleteUser(string id) // שינוי ל-string
+        // POST: api/Users/register
+        [HttpPost("register")]
+        [AllowAnonymous]
+        public IActionResult Register([FromBody] RegisterUserDto dto)
         {
-            try
-            {
-                _userService.DeleteUser(id);
-                return Ok(new { message = "המשתמש נמחק בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            // במידה והמייל קיים, ה-Service זורק ConflictException וה-Filter מחזיר 409
+            _userService.Register(dto);
+            return Ok(new { message = "הרישום בוצע בהצלחה!" });
+        }
+
+        // POST: api/Users/login
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public ActionResult<AuthResponseDto> Login([FromBody] LoginDto dto)
+        {
+            // במידה והפרטים שגויים, ה-Service זורק BusinessRuleException וה-Filter מחזיר 400
+            var result = _userService.Login(dto);
+            return Ok(result);
         }
     }
 }

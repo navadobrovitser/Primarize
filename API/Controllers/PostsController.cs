@@ -1,8 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
 using DTO.Posts;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System;
 
 namespace API.Controllers
 {
@@ -17,66 +18,61 @@ namespace API.Controllers
             _postService = postService;
         }
 
+        // GET: api/Posts
         [HttpGet]
         public ActionResult<IEnumerable<PostDto>> GetAllPosts()
         {
-            return Ok(_postService.GetAllPosts());
+            var posts = _postService.GetAllPosts();
+            return Ok(posts);
         }
 
-        [HttpGet("{id}")]
+        // GET: api/Posts/5
+        [HttpGet("{id:int}")]
         public ActionResult<PostDto> GetPostById(int id)
         {
+            // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
             var post = _postService.GetPostById(id);
-            if (post == null) return NotFound(new { message = "הפוסט לא נמצא" });
             return Ok(post);
         }
 
+        // POST: api/Posts
         [HttpPost]
+        [Authorize(Roles = "Admin,Candidate")]
         public ActionResult CreatePost([FromForm] CreatePostDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
-
-            try
-            {
-                var result = _postService.CreatePost(model);
-                return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            var result = _postService.CreatePost(model, currentUserId);
+            return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
         }
 
-        [HttpDelete("{id}")]
-        public ActionResult DeletePost(int id)
-        {
-            try
-            {
-                _postService.DeletePost(id);
-                return Ok(new { message = "הפוסט נמחק בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
-        }
-
-        [HttpPut("{id}")]
+        // PUT: api/Posts/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Admin,Candidate")]
         public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
         {
-            try
-            {
-                _postService.UpdatePost(id, model);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            int currentUserId = User.GetUserId();
+            _postService.UpdatePost(id, model, currentUserId);
+            return NoContent();
+        }
+
+        // DELETE: api/Posts/5
+        [HttpDelete("{id:int}")]
+        [Authorize]
+        public ActionResult DeletePost(int id)
+        {
+            int currentUserId = User.GetUserId();
+            _postService.DeletePost(id, currentUserId);
+            return Ok(new { message = "הפוסט נמחק בהצלחה!" });
+        }
+
+        // GET: api/Posts/my-posts
+        [HttpGet("my-posts")]
+        [Authorize]
+        public ActionResult<IEnumerable<PostDto>> GetMyPosts()
+        {
+            int currentUserId = User.GetUserId();
+            var posts = _postService.GetPostsByCandidateId(currentUserId);
+            return Ok(posts);
         }
     }
 }

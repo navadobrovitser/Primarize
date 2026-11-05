@@ -1,7 +1,8 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
 using BLL.IServices;
 using DTO.Voting;
-using System;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
@@ -16,36 +17,29 @@ namespace API.Controllers
             _votingService = votingService;
         }
 
-        // 1. Post: שליחת פתק הצבעה
+        // 1. שליחת פתק הצבעה - מזהה המשתמש נלקח מהטוקן
         [HttpPost("cast")]
-        public IActionResult CastVote([FromQuery] int userId, [FromBody] CastVoteDto model)
+        [Authorize]
+        public IActionResult CastVote([FromBody] CastVoteDto model)
         {
-            if (!ModelState.IsValid)
-            {
-                return BadRequest(ModelState);
-            }
-
-            try
-            {
-                _votingService.CastVote(userId, model);
-                return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+            _votingService.CastVote(currentUserId, model);
+            return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
         }
 
-        // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
-        [HttpGet("status/{userId}")]
-        public ActionResult<VoteStatusDto> GetVoteStatus(int userId)
+        // 2. בדיקת סטטוס הצבעה של המשתמש המחובר
+        [HttpGet("status")]
+        [Authorize]
+        public ActionResult<VoteStatusDto> GetMyVoteStatus()
         {
-            var status = _votingService.GetVoteStatus(userId);
+            int currentUserId = User.GetUserId();
+            var status = _votingService.GetVoteStatus(currentUserId);
             return Ok(status);
         }
 
-        // 3. Get: הצגת תוצאות הבחירות הכלליות
+        // 3. הצגת תוצאות הבחירות הכלליות - פתוח לכולם
         [HttpGet("results")]
+        [AllowAnonymous]
         public ActionResult<ElectionResultsDto> GetElectionResults()
         {
             var results = _votingService.GetElectionResults();

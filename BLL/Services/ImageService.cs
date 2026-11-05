@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using BLL.Exceptions;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.IO;
 using System.Linq;
@@ -27,11 +28,9 @@ namespace BLL.Services
             var ext = Path.GetExtension(file.FileName).ToLower();
             var allowed = new[] { ".jpg", ".jpeg", ".png", ".webp" };
             if (!allowed.Contains(ext))
-                throw new ArgumentException("מותר להעלות רק קבצי תמונה מסוג jpg, png או webp");
-
+                throw new BusinessRuleException("מותר להעלות רק קבצי תמונה מסוג jpg, png או webp");
             if (file.Length > 5 * 1024 * 1024)
-                throw new ArgumentException("קובץ התמונה גדול מדי (מקסימום 5MB)");
-
+                throw new BusinessRuleException("קובץ התמונה גדול מדי (מקסימום 5MB)");
             var fileName = Guid.NewGuid() + ext; // יצירת שם ייחודי למניעת התנגשויות
 
             using (var stream = File.Create(Path.Combine(_folder, fileName)))
@@ -48,11 +47,9 @@ namespace BLL.Services
             var ext = Path.GetExtension(file.FileName).ToLower();
             var allowed = new[] { ".mp4", ".webm", ".mov" };
             if (!allowed.Contains(ext))
-                throw new ArgumentException("מותר להעלות סרטונים בפורמט MP4, WEBM או MOV בלבד");
-
+                throw new BusinessRuleException("מותר להעלות סרטונים בפורמט MP4, WEBM או MOV בלבד");
             if (file.Length > 50 * 1024 * 1024)
-                throw new ArgumentException("קובץ הסרטון גדול מדי (מקסימום 50MB)");
-
+                throw new BusinessRuleException("קובץ הסרטון גדול מדי (מקסימום 50MB)");
             var fileName = Guid.NewGuid() + ext;
 
             using (var stream = File.Create(Path.Combine(_folder, fileName)))

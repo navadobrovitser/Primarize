@@ -15,7 +15,7 @@ namespace DAL
         public DbSet<Candidate> Candidates { get; set; }
         public DbSet<AnonymousVote> AnonymousVotes { get; set; }
         public DbSet<UserVote> UserVotes { get; set; }
-        public DbSet<Post> Posts { get; set; } // מתוקן ל-Post (או Posts לפי איך שהגדרת את המחלקה עצמה)
+        public DbSet<Post> Posts { get; set; }
         public DbSet<PostLike> PostLikes { get; set; }
         public DbSet<Comment> Comments { get; set; }
 
@@ -23,9 +23,15 @@ namespace DAL
         {
             base.OnModelCreating(modelBuilder);
 
+            // אינדקס ייחודי על תעודת זהות
             modelBuilder.Entity<User>()
-    .HasIndex(u => u.Id)
-    .IsUnique();
+                .HasIndex(u => u.Id)
+                .IsUnique();
+
+            // אינדקס ייחודי על אימייל (לפי סעיף 5 במדריך המורה)
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
 
             // מניעת מחיקה בשרשרת עבור תגובות משתמש
             modelBuilder.Entity<Comment>()
