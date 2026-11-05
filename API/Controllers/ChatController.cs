@@ -1,16 +1,13 @@
-﻿using Azure;
-using BLL.IServices;
+﻿using BLL.IServices;
 using DTO;
+using GenerativeAI.Exceptions;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Text.Json;
 
-
-using Microsoft.AspNetCore.Authorization;
-
-
 namespace API.Controllers
 {
-    [AllowAnonymous]
+    [AllowAnonymous]//צריך להוריד את זה זה בשביל הבדיקות
     [Route("api/[controller]")]
     [ApiController]
     public class ChatController : ControllerBase
@@ -22,15 +19,28 @@ namespace API.Controllers
             _agentService = agentService;
         }
 
+        private static bool IsOverloaded(ApiException ex) =>
+            ex.Message.Contains("503") || ex.Message.Contains("UNAVAILABLE");
+
         // נקודת קצה רגילה
         [HttpPost]
         public async Task<IActionResult> Ask(ChatRequestDto dto, CancellationToken ct)
         {
-            var answer = await _agentService.AskAsync(dto.Messages, ct);
-            return Ok(new { text = answer });
+            try
+            {
+                var answer = await _agentService.AskAsync(dto.Messages, ct);
+                return Ok(new { text = answer });
+            }
+            catch (ApiException ex) when (IsOverloaded(ex))
+            {
+                return StatusCode(StatusCodes.Status503ServiceUnavailable, new
+                {
+                    title = "השירות עמוס כרגע. נסה שוב בעוד רגע."
+                });
+            }
         }
 
-        // נקודת קצה בהזרמה (Streaming) באמצעות Server-Sent Events
+        // נקודת קצה בהזרמה (Streaming)
         [HttpPost("stream")]
         public async Task Stream(ChatRequestDto dto, CancellationToken ct)
         {
@@ -48,11 +58,20 @@ namespace API.Controllers
 
                 await Response.WriteAsync("data: [DONE]\n\n", ct);
             }
-            catch (Exception ex) when (Response.HasStarted && ex is not OperationCanceledException)
+            catch (ApiException ex) when (IsOverloaded(ex))
             {
-                var json = JsonSerializer.Serialize(new { title = "The answer was interrupted. Please try again." });
-                await Response.WriteAsync($"event: error\ndata: {json}\n\n", ct);
+                await WriteSseError("השירות עמוס כרגע. נסה שוב בעוד רגע.", ct);
             }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                await WriteSseError("התשובה נקטעה. נסה שוב.", ct);
+            }
+        }
+
+        private async Task WriteSseError(string message, CancellationToken ct)
+        {
+            var json = JsonSerializer.Serialize(new { title = message });
+            await Response.WriteAsync($"event: error\ndata: {json}\n\n", ct);
         }
     }
 }
