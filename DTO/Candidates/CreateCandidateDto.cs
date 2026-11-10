@@ -6,9 +6,7 @@ namespace DTO.Candidates
 {
     public class CreateCandidateDto
     {
-        [Required(ErrorMessage = "תעודת זהות היא שדה חובה")]
-        [RegularExpression(@"^\d{9}$", ErrorMessage = "תעודת זהות חייבת להכיל בדיוק 9 ספרות")]
-        public string Id { get; set; }
+     
 
         [Required(ErrorMessage = "סלוגן הוא שדה חובה")]
         [StringLength(100, ErrorMessage = "סלוגן לא יכול לעבור 100 תווים")]

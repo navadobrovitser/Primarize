@@ -37,48 +37,95 @@ namespace BLL.Services
         public CandidateDto GetCandidateById(string id)
         {
             var candidate = _candidateRepository.GetByUserIdentityNumber(id);
+
             if (candidate == null)
             {
-                throw new NotFoundException($"Candidate with identity number {id} was not found");
+                throw new NotFoundException(
+                    $"Candidate with identity number {id} was not found"
+                );
             }
+
             return _mapper.Map<CandidateDto>(candidate);
         }
-
-        public CandidateDto CreateCandidate(CreateCandidateDto model)
+        public CandidateEligibilityDto CheckEligibility(int userId)
         {
-            // חיפוש המשתמש לפי תעודת הזהות (Id) שנשלחה ב-DTO
-            var user = _userRepository.GetByIdNumber(model.Id);
-            if (user == null)
-            {
-                throw new BusinessRuleException("המשתמש עם מספר תעודת הזהות הזה אינו קיים במערכת, ולכן לא ניתן להגדירו כמועמד.");
-            }
+            var user = _userRepository.GetById(userId);
 
-            // בדיקה חדשה: האם כבר קיים מועמד רשום במערכת עבור משתמש זה
-            var existingCandidate = _candidateRepository.GetByUserId(user.UserId);
-            if (existingCandidate != null)
+            if (user == null)
+                throw new NotFoundException("המשתמש לא נמצא");
+
+            bool alreadyCandidate =
+                _candidateRepository.GetByUserId(userId) != null;
+
+            bool hasJoinDate = user.PartyJoinDate != default;
+
+            DateTime? eligibleFrom = hasJoinDate
+                ? user.PartyJoinDate.Date.AddYears(4)
+                : null;
+            // זמני לצורך בדיקות בלבד
+            bool eligible = !alreadyCandidate;
+            //bool eligible =
+            //    eligibleFrom.HasValue &&
+            //    DateTime.UtcNow.Date >= eligibleFrom.Value &&
+            //    !alreadyCandidate;
+
+            return new CandidateEligibilityDto
             {
-                throw new ConflictException("כבר קיים מועמד רשום במערכת עבור תעודת זהות זו.");
-            }
+                Eligible = eligible,
+                PartyJoinDate = hasJoinDate
+                    ? user.PartyJoinDate
+                    : null,
+                EligibleFrom = eligibleFrom,
+                AlreadyCandidate = alreadyCandidate
+            };
+        }
+
+        public CandidateDto CreateCandidate( int currentUserId,
+      CreateCandidateDto model)
+     
+        {
+            var user = _userRepository.GetById(currentUserId);
+
+            if (user == null)
+                throw new NotFoundException("המשתמש לא נמצא");
+
+            // בדיקת ותק של ארבע שנים
+            //if (user.PartyJoinDate == default ||
+            //    user.PartyJoinDate.Date.AddYears(4) > DateTime.UtcNow.Date)
+            //{
+            //    throw new BusinessRuleException(
+            //        "נדרשות לפחות ארבע שנות ותק להגשת מועמדות"
+            //    );
+            //}
+
+            // בדיקה שהמשתמש עדיין לא מועמד
+            var existingCandidate =
+                _candidateRepository.GetByUserId(currentUserId);
+
+            if (existingCandidate != null)
+                throw new ConflictException("כבר הגשת מועמדות");
 
             var candidate = _mapper.Map<Candidate>(model);
 
-            // שיוך ה-UserId המספרי שנמצא אל המועמד
+            // שיוך המועמד למשתמש המחובר
             candidate.UserId = user.UserId;
 
             if (model.ImageFile != null && model.ImageFile.Length > 0)
             {
-                candidate.ProfileImageUrl = _imageService.Save(model.ImageFile);
+                candidate.ProfileImageUrl =
+                    _imageService.Save(model.ImageFile);
             }
 
             if (model.VideoFile != null && model.VideoFile.Length > 0)
             {
-                candidate.ExplanationVideoUrl = _imageService.SaveVideo(model.VideoFile);
+                candidate.ExplanationVideoUrl =
+                    _imageService.SaveVideo(model.VideoFile);
             }
 
             var createdCandidate = _candidateRepository.Add(candidate);
+
             return _mapper.Map<CandidateDto>(createdCandidate);
         }
-
         public void UpdateCandidate(int currentUserId, UpdateCandidateDto model)
         {
             // חיפוש המועמד ששייך למשתמש המחובר מהטוקן
