@@ -65,5 +65,36 @@ namespace API.Controllers
             _candidateService.DeleteCandidate(currentUserId);
             return Ok(new { message = "המועמד נמחק בהצלחה!" });
         }
+
+        [HttpGet("eligibility")]
+        [Authorize]
+        public IActionResult CheckEligibility()
+        {
+            int userId = User.GetUserId();
+
+            var user = _userRepository.GetById(userId);
+
+            if (user == null)
+                return NotFound();
+
+            bool alreadyCandidate =
+                _candidateRepository.GetByUserId(userId) != null;
+
+            DateTime eligibleFrom =
+                user.PartyJoinDate.Date.AddYears(4);
+
+            bool eligible =
+                user.PartyJoinDate != default &&
+                DateTime.UtcNow.Date >= eligibleFrom &&
+                !alreadyCandidate;
+
+            return Ok(new
+            {
+                eligible,
+                partyJoinDate = user.PartyJoinDate,
+                eligibleFrom,
+                alreadyCandidate
+            });
+        }
     }
 }
