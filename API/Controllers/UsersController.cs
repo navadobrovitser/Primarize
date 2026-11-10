@@ -21,7 +21,9 @@ namespace API.Controllers
 
         // GET: api/Users
         [HttpGet]
-        [Authorize(Roles = "Admin")]
+        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
+
+        //[Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
             var users = _userService.GetAllUsers();

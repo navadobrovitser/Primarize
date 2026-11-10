@@ -20,6 +20,7 @@ namespace API.Controllers
 
         // GET: api/Posts
         [HttpGet]
+        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
         public ActionResult<IEnumerable<PostDto>> GetAllPosts()
         {
             var posts = _postService.GetAllPosts();
@@ -28,6 +29,7 @@ namespace API.Controllers
 
         // GET: api/Posts/5
         [HttpGet("{id:int}")]
+        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
         public ActionResult<PostDto> GetPostById(int id)
         {
             // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
@@ -37,7 +39,9 @@ namespace API.Controllers
 
         // POST: api/Posts
         [HttpPost]
-        [Authorize(Roles = "Admin,Candidate")]
+        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
+
+       // [Authorize(Roles = "Admin,Candidate")]
         public ActionResult CreatePost([FromForm] CreatePostDto model)
         {
             int currentUserId = User.GetUserId();

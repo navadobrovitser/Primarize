@@ -20,6 +20,7 @@ namespace API.Controllers
 
         // GET: api/Candidates
         [HttpGet]
+        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
         public ActionResult<IEnumerable<CandidateListItemDto>> GetAllCandidates()
         {
             var candidates = _candidateService.GetAllCandidates();
