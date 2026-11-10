@@ -49,12 +49,22 @@ namespace DAL.Repository
         {
             return _context.Users.FirstOrDefault(u => u.Email == email);
         }
-       
 
         public User? GetByIdNumber(string idNumber)
         {
-            return _context.Users.FirstOrDefault(u => u.Id == idNumber);
+            var allUsers = _context.Users.ToList();
+
+            var matchingUsers = allUsers
+                .Where(u => u.Id != null &&
+                            u.Id.Trim() == idNumber.Trim())
+                .ToList();
+
+            return matchingUsers.FirstOrDefault();
         }
+        //public User? GetByIdNumber(string idNumber)
+        //{
+        //    return _context.Users.FirstOrDefault(u => u.Id == idNumber);
+        //}
 
         public User? GetByEmailAndPassword(string email, string password)
         {

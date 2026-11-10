@@ -1,3 +1,4 @@
+
 using BLL.IServices;
 using BLL.Mapping;
 using BLL.Services;
@@ -19,30 +20,57 @@ using System.Text;
 using API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
-var apiKey = builder.Configuration["Gemini:ApiKey"]
-      ?? throw new InvalidOperationException("Gemini:ApiKey is missing");
 
-IChatClient innerClient = new GenerativeAIChatClient(apiKey, "gemini-2.5-flash-lite");
+// =====================================================
+// 1. Gemini AI
+// =====================================================
+
+var apiKey = builder.Configuration["Gemini:ApiKey"]
+    ?? throw new InvalidOperationException(
+        "Gemini:ApiKey is missing"
+    );
+
+IChatClient innerClient = new GenerativeAIChatClient(
+    apiKey,
+    "gemini-2.5-flash-lite"
+);
 
 builder.Services.AddChatClient(innerClient)
-    .UseFunctionInvocation();   // מריץ את הכלים שהמודל מבקש
+    .UseFunctionInvocation();
 
 builder.Services.AddScoped<IAgentService, AgentService>();
-Console.WriteLine($"Key starts with: {apiKey[..4]}, length: {apiKey.Length}");
 
-// 1. קריאת מחרוזת החיבור ורישום ה-DbContext (פעם אחת בלבד)
-var connStr = builder.Configuration.GetConnectionString("DefaultConnection")
-    ?? throw new InvalidOperationException("Connection string 'DefaultConnection' is missing.");
+// =====================================================
+// 2. חיבור למסד הנתונים
+// =====================================================
+
+var connStr = builder.Configuration
+    .GetConnectionString("DefaultConnection")
+    ?? throw new InvalidOperationException(
+        "Connection string 'DefaultConnection' is missing."
+    );
 
 builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connStr));
-// הוספת זיכרון מטמון (Memory Cache)
+    options.UseSqlServer(connStr)
+);
+
+// =====================================================
+// 3. שירותי אימות דו-שלבי ושליחת מייל
+// =====================================================
+
+// זיכרון מטמון עבור קודי האימות
 builder.Services.AddMemoryCache();
 
-// רישום השירותים שלנו
+// שירות שליחת מיילים
 builder.Services.AddScoped<EmailService>();
+
+// שירות אימות דו-שלבי
 builder.Services.AddScoped<AuthService>();
-// 2. הוספת קונטרולרים ו-Swagger
+
+// =====================================================
+// 4. Controllers ו-Swagger
+// =====================================================
+
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<GlobalExceptionFilter>();
@@ -51,7 +79,10 @@ builder.Services.AddControllers(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// 3. רישום ה-Repositories וה-Services (ללא כפילויות)
+// =====================================================
+// 5. Repositories
+// =====================================================
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -59,6 +90,10 @@ builder.Services.AddScoped<ICommentRepository, CommentRepository>();
 builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
 builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
 builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
+
+// =====================================================
+// 6. Services
+// =====================================================
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
@@ -69,89 +104,186 @@ builder.Services.AddScoped<IAnonymousVoteService, AnonymousVoteService>();
 builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 
 builder.Services.AddScoped<ITokenService, TokenService>();
-builder.Services.AddScoped<IPasswordHasher<User>, PasswordHasher<User>>();
 
-// 4. הגדרת אימות (Authentication) והרשאות (Authorization)
+builder.Services.AddScoped<
+    IPasswordHasher<User>,
+    PasswordHasher<User>
+>();
+
+// =====================================================
+// 7. JWT Authentication
+// =====================================================
+
 var jwtKey = builder.Configuration["Jwt:Key"];
+
 if (string.IsNullOrWhiteSpace(jwtKey))
 {
-    throw new InvalidOperationException("Jwt:Key is missing. Set the environment variable Jwt__Key.");
+    throw new InvalidOperationException(
+        "Jwt:Key is missing. Set the environment variable Jwt__Key."
+    );
 }
 
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
-        options.TokenValidationParameters = new TokenValidationParameters
-        {
-            ValidateIssuer = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
+        options.TokenValidationParameters =
+            new TokenValidationParameters
+            {
+                ValidateIssuer = true,
 
-            ValidateAudience = true,
-            ValidAudience = builder.Configuration["Jwt:Audience"],
+                ValidIssuer =
+                    builder.Configuration["Jwt:Issuer"],
 
-            ValidateLifetime = true,
-            ClockSkew = TimeSpan.Zero,
+                ValidateAudience = true,
 
-            ValidateIssuerSigningKey = true,
-            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey))
-        };
+                ValidAudience =
+                    builder.Configuration["Jwt:Audience"],
+
+                ValidateLifetime = true,
+
+                ClockSkew = TimeSpan.Zero,
+
+                ValidateIssuerSigningKey = true,
+
+                IssuerSigningKey =
+                    new SymmetricSecurityKey(
+                        Encoding.UTF8.GetBytes(jwtKey)
+                    )
+            };
     });
+
+// =====================================================
+// 8. Authorization
+// =====================================================
 
 builder.Services.AddAuthorization(options =>
 {
-    options.FallbackPolicy = new AuthorizationPolicyBuilder()
-        .RequireAuthenticatedUser()
-        .Build();
+    options.FallbackPolicy =
+        new AuthorizationPolicyBuilder()
+            .RequireAuthenticatedUser()
+            .Build();
 });
 
-// 5. הגדרת שירות תמונות ומדיה
-var imagesFolder = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
-Directory.CreateDirectory(imagesFolder);
-builder.Services.AddScoped<IImageService>(provider => new ImageService(imagesFolder));
+// =====================================================
+// 9. CORS - חיבור React לשרת
+// =====================================================
 
-// 6. רישום AutoMapper
-builder.Services.AddAutoMapper(cfg => {
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactPolicy", policy =>
+    {
+        policy
+            .WithOrigins(
+                "http://localhost:5173",
+                "http://localhost:5174",
+                "http://localhost:5175"
+            )
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
+// =====================================================
+// 10. שירות תמונות ומדיה
+// =====================================================
+
+var imagesFolder = Path.GetFullPath(
+    Path.Combine(
+        builder.Environment.ContentRootPath,
+        builder.Configuration["ImagesFolder"] ?? "../Images"
+    )
+);
+
+Directory.CreateDirectory(imagesFolder);
+
+builder.Services.AddScoped<IImageService>(
+    provider => new ImageService(imagesFolder)
+);
+
+// =====================================================
+// 11. AutoMapper
+// =====================================================
+
+builder.Services.AddAutoMapper(cfg =>
+{
     cfg.AddProfile<BLL.Mapping.MappingProfile>();
 });
 
-// 7. הגדרות גודל בקשה ל-Kestrel ו-IIS
+// =====================================================
+// 12. הגדרות גודל בקשות
+// =====================================================
+
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 104857600; // 100MB
+    options.Limits.MaxRequestBodySize = 104857600;
 });
 
 builder.Services.Configure<IISServerOptions>(options =>
 {
-    options.MaxRequestBodySize = 104857600; // 100MB
+    options.MaxRequestBodySize = 104857600;
 });
+
+// =====================================================
+// 13. בניית האפליקציה
+// =====================================================
 
 var app = builder.Build();
 
-// 8. הגדרת קבצים סטטיים
-var imagesFolderFullPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, builder.Configuration["ImagesFolder"] ?? "../Images"));
+// =====================================================
+// 14. הגדרת קבצים סטטיים
+// =====================================================
+
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(imagesFolderFullPath),
+    FileProvider = new PhysicalFileProvider(imagesFolder),
     RequestPath = "/Images"
 });
 
-// 9. צינור העיבוד (Pipeline)
+// =====================================================
+// 15. Swagger
+// =====================================================
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
+
     app.UseSwaggerUI(c =>
     {
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Primerize API V1");
+        c.SwaggerEndpoint(
+            "/swagger/v1/swagger.json",
+            "Primerize API V1"
+        );
+
         c.RoutePrefix = string.Empty;
     });
 }
 
+// =====================================================
+// 16. Middleware Pipeline
+// =====================================================
+
+// הפניה ל-HTTPS
 app.UseHttpsRedirection();
 
+// ניתוב בקשות
+app.UseRouting();
+
+// מאפשר בקשות מ-React
+// חייב להופיע לפני Authentication ו-Authorization
+app.UseCors("ReactPolicy");
+
+// זיהוי משתמש לפי JWT
 app.UseAuthentication();
+
+// בדיקת הרשאות
 app.UseAuthorization();
 
+// מיפוי Controllers
 app.MapControllers();
+
+// =====================================================
+// 17. הפעלת השרת
+// =====================================================
 
 app.Run();
