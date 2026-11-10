@@ -144,15 +144,50 @@ namespace BLL.Services
         }
 
         // שליפת תוצאות הבחירות - נפתח בהמשך
+
         public ElectionResultsDto GetElectionResults()
         {
-            int totalVotes = _userVoteRepository.CountVotes();
+            // מספר המשתמשים שהצביעו
+            int totalVoters = _userVoteRepository.CountVotes();
+
+            // כל המועמדים
+            var candidates = _candidateRepository.GetAll().ToList();
+
+            // כל הדירוגים האנונימיים
+            var votes = _anonymousVoteRepository.GetAll();
+
+            // חישוב סדר המועמדים באמצעות IRV חוזר
+            var rankingService = new ElectionRankingService();
+
+            List<int> rankedCandidateIds =
+                rankingService.CalculateRanking(candidates, votes);
+
+            // הכנת התוצאות לפי הסדר שנקבע
+            var results = new List<CandidateResultDto>();
+
+            for (int i = 0; i < rankedCandidateIds.Count; i++)
+            {
+                int candidateId = rankedCandidateIds[i];
+
+                var candidate = candidates.First(c =>
+                    c.CandidateId == candidateId);
+
+                results.Add(new CandidateResultDto
+                {
+                    CandidateId = candidateId,
+                    Name = candidate.User.Name,
+                    Position = i + 1,
+                    TotalVotes = votes.Count(v =>
+                        v.CandidateId == candidateId)
+                });
+            }
 
             return new ElectionResultsDto
             {
-                TotalVoters = totalVotes,
-                Results = new List<CandidateResultDto>()
+                TotalVoters = totalVoters,
+                Results = results
             };
         }
+
     }
 }

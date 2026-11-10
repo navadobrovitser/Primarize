@@ -1,4 +1,6 @@
-﻿using API.Extensions;
+﻿
+using API.Extensions;
+using API.Services;
 using BLL.IServices;
 using DTO.Voting;
 using Microsoft.AspNetCore.Authorization;
@@ -11,38 +13,97 @@ namespace API.Controllers
     public class VotingController : ControllerBase
     {
         private readonly IVotingService _votingService;
+        private readonly ElectionStateService _electionState;
 
-        public VotingController(IVotingService votingService)
+        public VotingController(
+            IVotingService votingService,
+            ElectionStateService electionState)
         {
             _votingService = votingService;
+            _electionState = electionState;
         }
 
-        // 1. שליחת פתק הצבעה - מזהה המשתמש נלקח מהטוקן
+        // שליחת הצבעה - רק כשהבחירות פתוחות
         [HttpPost("cast")]
         [Authorize]
         public IActionResult CastVote([FromBody] CastVoteDto model)
         {
             int currentUserId = User.GetUserId();
-            _votingService.CastVote(currentUserId, model);
-            return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
+
+            if (_electionState.IsClosed)
+            {
+                return Conflict(new
+                {
+                    message = "ההצבעה הסתיימה."
+                });
+            }
+
+            try
+            {
+                _electionState.ExecuteVote(() =>
+                    _votingService.CastVote(currentUserId, model));
+            }
+            catch (InvalidOperationException)
+                when (_electionState.IsClosed)
+            {
+                return Conflict(new
+                {
+                    message = "ההצבעה הסתיימה."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "ההצבעה נקלטה בהצלחה!"
+            });
         }
 
-        // 2. בדיקת סטטוס הצבעה של המשתמש המחובר
+        // סטטוס ההצבעה של המשתמש
         [HttpGet("status")]
         [Authorize]
         public ActionResult<VoteStatusDto> GetMyVoteStatus()
         {
             int currentUserId = User.GetUserId();
-            var status = _votingService.GetVoteStatus(currentUserId);
-            return Ok(status);
+
+            return Ok(
+                _votingService.GetVoteStatus(currentUserId));
         }
 
-        // 3. הצגת תוצאות הבחירות הכלליות - פתוח לכולם
+        // האם הבחירות פתוחות או סגורות?
+        [HttpGet("election-status")]
+        [Authorize]
+        public IActionResult GetElectionStatus()
+        {
+            return Ok(new
+            {
+                isClosed = _electionState.IsClosed
+            });
+        }
+
+        // צפייה בתוצאות - רק אחרי הסגירה
         [HttpGet("results")]
-        [AllowAnonymous]
+        [Authorize]
         public ActionResult<ElectionResultsDto> GetElectionResults()
         {
-            var results = _votingService.GetElectionResults();
+            if (!_electionState.IsClosed)
+            {
+                return StatusCode(403, new
+                {
+                    message = "התוצאות יתפרסמו לאחר סגירת ההצבעה."
+                });
+            }
+
+            return Ok(_electionState.GetResults());
+        }
+
+        // סגירת הבחירות - למנהל בלבד
+        [HttpPost("close")]
+        [Authorize(Roles = "Admin")]
+        public ActionResult<ElectionResultsDto> CloseElection()
+        {
+            var results = _electionState.CloseElection(
+                () => _votingService.GetElectionResults());
+
             return Ok(results);
         }
     }

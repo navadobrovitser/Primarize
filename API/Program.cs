@@ -1,4 +1,6 @@
 
+using API.Filters;
+using API.Services;
 using BLL.IServices;
 using BLL.Mapping;
 using BLL.Services;
@@ -17,7 +19,6 @@ using Microsoft.IdentityModel.Tokens;
 using OpenAI;
 using System.ClientModel;
 using System.Text;
-using API.Filters;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -77,7 +78,34 @@ builder.Services.AddControllers(options =>
 });
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
+
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+        Description = "Enter your JWT token"
+    });
+
+    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+    {
+        {
+            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+            {
+                Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                {
+                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            Array.Empty<string>()
+        }
+    });
+});
 
 // =====================================================
 // 5. Repositories
@@ -96,6 +124,7 @@ builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
 // =====================================================
 
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddSingleton<ElectionStateService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 builder.Services.AddScoped<IPostService, PostService>();
 builder.Services.AddScoped<ICommentService, CommentService>();
