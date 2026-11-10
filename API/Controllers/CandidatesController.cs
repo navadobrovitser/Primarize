@@ -38,12 +38,19 @@ namespace API.Controllers
 
         // POST: api/Candidates
         [HttpPost]
-        [Authorize(Roles = "Admin,Candidate")]
+        [Authorize]
+       
         public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
         {
-            // ה-Filter וה-[ApiController] מטפלים בשגיאות ובשדות לא תקינים
-            var result = _candidateService.CreateCandidate(model);
-            return Ok(new { message = "המועמד נוצר בהצלחה!", data = result });
+            int currentUserId = User.GetUserId();
+
+            var result = _candidateService.CreateCandidate(currentUserId, model);
+
+            return Ok(new
+            {
+                message = "המועמדות הוגשה בהצלחה!",
+                data = result
+            });
         }
 
         // PUT: api/Candidates
@@ -64,6 +71,17 @@ namespace API.Controllers
             int currentUserId = User.GetUserId();
             _candidateService.DeleteCandidate(currentUserId);
             return Ok(new { message = "המועמד נמחק בהצלחה!" });
+        }
+
+        [HttpGet("eligibility")]
+        [Authorize]
+        public IActionResult CheckEligibility()
+        {
+            int userId = User.GetUserId();
+
+            var result = _candidateService.CheckEligibility(userId);
+
+            return Ok(result);
         }
     }
 }

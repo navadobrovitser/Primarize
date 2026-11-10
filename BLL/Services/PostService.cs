@@ -60,7 +60,7 @@ namespace BLL.Services
 
             if (model.MediaFile != null && model.MediaFile.Length > 0)
             {
-                post.MediaUrl = _imageService.Save(model.MediaFile);
+                post.MediaUrl = _imageService.SaveVideo(model.MediaFile);
             }
 
             _postRepository.Add(post);
