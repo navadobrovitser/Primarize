@@ -1,43 +1,130 @@
-﻿using BLL.IServices;
+﻿
+using BLL.IServices;
+using DAL;
 using DAL.Entities;
 using DAL.IRepository;
 using DTO.Voting;
+using BLL.Exceptions;
 using System;
 using System.Collections.Generic;
-using BLL.Exceptions; // הוספת ה-using לחריגות שלנו
+using System.Linq;
 
 namespace BLL.Services
 {
     public class VotingService : IVotingService
     {
         private readonly IUserVoteRepository _userVoteRepository;
+        private readonly IAnonymousVoteRepository _anonymousVoteRepository;
         private readonly ICandidateRepository _candidateRepository;
+        private readonly AppDbContext _context;
 
-        public VotingService(IUserVoteRepository userVoteRepository, ICandidateRepository candidateRepository)
+        public VotingService(
+            IUserVoteRepository userVoteRepository,
+            IAnonymousVoteRepository anonymousVoteRepository,
+            ICandidateRepository candidateRepository,
+            AppDbContext context)
         {
             _userVoteRepository = userVoteRepository;
+            _anonymousVoteRepository = anonymousVoteRepository;
             _candidateRepository = candidateRepository;
+            _context = context;
         }
 
-        // ביצוע הצבעה - זריקת ConflictException במידה והמשתמש כבר הצביע
+        // ביצוע הצבעה מלאה
         public bool CastVote(int userId, CastVoteDto model)
         {
+            // 1. בדיקה שהמשתמש עדיין לא הצביע
             if (_userVoteRepository.HasVoted(userId))
             {
-                throw new ConflictException("המשתמש כבר ביצע הצבעה בעבר.");
+                throw new ConflictException(
+                    "המשתמש כבר ביצע הצבעה בעבר.");
             }
 
-            var newVote = new UserVote
+            // 2. בדיקת מספר המועמדים
+            if (model == null ||
+                model.Rankings == null ||
+                model.Rankings.Count < 1 ||
+                model.Rankings.Count > 5)
+            {
+                throw new ArgumentException(
+                    "יש לבחור בין מועמד אחד לחמישה מועמדים.");
+            }
+
+            // 3. בדיקה שאין מועמד שמופיע פעמיים
+            var candidateIds = model.Rankings
+                .Select(r => r.CandidateId)
+                .ToList();
+
+            if (candidateIds.Distinct().Count() != candidateIds.Count)
+            {
+                throw new ArgumentException(
+                    "לא ניתן לבחור את אותו מועמד יותר מפעם אחת.");
+            }
+
+            // 4. בדיקה שהעדיפויות הן 1,2,3... ברצף
+            var priorities = model.Rankings
+                .Select(r => r.Priority)
+                .OrderBy(p => p)
+                .ToList();
+
+            for (int i = 0; i < priorities.Count; i++)
+            {
+                if (priorities[i] != i + 1)
+                {
+                    throw new ArgumentException(
+                        "סדר העדיפויות אינו תקין.");
+                }
+            }
+
+            // 5. בדיקה שכל המועמדים קיימים
+            var existingCandidateIds = _candidateRepository
+                .GetAll()
+                .Select(c => c.CandidateId)
+                .ToHashSet();
+
+            foreach (var candidateId in candidateIds)
+            {
+                if (!existingCandidateIds.Contains(candidateId))
+                {
+                    throw new ArgumentException(
+                        "אחד המועמדים שנבחרו אינו קיים.");
+                }
+            }
+
+            // 6. יצירת מזהה אקראי לפתק ההצבעה
+            string randomVoteId = Guid.NewGuid().ToString("N");
+
+            // 7. הכנת רשומת המשתמש
+            var userVote = new UserVote
             {
                 UserId = userId,
-                VoteDate = DateTime.UtcNow
+                VoteDate = DateTime.UtcNow.Date
             };
 
-            _userVoteRepository.Add(newVote);
+            // 8. הכנת כל הדירוגים האנונימיים
+            var anonymousVotes = new List<AnonymousVote>();
+
+            foreach (var ranking in model.Rankings)
+            {
+                anonymousVotes.Add(new AnonymousVote
+                {
+                    CandidateId = ranking.CandidateId,
+                    Priority = ranking.Priority,
+                    UserRandomVoteId = randomVoteId
+                });
+            }
+
+            // 9. הכנת כל הרשומות לשמירה
+            _userVoteRepository.AddWithoutSave(userVote);
+            _anonymousVoteRepository.AddRange(anonymousVotes);
+
+            // 10. שמירת כל הרשומות ביחד
+            _context.SaveChanges();
+
             return true;
         }
 
-        // בדיקת סטטוס הצבעה
+        // בדיקת סטטוס ההצבעה של המשתמש
         public VoteStatusDto GetVoteStatus(int userId)
         {
             bool hasVoted = _userVoteRepository.HasVoted(userId);
@@ -45,7 +132,8 @@ namespace BLL.Services
 
             if (hasVoted && vote == null)
             {
-                throw new NotFoundException($"פרטי ההצבעה עבור משתמש {userId} לא נמצאו.");
+                throw new NotFoundException(
+                    $"פרטי ההצבעה עבור משתמש {userId} לא נמצאו.");
             }
 
             return new VoteStatusDto
@@ -55,7 +143,7 @@ namespace BLL.Services
             };
         }
 
-        // שליפת תוצאות הבחירות
+        // שליפת תוצאות הבחירות - נפתח בהמשך
         public ElectionResultsDto GetElectionResults()
         {
             int totalVotes = _userVoteRepository.CountVotes();

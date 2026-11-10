@@ -69,5 +69,10 @@ namespace DAL.Repository
         {
             return _context.UserVotes.FirstOrDefault(v => v.UserId == userId);
         }
+
+        public void AddWithoutSave(UserVote userVote)
+        {
+            _context.UserVotes.Add(userVote);
+        }
     }
 }

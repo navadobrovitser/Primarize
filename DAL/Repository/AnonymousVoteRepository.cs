@@ -70,5 +70,11 @@ namespace DAL.Repository
                 .OrderBy(v => v.Priority)
                 .ToList();
         }
+
+
+        public void AddRange(List<AnonymousVote> votes)
+        {
+            _context.AnonymousVotes.AddRange(votes);
+        }
     }
 }

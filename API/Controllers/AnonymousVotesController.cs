@@ -36,13 +36,15 @@ namespace API.Controllers
             return Ok(vote);
         }
 
-        // POST: api/AnonymousVotes
-        [HttpPost]
-        public ActionResult AddAnonymousVote([FromBody] CreateAnonymousVoteDto model)
-        {
-            // ה-Filter וה-[ApiController] מטפלים בשגיאות ובשדות לא תקינים
-            _anonymousVoteService.AddAnonymousVote(model);
-            return Ok(new { message = "ההצבעה האנונימית נקלטה בהצלחה!", data = model });
-        }
+
+        //אי אפשר לעשות מילוי כזה ידני של הוספה נוגד אבטחה
+        //// POST: api/AnonymousVotes
+        //[HttpPost]
+        //public ActionResult AddAnonymousVote([FromBody] CreateAnonymousVoteDto model)
+        //{
+        //    // ה-Filter וה-[ApiController] מטפלים בשגיאות ובשדות לא תקינים
+        //    _anonymousVoteService.AddAnonymousVote(model);
+        //    return Ok(new { message = "ההצבעה האנונימית נקלטה בהצלחה!", data = model });
+        //}
     }
 }

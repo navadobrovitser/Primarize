@@ -122,11 +122,11 @@ namespace BLL.Mapping
                     opt => opt.MapFrom(src => src.User != null ? src.User.Name : string.Empty));
 
             // AnonymousVote
+            // AnonymousVote
             CreateMap<AnonymousVote, AnonymousVoteDto>();
 
             CreateMap<CreateAnonymousVoteDto, AnonymousVote>()
                 .ForMember(dest => dest.AnonymousVoteId, opt => opt.Ignore())
-                .ForMember(dest => dest.VoteTime, opt => opt.MapFrom(src => DateTime.UtcNow))
                 .ForMember(dest => dest.Candidate, opt => opt.Ignore());
         }
     }
