@@ -72,29 +72,73 @@ namespace BLL.Services
             _userRepository.Delete(user.Id);
         }
 
-        // הרשמת משתמש - זריקת ConflictException במידה והאימייל כבר רשום במערכת
+
+
         public bool Register(RegisterUserDto dto)
         {
             var email = dto.Email.Trim().ToLowerInvariant();
+            var idNumber = dto.Id.Trim();
+
             if (_userRepository.GetByEmail(email) != null)
             {
-                throw new ConflictException("כתובת האימייל כבר רשומה במערכת.");
+                throw new ConflictException(
+                    "כתובת האימייל כבר רשומה במערכת."
+                );
+            }
+
+            if (_userRepository.GetByIdNumber(idNumber) != null)
+            {
+                throw new ConflictException(
+                    "תעודת הזהות כבר רשומה במערכת."
+                );
             }
 
             var user = new User
             {
+                Id = idNumber,
+                Name = dto.Name.Trim(),
                 Email = email,
-                Role = "User",
-                Gender = dto.Gender,
                 Phone = dto.Phone,
-                Id = dto.Id
+                Gender = dto.Gender,
+                Role = "User",
+                PartyJoinDate = DateTime.UtcNow
             };
 
-            user.Password = _hasher.HashPassword(user, dto.Password);
+            user.Password = _hasher.HashPassword(
+                user,
+                dto.Password
+            );
 
             _userRepository.Add(user);
+
             return true;
         }
+
+        // הרשמת משתמש - זריקת ConflictException במידה והאימייל כבר רשום במערכת
+      //
+      //
+      //public bool Register(RegisterUserDto dto)
+      //  {
+      //      var email = dto.Email.Trim().ToLowerInvariant();
+      //      if (_userRepository.GetByEmail(email) != null)
+      //      {
+      //          throw new ConflictException("כתובת האימייל כבר רשומה במערכת.");
+      //      }
+
+      //      var user = new User
+      //      {
+      //          Email = email,
+      //          Role = "User",
+      //          Gender = dto.Gender,
+      //          Phone = dto.Phone,
+      //          Id = dto.Id
+      //      };
+
+      //      user.Password = _hasher.HashPassword(user, dto.Password);
+
+      //      _userRepository.Add(user);
+      //      return true;
+      //  }
 
         // התחברות משתמש - זריקת BusinessRuleException במידה והפרטים אינם נכונים
         public AuthResponseDto Login(LoginDto dto)
