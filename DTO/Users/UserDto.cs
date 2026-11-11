@@ -14,5 +14,6 @@ namespace DTO.Users
         public string Phone { get; set; }
         public string Gender { get; set; }
         public DateTime PartyJoinDate { get; set; }
+        public DateTime? PasswordSetupLinkSentAt { get; set; }
     }
 }

@@ -19,5 +19,9 @@ namespace DAL.Entities
         public DateTime PartyJoinDate { get; set; }
         public List<PostLike> PostLikes { get; set; } = new List<PostLike>();
         public List<Comment> Comments { get; set; } = new List<Comment>();
+        public bool IsApproved { get; set; } = false;
+        public DateTime? PasswordSetupLinkSentAt { get; set; }
+
+        public Guid? PasswordSetupTokenId { get; set; }
     }
 }

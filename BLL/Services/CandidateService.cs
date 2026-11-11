@@ -149,6 +149,14 @@ namespace BLL.Services
 
             _candidateRepository.Update(candidate);
         }
+
+        public IEnumerable<CandidateDto> GetCandidatesForMatch()
+        {
+            var candidates = _candidateRepository.GetAll();
+
+            return _mapper.Map<IEnumerable<CandidateDto>>(candidates);
+        }
+
         public void DeleteCandidate(int currentUserId)
         {
             var candidate = _candidateRepository.GetByUserId(currentUserId);

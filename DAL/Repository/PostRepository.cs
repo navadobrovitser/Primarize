@@ -25,14 +25,17 @@ namespace DAL.Repository
                 .FirstOrDefault(p => p.PostId == id);
         }
 
+
         public List<Post> GetAll()
         {
             return _context.Posts
                 .Include(p => p.Candidate)
+                    .ThenInclude(c => c.User)
                 .Include(p => p.PostLikes)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
         }
+
 
         public void Add(Post post)
         {

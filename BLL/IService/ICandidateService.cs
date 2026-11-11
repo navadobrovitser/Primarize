@@ -11,7 +11,7 @@ namespace BLL.IServices
         IEnumerable<CandidateListItemDto> GetAllCandidates();
         CandidateDto GetCandidateById(string id); // שינוי מ-int ל-string
         CandidateDto CreateCandidate(int currentUserId, CreateCandidateDto model);
-        
+        IEnumerable<CandidateDto> GetCandidatesForMatch();
         void DeleteCandidate(int currentUserId);
         void UpdateCandidate(int currentUserId, UpdateCandidateDto model);
 

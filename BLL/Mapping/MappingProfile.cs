@@ -128,6 +128,14 @@ namespace BLL.Mapping
             CreateMap<CreateAnonymousVoteDto, AnonymousVote>()
                 .ForMember(dest => dest.AnonymousVoteId, opt => opt.Ignore())
                 .ForMember(dest => dest.Candidate, opt => opt.Ignore());
+
+            CreateMap<Post, PostDto>()
+.ForMember(
+    dest => dest.CandidateName,
+    opt => opt.MapFrom(
+        src => src.Candidate.User.Name
+    )
+);
         }
     }
 }

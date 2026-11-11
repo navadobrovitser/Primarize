@@ -1,4 +1,5 @@
-﻿using API.Extensions;
+﻿
+using API.Extensions;
 using BLL.IServices;
 using DTO.Security;
 using DTO.Users;
@@ -10,7 +11,6 @@ namespace API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [AllowAnonymous]//deler it
     public class UsersController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -20,65 +20,247 @@ namespace API.Controllers
             _userService = userService;
         }
 
+        // ==========================================
+        // שליפת כל המשתמשים - מנהל בלבד
+        // ==========================================
+
         // GET: api/Users
         [HttpGet]
-        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
-
-        //[Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<UserDto>> GetAllUsers()
         {
             var users = _userService.GetAllUsers();
             return Ok(users);
         }
 
-        // GET: api/Users/id
+        // ==========================================
+        // שליפת משתמש לפי תעודת זהות
+        // ==========================================
+
+        // GET: api/Users/{id}
         [HttpGet("{id}")]
         [Authorize(Roles = "Admin")]
         public ActionResult<UserDto> GetUserById(string id)
         {
-            // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
             var user = _userService.GetUserById(id);
             return Ok(user);
         }
 
+        // ==========================================
+        // עדכון פרטי המשתמש המחובר
+        // ==========================================
+
         // PUT: api/Users
         [HttpPut]
         [Authorize]
-        public ActionResult UpdateUser([FromBody] RegisterUserDto model)
+        public IActionResult UpdateUser(
+            [FromBody] RegisterUserDto model)
         {
             int currentUserId = User.GetUserId();
+
             _userService.UpdateUser(currentUserId, model);
-            return Ok(new { message = "המשתמש עודכן בהצלחה!" });
+
+            return Ok(new
+            {
+                message = "המשתמש עודכן בהצלחה!"
+            });
         }
+
+        // ==========================================
+        // מחיקת המשתמש המחובר
+        // ==========================================
 
         // DELETE: api/Users
         [HttpDelete]
         [Authorize]
-        public ActionResult DeleteUser()
+        public IActionResult DeleteUser()
         {
             int currentUserId = User.GetUserId();
+
             _userService.DeleteUser(currentUserId);
-            return Ok(new { message = "המשתמש נמחק בהצלחה!" });
+
+            return Ok(new
+            {
+                message = "המשתמש נמחק בהצלחה!"
+            });
         }
+
+        // ==========================================
+        // הרשמה - יצירת בקשה שממתינה לאישור
+        // ==========================================
 
         // POST: api/Users/register
         [HttpPost("register")]
         [AllowAnonymous]
-        public IActionResult Register([FromBody] RegisterUserDto dto)
+        public IActionResult Register(
+            [FromBody] RegisterUserDto dto)
         {
-            // במידה והמייל קיים, ה-Service זורק ConflictException וה-Filter מחזיר 409
             _userService.Register(dto);
-            return Ok(new { message = "הרישום בוצע בהצלחה!" });
+
+            return Ok(new
+            {
+                message = "בקשת ההצטרפות נשלחה בהצלחה וממתינה לאישור מנהל."
+            });
         }
+
+        // ==========================================
+        // התחברות
+        // ==========================================
 
         // POST: api/Users/login
         [HttpPost("login")]
         [AllowAnonymous]
-        public ActionResult<AuthResponseDto> Login([FromBody] LoginDto dto)
+        public ActionResult<AuthResponseDto> Login(
+            [FromBody] LoginDto dto)
         {
-            // במידה והפרטים שגויים, ה-Service זורק BusinessRuleException וה-Filter מחזיר 400
             var result = _userService.Login(dto);
+
             return Ok(result);
+        }
+
+        // ==========================================
+        // בקשות שממתינות לאישור מנהל
+        // ==========================================
+
+        // GET: api/Users/pending
+        [HttpGet("pending")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetPendingUsers()
+        {
+            var users = _userService.GetPendingUsers();
+
+            return Ok(users);
+        }
+
+        // ==========================================
+        // משתמשים שממתינים להגדרת סיסמה
+        // ==========================================
+
+        // GET: api/Users/waiting-for-password
+        [HttpGet("waiting-for-password")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult GetUsersWaitingForPassword()
+        {
+            var users =
+                _userService.GetUsersWaitingForPassword();
+
+            return Ok(users);
+        }
+
+        // ==========================================
+        // אישור בקשת הצטרפות
+        // ==========================================
+
+        // PUT: api/Users/{userId}/approve
+        [HttpPut("{userId:int}/approve")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult ApproveUser(int userId)
+        {
+            bool approved =
+                _userService.ApproveUser(userId);
+
+            if (!approved)
+            {
+                return BadRequest(new
+                {
+                    message = "המשתמש לא נמצא או שכבר אושר."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "המשתמש אושר ונשלח אליו מייל להגדרת סיסמה."
+            });
+        }
+
+        // ==========================================
+        // שליחה חוזרת של קישור אחרי 24 שעות
+        // ==========================================
+
+        // POST: api/Users/{userId}/resend-password-link
+        [HttpPost("{userId:int}/resend-password-link")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult ResendPasswordSetupLink(
+            int userId)
+        {
+            bool sent =
+                _userService.ResendPasswordSetupLink(userId);
+
+            if (!sent)
+            {
+                return BadRequest(new
+                {
+                    message =
+                        "לא ניתן לשלוח קישור חדש. " +
+                        "ייתכן שטרם עברו 24 שעות, " +
+                        "שהמשתמש אינו מאושר, " +
+                        "או שכבר הוגדרה סיסמה."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "קישור חדש להגדרת סיסמה נשלח בהצלחה."
+            });
+        }
+
+        // ==========================================
+        // מחיקת בקשת הרשמה
+        // ==========================================
+
+        // DELETE: api/Users/{userId}/registration-request
+        [HttpDelete("{userId:int}/registration-request")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult DeleteRegistrationRequest(
+            int userId)
+        {
+            bool deleted =
+                _userService.DeleteRegistrationRequest(userId);
+
+            if (!deleted)
+            {
+                return BadRequest(new
+                {
+                    message =
+                        "לא ניתן למחוק את הבקשה. " +
+                        "המשתמש לא נמצא או שכבר הגדיר סיסמה."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "בקשת ההצטרפות נמחקה בהצלחה."
+            });
+        }
+
+        // ==========================================
+        // הגדרת סיסמה באמצעות קישור מהמייל
+        // ==========================================
+
+        // POST: api/Users/set-password
+        [HttpPost("set-password")]
+        [AllowAnonymous]
+        public IActionResult SetPassword(
+            [FromBody] SetPasswordDto dto)
+        {
+            bool success =
+                _userService.SetPassword(dto);
+
+            if (!success)
+            {
+                return BadRequest(new
+                {
+                    message =
+                        "הקישור אינו תקין, פג תוקפו " +
+                        "או שכבר נעשה בו שימוש."
+                });
+            }
+
+            return Ok(new
+            {
+                message =
+                    "הסיסמה הוגדרה בהצלחה. כעת ניתן להתחבר."
+            });
         }
     }
 }

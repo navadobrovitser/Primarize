@@ -110,7 +110,9 @@ builder.Services.AddSwaggerGen(options =>
 // =====================================================
 // 5. Repositories
 // =====================================================
+builder.Services.AddDataProtection();
 
+builder.Services.AddScoped<PasswordSetupTokenService>();
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
 builder.Services.AddScoped<IPostRepository, PostRepository>();
@@ -252,12 +254,23 @@ builder.Services.Configure<IISServerOptions>(options =>
 {
     options.MaxRequestBodySize = 104857600;
 });
+builder.Services.AddScoped<
+    ICandidateMatchService,
+    CandidateMatchService>();
 
 // =====================================================
 // 13. בניית האפליקציה
-// =====================================================
+// =================================================
+
+
+
+
 
 var app = builder.Build();
+
+
+
+
 
 // =====================================================
 // 14. הגדרת קבצים סטטיים
