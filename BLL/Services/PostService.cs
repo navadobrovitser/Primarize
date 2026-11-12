@@ -69,29 +69,76 @@ namespace BLL.Services
         }
 
         // 3. עדכון פוסט - זריקת NotFoundException
+
+
         public void UpdatePost(int id, UpdatePostDto model, int currentUserId)
         {
             var candidate = _candidateRepository.GetByUserId(currentUserId);
+
             if (candidate == null)
             {
                 throw new NotFoundException("המועמד לא נמצא.");
             }
 
             var post = _postRepository.GetOwned(id, candidate.CandidateId);
+
             if (post == null)
             {
-                throw new NotFoundException("הפוסט לא נמצא או שאינו שייך למועמד.");
+                throw new NotFoundException(
+                    "הפוסט לא נמצא או שאינו שייך למועמד."
+                );
             }
 
-            _mapper.Map(model, post);
+            if (string.IsNullOrWhiteSpace(model.Content) ||
+                model.Content.Trim().Length > 4000)
+            {
+                throw new ArgumentException("תוכן הפוסט אינו תקין.");
+            }
 
+            if (!Enum.TryParse<PostContentType>(
+                    model.ContentType,
+                    true,
+                    out var contentType) ||
+                !Enum.IsDefined(typeof(PostContentType), contentType))
+            {
+                throw new ArgumentException("סוג הפוסט אינו תקין.");
+            }
+
+            // עדכון התוכן בלי לשנות מזהים, לייקים או תגובות
+            post.Content = model.Content.Trim();
+
+            // שמירת סרטון חדש, אם נבחר
             if (model.MediaFile != null && model.MediaFile.Length > 0)
             {
-                post.MediaUrl = _imageService.Save(model.MediaFile);
+                post.MediaUrl = _imageService.SaveVideo(model.MediaFile);
+                post.ContentType = PostContentType.Video;
+            }
+            else
+            {
+                // לא מאפשרים לשנות את סוג הפוסט
+                // בלי להחליף את המדיה הקיימת
+                if (post.MediaUrl != null &&
+                    contentType != post.ContentType)
+                {
+                    throw new ArgumentException(
+                        "לא ניתן לשנות סוג פוסט עם מדיה קיימת ללא העלאת מדיה חדשה."
+                    );
+                }
+
+                if (post.MediaUrl == null &&
+                    contentType != PostContentType.Text)
+                {
+                    throw new ArgumentException(
+                        "יש לצרף מדיה לפוסט מסוג תמונה או סרטון."
+                    );
+                }
+
+                post.ContentType = contentType;
             }
 
             _postRepository.Update(post);
         }
+
 
         // 4. מחיקת פוסט - זריקת NotFoundException
         public void DeletePost(int id, int currentUserId)

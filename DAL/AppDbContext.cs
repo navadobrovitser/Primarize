@@ -62,6 +62,13 @@ namespace DAL
             modelBuilder.Entity<UserVote>()
                 .HasIndex(uv => uv.UserId)
                 .IsUnique();
+
+
+            modelBuilder.Entity<PostLike>()
+.HasOne(pl => pl.Post)
+.WithMany(p => p.PostLikes)
+.HasForeignKey(pl => pl.PostId)
+.OnDelete(DeleteBehavior.Cascade);
         }
     }
 }
