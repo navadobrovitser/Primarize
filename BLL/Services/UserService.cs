@@ -261,6 +261,7 @@ namespace BLL.Services
         // אישור משתמש על ידי מנהל
         // ==========================================
 
+
         public bool ApproveUser(int userId)
         {
             var user = _userRepository.GetById(userId);
@@ -273,10 +274,19 @@ namespace BLL.Services
                 return false;
             }
 
-            SendPasswordSetupLink(user);
+            // תאריך תחילת החברות הוא יום אישור המנהל
+            user.PartyJoinDate = DateTime.UtcNow;
 
+            // הפעלת החברות
             user.IsApproved = true;
+
+            // שמירת האישור במסד הנתונים הקיים
             _userRepository.Update(user);
+
+            // שליחת קישור להגדרת סיסמה
+            // אם השליחה תיכשל, החברות עדיין מאושרת
+            // וניתן יהיה לשלוח קישור מחדש
+            SendPasswordSetupLink(user);
 
             return true;
         }

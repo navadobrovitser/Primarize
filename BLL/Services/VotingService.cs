@@ -18,21 +18,45 @@ namespace BLL.Services
         private readonly ICandidateRepository _candidateRepository;
         private readonly AppDbContext _context;
 
+        private readonly IUserRepository _userRepository;
+
+
         public VotingService(
             IUserVoteRepository userVoteRepository,
             IAnonymousVoteRepository anonymousVoteRepository,
             ICandidateRepository candidateRepository,
+            IUserRepository userRepository,
             AppDbContext context)
         {
             _userVoteRepository = userVoteRepository;
             _anonymousVoteRepository = anonymousVoteRepository;
             _candidateRepository = candidateRepository;
+            _userRepository = userRepository;
             _context = context;
         }
 
         // ביצוע הצבעה מלאה
         public bool CastVote(int userId, CastVoteDto model)
         {
+            var user = _userRepository.GetById(userId);
+
+            if (user == null)
+            {
+                throw new NotFoundException(
+                    "המשתמש לא נמצא במערכת"
+                );
+            }
+
+            if (!user.IsApproved)
+            {
+                throw new BusinessRuleException(
+                    "רק חבר מפלגה מאושר רשאי להצביע"
+                );
+            }
+
+
+
+
             // 1. בדיקה שהמשתמש עדיין לא הצביע
             if (_userVoteRepository.HasVoted(userId))
             {
