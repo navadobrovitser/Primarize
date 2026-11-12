@@ -13,6 +13,7 @@ namespace DTO.Users
         public string Password { get; set; } // ---> הוספת שדה הסיסמה
         public string Phone { get; set; }
         public string Gender { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTime PartyJoinDate { get; set; }
         public DateTime? PasswordSetupLinkSentAt { get; set; }
     }

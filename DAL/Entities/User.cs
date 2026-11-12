@@ -20,6 +20,10 @@ namespace DAL.Entities
         public List<PostLike> PostLikes { get; set; } = new List<PostLike>();
         public List<Comment> Comments { get; set; } = new List<Comment>();
         public bool IsApproved { get; set; } = false;
+
+        // מחיקה לוגית של משתמש
+        public bool IsDeleted { get; set; } = false;
+
         public DateTime? PasswordSetupLinkSentAt { get; set; }
 
         public Guid? PasswordSetupTokenId { get; set; }

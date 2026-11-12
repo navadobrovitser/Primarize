@@ -166,6 +166,20 @@ namespace BLL.Services
             }
 
             _candidateRepository.Delete(candidate.CandidateId);
+            }
+
+
+
+
+public CandidateDto GetCandidateByCandidateId(int candidateId)
+        {
+            var candidate = _candidateRepository.GetByCandidateId(candidateId);
+
+            if (candidate == null)
+                throw new NotFoundException("המועמד לא נמצא.");
+
+            return _mapper.Map<CandidateDto>(candidate);
         }
+
     }
 }

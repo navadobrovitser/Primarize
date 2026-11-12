@@ -13,7 +13,8 @@ namespace BLL.IServices
 
         void UpdateUser(int currentUserId, RegisterUserDto model);
         void DeleteUser(int currentUserId);
-
+        bool SoftDeleteUser(int userId);
+        bool RestoreUser(int userId);
         bool Register(RegisterUserDto dto);
         AuthResponseDto Login(LoginDto dto);
 

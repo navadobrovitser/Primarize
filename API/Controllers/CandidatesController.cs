@@ -83,5 +83,15 @@ namespace API.Controllers
 
             return Ok(result);
         }
+
+
+        [HttpGet("profile/{candidateId:int}")]
+        [AllowAnonymous]
+        public ActionResult<CandidateDto> GetCandidateProfile(int candidateId)
+        {
+            var candidate = _candidateService.GetCandidateByCandidateId(candidateId);
+            return Ok(candidate);
+        }
+
     }
 }

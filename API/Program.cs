@@ -19,6 +19,7 @@ using Microsoft.IdentityModel.Tokens;
 using OpenAI;
 using System.ClientModel;
 using System.Text;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -141,6 +142,8 @@ builder.Services.AddScoped<
     PasswordHasher<User>
 >();
 
+
+
 // =====================================================
 // 7. JWT Authentication
 // =====================================================
@@ -182,7 +185,47 @@ builder.Services
                         Encoding.UTF8.GetBytes(jwtKey)
                     )
             };
+
+        // בדיקת מצב המשתמש בכל אימות JWT
+        options.Events = new JwtBearerEvents
+        {
+            OnTokenValidated = async context =>
+            {
+                var userIdClaim =
+                    context.Principal?.FindFirst(
+                        ClaimTypes.NameIdentifier
+                    )?.Value;
+
+                if (!int.TryParse(
+                    userIdClaim,
+                    out int userId))
+                {
+                    context.Fail("Invalid user token.");
+                    return;
+                }
+
+                var dbContext =
+                    context.HttpContext.RequestServices
+                        .GetRequiredService<AppDbContext>();
+
+                var user = await dbContext.Users
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(
+                        u => u.UserId == userId
+                    );
+
+                if (user == null ||
+                    user.IsDeleted ||
+                    !user.IsApproved)
+                {
+                    context.Fail(
+                        "User account is inactive."
+                    );
+                }
+            }
+        };
     });
+
 
 // =====================================================
 // 8. Authorization

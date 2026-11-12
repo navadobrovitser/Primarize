@@ -26,15 +26,23 @@ namespace DAL.Repository
         }
 
 
+
+
+
         public List<Post> GetAll()
         {
             return _context.Posts
+                .AsNoTracking()
                 .Include(p => p.Candidate)
                     .ThenInclude(c => c.User)
                 .Include(p => p.PostLikes)
+                .Include(p => p.Comments)
                 .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.PostId)
                 .ToList();
         }
+
+
 
 
         public void Add(Post post)

@@ -86,6 +86,69 @@ namespace API.Controllers
         }
 
         // ==========================================
+        // מחיקה לוגית של משתמש - מנהל בלבד
+        // ==========================================
+
+        // DELETE: api/Users/{userId}/soft-delete
+        [HttpDelete("{userId:int}/soft-delete")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult SoftDeleteUser(int userId)
+        {
+            int currentUserId = User.GetUserId();
+
+            // מניעת מחיקה עצמית של המנהל
+            if (currentUserId == userId)
+            {
+                return BadRequest(new
+                {
+                    message = "לא ניתן להסיר את החשבון של עצמך."
+                });
+            }
+
+            bool deleted = _userService.SoftDeleteUser(userId);
+
+            if (!deleted)
+            {
+                return BadRequest(new
+                {
+                    message = "לא ניתן להסיר את המשתמש. ייתכן שהוא לא נמצא, כבר הוסר או שהוא מנהל."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "המשתמש הוסר בהצלחה."
+            });
+        }
+
+        // ==========================================
+        // שחזור משתמש שהוסר - מנהל בלבד
+        // ==========================================
+
+        // PUT: api/Users/{userId}/restore
+        [HttpPut("{userId:int}/restore")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult RestoreUser(int userId)
+        {
+            bool restored = _userService.RestoreUser(userId);
+
+            if (!restored)
+            {
+                return BadRequest(new
+                {
+                    message = "לא ניתן לשחזר את המשתמש. ייתכן שהוא לא נמצא, אינו מוסר או שהוא מנהל."
+                });
+            }
+
+            return Ok(new
+            {
+                message = "המשתמש שוחזר בהצלחה."
+            });
+        }
+
+
+
+        // ==========================================
         // הרשמה - יצירת בקשה שממתינה לאישור
         // ==========================================
 

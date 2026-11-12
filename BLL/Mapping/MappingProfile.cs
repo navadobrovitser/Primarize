@@ -50,7 +50,10 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.ExplanationVideoUrl, opt => opt.Ignore());
 
             // Post
+
             CreateMap<Post, PostDto>()
+                .ForMember(dest => dest.CandidateName,
+                    opt => opt.MapFrom(src => src.Candidate.User.Name))
                 .ForMember(dest => dest.ContentType,
                     opt => opt.MapFrom(src => src.ContentType.ToString()))
                 .ForMember(dest => dest.LikesCount,
@@ -129,13 +132,7 @@ namespace BLL.Mapping
                 .ForMember(dest => dest.AnonymousVoteId, opt => opt.Ignore())
                 .ForMember(dest => dest.Candidate, opt => opt.Ignore());
 
-            CreateMap<Post, PostDto>()
-.ForMember(
-    dest => dest.CandidateName,
-    opt => opt.MapFrom(
-        src => src.Candidate.User.Name
-    )
-);
+
         }
     }
 }

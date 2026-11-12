@@ -89,7 +89,17 @@ namespace BLL.Services
             if (user == null)
                 throw new NotFoundException("המשתמש לא נמצא.");
 
-            _userRepository.Delete(user.Id);
+            if (user.Role == "Admin")
+                throw new BusinessRuleException(
+                    "לא ניתן להסיר חשבון מנהל.");
+
+            if (user.IsDeleted)
+                throw new BusinessRuleException(
+                    "המשתמש כבר הוסר מהמערכת.");
+
+            user.IsDeleted = true;
+
+            _userRepository.Update(user);
         }
 
         // ==========================================
@@ -143,13 +153,13 @@ namespace BLL.Services
             var user = _userRepository.GetByEmail(email);
 
             if (user == null ||
-                !user.IsApproved ||
-                string.IsNullOrEmpty(user.Password))
+     !user.IsApproved ||
+     user.IsDeleted ||
+     string.IsNullOrEmpty(user.Password))
             {
                 throw new BusinessRuleException(
                     "אימייל או סיסמה שגויים.");
             }
-
             var result = _hasher.VerifyHashedPassword(
                 user,
                 user.Password,
@@ -173,7 +183,8 @@ namespace BLL.Services
             var users = _userRepository.GetAll()
                 .Where(u =>
                     u.Role != "Admin" &&
-                    !u.IsApproved)
+                    !u.IsApproved &&
+                    !u.IsDeleted)
                 .ToList();
 
             return _mapper.Map<IEnumerable<UserDto>>(users);
@@ -187,9 +198,10 @@ namespace BLL.Services
         {
             var users = _userRepository.GetAll()
                 .Where(u =>
-                    u.Role != "Admin" &&
-                    u.IsApproved &&
-                    string.IsNullOrEmpty(u.Password))
+    u.Role != "Admin" &&
+    u.IsApproved &&
+    !u.IsDeleted &&
+    string.IsNullOrEmpty(u.Password))
                 .ToList();
 
             return _mapper.Map<IEnumerable<UserDto>>(users);
@@ -254,8 +266,9 @@ namespace BLL.Services
             var user = _userRepository.GetById(userId);
 
             if (user == null ||
-                user.Role == "Admin" ||
-                user.IsApproved)
+    user.Role == "Admin" ||
+    user.IsApproved ||
+    user.IsDeleted)
             {
                 return false;
             }
@@ -278,7 +291,7 @@ namespace BLL.Services
 
             if (user == null ||
                 user.Role == "Admin" ||
-                !user.IsApproved ||
+                !user.IsApproved || user.IsDeleted ||
                 !string.IsNullOrEmpty(user.Password))
             {
                 return false;
@@ -340,6 +353,8 @@ namespace BLL.Services
 
             if (user == null)
                 return false;
+            if (user.IsDeleted)
+                return false;
 
             // בדיקת התאמה בין הטוקן למשתמש
             if (!string.Equals(
@@ -395,5 +410,45 @@ namespace BLL.Services
 
             return true;
         }
+        // ==========================================
+        // מחיקה לוגית של משתמש על ידי מנהל
+        // ==========================================
+        public bool SoftDeleteUser(int userId)
+        {
+            var user = _userRepository.GetById(userId);
+
+            if (user == null ||
+                user.Role == "Admin" ||
+                user.IsDeleted)
+            {
+                return false;
+            }
+
+            user.IsDeleted = true;
+            _userRepository.Update(user);
+
+            return true;
+        }
+
+        // ==========================================
+        // שחזור משתמש שהוסר
+        // ==========================================
+        public bool RestoreUser(int userId)
+        {
+            var user = _userRepository.GetById(userId);
+
+            if (user == null ||
+                user.Role == "Admin" ||
+                !user.IsDeleted)
+            {
+                return false;
+            }
+
+            user.IsDeleted = false;
+            _userRepository.Update(user);
+
+            return true;
+        }
     }
 }
+

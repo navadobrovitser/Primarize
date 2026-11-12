@@ -15,5 +15,7 @@ namespace BLL.IServices
         void DeleteCandidate(int currentUserId);
         void UpdateCandidate(int currentUserId, UpdateCandidateDto model);
 
+        CandidateDto GetCandidateByCandidateId(int candidateId);
+
     }
 }
