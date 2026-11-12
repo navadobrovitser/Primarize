@@ -20,6 +20,18 @@ using OpenAI;
 using System.ClientModel;
 using System.Text;
 
+var testUser = new User();
+
+var hasher = new PasswordHasher<User>();
+
+string hashedPassword = hasher.HashPassword(
+    testUser,
+    "999999999"
+);
+
+Console.WriteLine("PASSWORD HASH:");
+Console.WriteLine(hashedPassword);
+
 var builder = WebApplication.CreateBuilder(args);
 
 // =====================================================
@@ -200,6 +212,10 @@ builder.Services.AddAuthorization(options =>
 // 9. CORS - חיבור React לשרת
 // =====================================================
 
+// =====================================================
+// 9. CORS - חיבור React לשרת
+// =====================================================
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("ReactPolicy", policy =>
@@ -208,13 +224,13 @@ builder.Services.AddCors(options =>
             .WithOrigins(
                 "http://localhost:5173",
                 "http://localhost:5174",
-                "http://localhost:5175"
+                "http://localhost:5175",
+                "http://localhost:5176"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
     });
 });
-
 // =====================================================
 // 10. שירות תמונות ומדיה
 // =====================================================

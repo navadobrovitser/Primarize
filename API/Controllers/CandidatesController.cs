@@ -27,14 +27,16 @@ namespace API.Controllers
             return Ok(candidates);
         }
 
-        // GET: api/Candidates/{id}
-        [HttpGet("{id}")]
+
+        // GET: api/Candidates/by-id/999999999
+        [HttpGet("by-id/{id}")]
         public ActionResult<CandidateDto> GetCandidateById(string id)
         {
-            // ה-Service זורק NotFoundException במידה ואינו מוצא, וה-Filter מחזיר 404
             var candidate = _candidateService.GetCandidateById(id);
             return Ok(candidate);
         }
+
+        
 
         // POST: api/Candidates
         [HttpPost]
@@ -53,35 +55,34 @@ namespace API.Controllers
             });
         }
 
-        // PUT: api/Candidates
+
         [HttpPut]
-        [Authorize(Roles = "Admin,Candidate")]
-        public ActionResult UpdateCandidate([FromForm] UpdateCandidateDto model)
-        {
-            int currentUserId = User.GetUserId();
-            _candidateService.UpdateCandidate(currentUserId, model);
-            return Ok(new { message = "המועמד עודכן בהצלחה!" });
-        }
-
-        // DELETE: api/Candidates
-        [HttpDelete]
-        [Authorize(Roles = "Admin,Candidate")]
-        public ActionResult DeleteCandidate()
-        {
-            int currentUserId = User.GetUserId();
-            _candidateService.DeleteCandidate(currentUserId);
-            return Ok(new { message = "המועמד נמחק בהצלחה!" });
-        }
-
-        [HttpGet("eligibility")]
         [Authorize]
-        public IActionResult CheckEligibility()
+        public ActionResult UpdateCandidate(
+            [FromForm] UpdateCandidateDto model)
         {
-            int userId = User.GetUserId();
+            int currentUserId = User.GetUserId();
 
-            var result = _candidateService.CheckEligibility(userId);
+            _candidateService.UpdateCandidate(currentUserId, model);
 
-            return Ok(result);
+            return Ok(new
+            {
+                message = "המועמד עודכן בהצלחה!"
+            });
         }
+
+
+        [HttpGet("me")]
+        [Authorize]
+        public ActionResult<CandidateDto> GetMyCandidate()
+        {
+            int currentUserId = User.GetUserId();
+
+            var candidate =
+                _candidateService.GetMyCandidate(currentUserId);
+
+            return Ok(candidate);
+        }
+
     }
 }
