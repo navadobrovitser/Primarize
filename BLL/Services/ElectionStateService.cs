@@ -1,5 +1,4 @@
-﻿
-using DTO.Voting;
+﻿using DTO.Voting;
 using Microsoft.AspNetCore.Hosting;
 using System.Text.Json;
 
@@ -53,6 +52,7 @@ namespace API.Services
             }
         }
 
+        // ביצוע הצבעה רק כשהבחירות פתוחות
         public void ExecuteVote(Action castVote)
         {
             lock (_lock)
@@ -67,6 +67,7 @@ namespace API.Services
             }
         }
 
+        // קבלת תוצאות רק כשהבחירות סגורות
         public ElectionResultsDto GetResults()
         {
             lock (_lock)
@@ -81,6 +82,7 @@ namespace API.Services
             }
         }
 
+        // סגירת הבחירות
         public ElectionResultsDto CloseElection(
             Func<ElectionResultsDto> calculateResults)
         {
@@ -91,7 +93,7 @@ namespace API.Services
                     return CloneResults(_state.Results!);
                 }
 
-                // חישוב חד-פעמי של התוצאות
+                // מחשבים תוצאות מכל ההצבעות הקיימות
                 var results = calculateResults();
 
                 if (results == null)
@@ -120,6 +122,41 @@ namespace API.Services
                 }
 
                 return CloneResults(_state.Results!);
+            }
+        }
+
+        // פתיחה מחדש של הבחירות
+        public void OpenElection()
+        {
+            lock (_lock)
+            {
+                // אם הבחירות כבר פתוחות אין צורך לבצע שינוי
+                if (!_state.IsClosed)
+                {
+                    return;
+                }
+
+                var previousState = _state;
+
+                _state = new ElectionState
+                {
+                    IsClosed = false,
+                    ClosedAt = null,
+
+                    // מנקים רק את התוצאות המחושבות הישנות
+                    // לא מוחקים אף הצבעה ממסד הנתונים
+                    Results = null
+                };
+
+                try
+                {
+                    Save();
+                }
+                catch
+                {
+                    _state = previousState;
+                    throw;
+                }
             }
         }
 

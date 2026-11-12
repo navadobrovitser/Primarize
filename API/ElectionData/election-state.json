@@ -1,27 +1,5 @@
 {
-  "IsClosed": true,
-  "ClosedAt": "2026-11-10T20:09:23.4660755Z",
-  "Results": {
-    "Results": [
-      {
-        "CandidateId": 4,
-        "Name": "yael",
-        "Position": 1,
-        "TotalVotes": 5
-      },
-      {
-        "CandidateId": 2,
-        "Name": "nava",
-        "Position": 2,
-        "TotalVotes": 5
-      },
-      {
-        "CandidateId": 1,
-        "Name": "nava",
-        "Position": 3,
-        "TotalVotes": 5
-      }
-    ],
-    "TotalVoters": 0
-  }
+  "IsClosed": false,
+  "ClosedAt": null,
+  "Results": null
 }

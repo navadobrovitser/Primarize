@@ -1,5 +1,4 @@
-﻿
-using API.Extensions;
+﻿using API.Extensions;
 using API.Services;
 using BLL.IServices;
 using DTO.Voting;
@@ -105,6 +104,20 @@ namespace API.Controllers
                 () => _votingService.GetElectionResults());
 
             return Ok(results);
+        }
+
+        // פתיחת הבחירות מחדש - למנהל בלבד
+        [HttpPost("open")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult OpenElection()
+        {
+            _electionState.OpenElection();
+
+            return Ok(new
+            {
+                message = "הבחירות נפתחו מחדש בהצלחה.",
+                isClosed = false
+            });
         }
     }
 }
