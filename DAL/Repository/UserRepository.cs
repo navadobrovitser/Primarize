@@ -1,5 +1,6 @@
 ﻿using DAL.Entities;
 using DAL.IRepository;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -73,6 +74,15 @@ namespace DAL.Repository
         public User? GetOwned(int userId)
         {
             return _context.Users.FirstOrDefault(u => u.UserId == userId);
+        }
+
+        public User? GetPartyLeader()
+        {
+            return _context.Users
+                .AsNoTracking()
+                .FirstOrDefault(u =>
+                    u.Role == "Admin" &&
+                    !u.IsDeleted);
         }
     }
 }
