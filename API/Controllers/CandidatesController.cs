@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using BLL.IServices;
 using DTO.Candidates;
@@ -13,40 +14,58 @@ namespace API.Controllers
     {
         private readonly ICandidateService _candidateService;
 
-        public CandidatesController(ICandidateService candidateService)
+        public CandidatesController(
+            ICandidateService candidateService)
         {
             _candidateService = candidateService;
         }
 
         // GET: api/Candidates
         [HttpGet]
-        [AllowAnonymous]//לבדיקה בריאקט נא למחוק
-        public ActionResult<IEnumerable<CandidateListItemDto>> GetAllCandidates()
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<CandidateListItemDto>>
+            GetAllCandidates()
         {
             var candidates = _candidateService.GetAllCandidates();
             return Ok(candidates);
         }
 
-
         // GET: api/Candidates/by-id/999999999
         [HttpGet("by-id/{id}")]
-        public ActionResult<CandidateDto> GetCandidateById(string id)
+        public ActionResult<CandidateDto>
+            GetCandidateById(string id)
         {
             var candidate = _candidateService.GetCandidateById(id);
             return Ok(candidate);
         }
 
-        
+        // GET: api/Candidates/eligibility
+        // בדיקת זכאות לפי המשתמש המחובר
+        [HttpGet("eligibility")]
+        [Authorize]
+        public ActionResult<CandidateEligibilityDto>
+            GetEligibility()
+        {
+            int currentUserId = User.GetUserId();
+
+            var eligibility =
+                _candidateService.CheckEligibility(currentUserId);
+
+            return Ok(eligibility);
+        }
 
         // POST: api/Candidates
         [HttpPost]
         [Authorize]
-       
-        public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
+        public ActionResult CreateCandidate(
+            [FromForm] CreateCandidateDto model)
         {
             int currentUserId = User.GetUserId();
 
-            var result = _candidateService.CreateCandidate(currentUserId, model);
+            var result = _candidateService.CreateCandidate(
+                currentUserId,
+                model
+            );
 
             return Ok(new
             {
@@ -55,7 +74,7 @@ namespace API.Controllers
             });
         }
 
-
+        // PUT: api/Candidates
         [HttpPut]
         [Authorize]
         public ActionResult UpdateCandidate(
@@ -63,7 +82,10 @@ namespace API.Controllers
         {
             int currentUserId = User.GetUserId();
 
-            _candidateService.UpdateCandidate(currentUserId, model);
+            _candidateService.UpdateCandidate(
+                currentUserId,
+                model
+            );
 
             return Ok(new
             {
@@ -71,10 +93,11 @@ namespace API.Controllers
             });
         }
 
-
+        // GET: api/Candidates/me
         [HttpGet("me")]
         [Authorize]
-        public ActionResult<CandidateDto> GetMyCandidate()
+        public ActionResult<CandidateDto>
+            GetMyCandidate()
         {
             int currentUserId = User.GetUserId();
 
@@ -83,6 +106,5 @@ namespace API.Controllers
 
             return Ok(candidate);
         }
-
     }
 }
