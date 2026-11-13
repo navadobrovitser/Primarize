@@ -16,22 +16,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
-using OpenAI;
-using System.ClientModel;
-using System.Text;
 using System.Security.Claims;
-
-var testUser = new User();
-
-var hasher = new PasswordHasher<User>();
-
-string hashedPassword = hasher.HashPassword(
-    testUser,
-    "999999999"
-);
-
-Console.WriteLine("PASSWORD HASH:");
-Console.WriteLine(hashedPassword);
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -55,7 +41,7 @@ builder.Services.AddChatClient(innerClient)
 builder.Services.AddScoped<IAgentService, AgentService>();
 
 // =====================================================
-// 2. חיבור למסד הנתונים
+// 2. Database
 // =====================================================
 
 var connStr = builder.Configuration
@@ -69,20 +55,20 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 );
 
 // =====================================================
-// 3. שירותי אימות דו-שלבי ושליחת מייל
+// 3. Authentication services
 // =====================================================
 
-// זיכרון מטמון עבור קודי האימות
 builder.Services.AddMemoryCache();
 
-// שירות שליחת מיילים
 builder.Services.AddScoped<EmailService>();
-
-// שירות אימות דו-שלבי
 builder.Services.AddScoped<AuthService>();
 
+builder.Services.AddDataProtection();
+
+builder.Services.AddScoped<PasswordSetupTokenService>();
+
 // =====================================================
-// 4. Controllers ו-Swagger
+// 4. Controllers + Swagger
 // =====================================================
 
 builder.Services.AddControllers(options =>
@@ -94,70 +80,137 @@ builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Enter your JWT token"
-    });
-
-    options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
+    options.AddSecurityDefinition(
+        "Bearer",
+        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
+            Name = "Authorization",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "Enter your JWT token"
         }
-    });
+    );
+
+    options.AddSecurityRequirement(
+        new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
+            {
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Reference =
+                        new Microsoft.OpenApi.Models.OpenApiReference
+                        {
+                            Type =
+                                Microsoft.OpenApi.Models.ReferenceType
+                                    .SecurityScheme,
+                            Id = "Bearer"
+                        }
+                },
+                Array.Empty<string>()
+            }
+        }
+    );
 });
 
 // =====================================================
 // 5. Repositories
 // =====================================================
-builder.Services.AddDataProtection();
 
-builder.Services.AddScoped<PasswordSetupTokenService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
-builder.Services.AddScoped<ICandidateRepository, CandidateRepository>();
-builder.Services.AddScoped<IPostRepository, PostRepository>();
-builder.Services.AddScoped<ICommentRepository, CommentRepository>();
-builder.Services.AddScoped<IUserVoteRepository, UserVoteRepository>();
-builder.Services.AddScoped<IAnonymousVoteRepository, AnonymousVoteRepository>();
-builder.Services.AddScoped<IPostLikeRepository, PostLikeRepository>();
+builder.Services.AddScoped<
+    IUserRepository,
+    UserRepository
+>();
+
+builder.Services.AddScoped<
+    ICandidateRepository,
+    CandidateRepository
+>();
+
+builder.Services.AddScoped<
+    IPostRepository,
+    PostRepository
+>();
+
+builder.Services.AddScoped<
+    ICommentRepository,
+    CommentRepository
+>();
+
+builder.Services.AddScoped<
+    IUserVoteRepository,
+    UserVoteRepository
+>();
+
+builder.Services.AddScoped<
+    IAnonymousVoteRepository,
+    AnonymousVoteRepository
+>();
+
+builder.Services.AddScoped<
+    IPostLikeRepository,
+    PostLikeRepository
+>();
 
 // =====================================================
-// 6. Services
+// 6. Business services
 // =====================================================
 
-builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<
+    IUserService,
+    UserService
+>();
+
 builder.Services.AddSingleton<ElectionStateService>();
-builder.Services.AddScoped<ICandidateService, CandidateService>();
-builder.Services.AddScoped<IPostService, PostService>();
-builder.Services.AddScoped<ICommentService, CommentService>();
-builder.Services.AddScoped<IVotingService, VotingService>();
-builder.Services.AddScoped<IAnonymousVoteService, AnonymousVoteService>();
-builder.Services.AddScoped<IPostLikeService, PostLikeService>();
 
-builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<
+    ICandidateService,
+    CandidateService
+>();
+
+builder.Services.AddScoped<
+    IPostService,
+    PostService
+>();
+
+builder.Services.AddScoped<
+    ICommentService,
+    CommentService
+>();
+
+builder.Services.AddScoped<
+    IVotingService,
+    VotingService
+>();
+
+builder.Services.AddScoped<
+    IAnonymousVoteService,
+    AnonymousVoteService
+>();
+
+builder.Services.AddScoped<
+    IPostLikeService,
+    PostLikeService
+>();
+
+builder.Services.AddScoped<
+    ITokenService,
+    TokenService
+>();
+
+builder.Services.AddScoped<
+    ICandidateMatchService,
+    CandidateMatchService
+>();
 
 builder.Services.AddScoped<
     IPasswordHasher<User>,
     PasswordHasher<User>
 >();
 
-
-
 // =====================================================
-// 7. JWT Authentication
+// 7. JWT
 // =====================================================
 
 var jwtKey = builder.Configuration["Jwt:Key"];
@@ -165,7 +218,7 @@ var jwtKey = builder.Configuration["Jwt:Key"];
 if (string.IsNullOrWhiteSpace(jwtKey))
 {
     throw new InvalidOperationException(
-        "Jwt:Key is missing. Set the environment variable Jwt__Key."
+        "Jwt:Key is missing. Set Jwt__Key."
     );
 }
 
@@ -198,7 +251,6 @@ builder.Services
                     )
             };
 
-        // בדיקת מצב המשתמש בכל אימות JWT
         options.Events = new JwtBearerEvents
         {
             OnTokenValidated = async context =>
@@ -226,9 +278,11 @@ builder.Services
                         u => u.UserId == userId
                     );
 
-                if (user == null ||
+                if (
+                    user == null ||
                     user.IsDeleted ||
-                    !user.IsApproved)
+                    !user.IsApproved
+                )
                 {
                     context.Fail(
                         "User account is inactive."
@@ -237,7 +291,6 @@ builder.Services
             }
         };
     });
-
 
 // =====================================================
 // 8. Authorization
@@ -252,11 +305,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 // =====================================================
-// 9. CORS - חיבור React לשרת
-// =====================================================
-
-// =====================================================
-// 9. CORS - חיבור React לשרת
+// 9. CORS
 // =====================================================
 
 builder.Services.AddCors(options =>
@@ -274,8 +323,9 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
+
 // =====================================================
-// 10. שירות תמונות ומדיה
+// 10. Image and video storage
 // =====================================================
 
 var imagesFolder = Path.GetFullPath(
@@ -288,7 +338,7 @@ var imagesFolder = Path.GetFullPath(
 Directory.CreateDirectory(imagesFolder);
 
 builder.Services.AddScoped<IImageService>(
-    provider => new ImageService(imagesFolder)
+    _ => new ImageService(imagesFolder)
 );
 
 // =====================================================
@@ -297,52 +347,119 @@ builder.Services.AddScoped<IImageService>(
 
 builder.Services.AddAutoMapper(cfg =>
 {
-    cfg.AddProfile<BLL.Mapping.MappingProfile>();
+    cfg.AddProfile<MappingProfile>();
 });
 
 // =====================================================
-// 12. הגדרות גודל בקשות
+// 12. Upload limits
 // =====================================================
 
 builder.WebHost.ConfigureKestrel(options =>
 {
-    options.Limits.MaxRequestBodySize = 104857600;
+    options.Limits.MaxRequestBodySize =
+        100 * 1024 * 1024;
 });
 
 builder.Services.Configure<IISServerOptions>(options =>
 {
-    options.MaxRequestBodySize = 104857600;
+    options.MaxRequestBodySize =
+        100 * 1024 * 1024;
 });
-builder.Services.AddScoped<
-    ICandidateMatchService,
-    CandidateMatchService>();
 
 // =====================================================
-// 13. בניית האפליקציה
-// =================================================
-
-
-
-
+// 13. Build
+// =====================================================
 
 var app = builder.Build();
 
+// =====================================================
+// 14. HTTPS
+// =====================================================
 
-
-
+app.UseHttpsRedirection();
 
 // =====================================================
-// 14. הגדרת קבצים סטטיים
+// 15. Static media files
 // =====================================================
+
+// קבצים שנשמרים בתיקיית Images נגישים דרך:
+// https://localhost:7227/Images/file.jpg
+
+var mediaProvider =
+    new PhysicalFileProvider(imagesFolder);
+
+var mediaExtensions =
+    new HashSet<string>(
+        StringComparer.OrdinalIgnoreCase
+    )
+    {
+        ".jpg",
+        ".jpeg",
+        ".png",
+        ".webp",
+        ".mp4",
+        ".webm",
+        ".mov"
+    };
+
+// תאימות לכתובות ישנות שמכילות רק שם קובץ.
+// אין צורך לשלוח JWT עבור קובצי מדיה ציבוריים.
+
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? "";
+
+    if (
+        context.Request.Method == HttpMethods.Get ||
+        context.Request.Method == HttpMethods.Head
+    )
+    {
+        var requestedFileName =
+            Path.GetFileName(path);
+
+        var extension =
+            Path.GetExtension(requestedFileName);
+
+        var isRootFile =
+            path.StartsWith("/") &&
+            path.LastIndexOf('/') == 0;
+
+        if (
+            isRootFile &&
+            mediaExtensions.Contains(extension)
+        )
+        {
+            var physicalPath = Path.Combine(
+                imagesFolder,
+                requestedFileName
+            );
+
+            if (File.Exists(physicalPath))
+            {
+                context.Response.Redirect(
+                    "/Images/" +
+                    Uri.EscapeDataString(requestedFileName),
+                    permanent: false
+                );
+
+                return;
+            }
+        }
+    }
+
+    await next();
+});
+
+// הגשת הקבצים לפני מנגנון ההרשאות
 
 app.UseStaticFiles(new StaticFileOptions
 {
-    FileProvider = new PhysicalFileProvider(imagesFolder),
+    FileProvider = mediaProvider,
     RequestPath = "/Images"
 });
 
 // =====================================================
-// 15. Swagger
+// 16. Swagger
 // =====================================================
 
 if (app.Environment.IsDevelopment())
@@ -361,30 +478,21 @@ if (app.Environment.IsDevelopment())
 }
 
 // =====================================================
-// 16. Middleware Pipeline
+// 17. Middleware
 // =====================================================
 
-// הפניה ל-HTTPS
-app.UseHttpsRedirection();
-
-// ניתוב בקשות
 app.UseRouting();
 
-// מאפשר בקשות מ-React
-// חייב להופיע לפני Authentication ו-Authorization
 app.UseCors("ReactPolicy");
 
-// זיהוי משתמש לפי JWT
 app.UseAuthentication();
 
-// בדיקת הרשאות
 app.UseAuthorization();
 
-// מיפוי Controllers
 app.MapControllers();
 
 // =====================================================
-// 17. הפעלת השרת
+// 18. Start
 // =====================================================
 
 app.Run();
