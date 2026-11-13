@@ -10,7 +10,8 @@ namespace API.Filters
     {
         private readonly ILogger<GlobalExceptionFilter> _logger;
 
-        public GlobalExceptionFilter(ILogger<GlobalExceptionFilter> logger)
+        public GlobalExceptionFilter(
+            ILogger<GlobalExceptionFilter> logger)
         {
             _logger = logger;
         }
@@ -19,35 +20,51 @@ namespace API.Filters
         {
             var ex = context.Exception;
 
-            // 1. רישום השגיאה ללוג
-            _logger.LogError(ex, "Unhandled exception at {Path}", context.HttpContext.Request.Path);
+            // רישום השגיאה ללוג
+            _logger.LogError(
+                ex,
+                "Exception at {Path}",
+                context.HttpContext.Request.Path);
 
-            // 2. קביעת קוד ה-HTTP לפי סוג החריגה שנזרקה ב-BLL
+            // התאמת קוד HTTP לסוג השגיאה
             int status = ex switch
             {
-                NotFoundException => StatusCodes.Status404NotFound,
-                ConflictException => StatusCodes.Status409Conflict,
-                BusinessRuleException => StatusCodes.Status400BadRequest,
-                ArgumentException => StatusCodes.Status400BadRequest,
-                _ => StatusCodes.Status500InternalServerError
+                NotFoundException =>
+                    StatusCodes.Status404NotFound,
+
+                ConflictException =>
+                    StatusCodes.Status409Conflict,
+
+                BusinessRuleException =>
+                    StatusCodes.Status400BadRequest,
+
+                ArgumentException =>
+                    StatusCodes.Status400BadRequest,
+
+                _ =>
+                    StatusCodes.Status500InternalServerError
             };
 
-            // 3. בשגיאות שרת כלליות (500) לא חושפים פרטים פנימיים למשתמש
+            // לא חושפים פרטים פנימיים בשגיאות לא צפויות
             string message = status == 500
-                ? "An unexpected error occurred. Please try again later."
+                ? "אירעה תקלה בשרת. נסי שוב מאוחר יותר."
                 : ex.Message;
 
-            // 4. החזרת תשובה במבנה ProblemDetails תקני
-            context.Result = new ObjectResult(new ProblemDetails
+            // תשובת ProblemDetails עם שדה message נוסף
+            var problem = new ProblemDetails
             {
                 Status = status,
                 Title = message
-            })
+            };
+
+            problem.Extensions["message"] = message;
+
+            context.Result = new ObjectResult(problem)
             {
                 StatusCode = status
             };
 
-            // 5. סימון שהשגיאה טופלה
+            // סימון שהחריגה טופלה
             context.ExceptionHandled = true;
         }
     }
