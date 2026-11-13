@@ -3,10 +3,11 @@ using API.Extensions;
 using BLL.IServices;
 using DTO.Security;
 using DTO.Users;
+using GenerativeAI.Types;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
-
 namespace API.Controllers
 {
     [Route("api/[controller]")]
@@ -325,5 +326,35 @@ namespace API.Controllers
                     "הסיסמה הוגדרה בהצלחה. כעת ניתן להתחבר."
             });
         }
+
+
+        // ==========================================
+        // שליפת ראש המפלגה
+        // GET: api/Users/party-leader
+        // גישה לכל משתמש עם JWT תקין
+        // ==========================================
+
+        [HttpGet("party-leader")]
+        [Authorize]
+        public IActionResult GetPartyLeader()
+        {
+            var leader = _userService.GetPartyLeader();
+
+            if (leader == null)
+            {
+                return NotFound(new
+                {
+                    message = "ראש המפלגה לא נמצא"
+                });
+            }
+
+            return Ok(new
+            {
+                leader.UserId,
+                leader.Name,
+                Role = "ראש המפלגה"
+            });
+        }
+
     }
 }

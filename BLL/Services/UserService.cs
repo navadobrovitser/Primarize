@@ -459,6 +459,20 @@ namespace BLL.Services
 
             return true;
         }
+
+        public UserDto? GetPartyLeader()
+        {
+            var leader = _userRepository.GetPartyLeader();
+
+            if (leader == null)
+                return null;
+
+            return new UserDto
+            {
+                UserId = leader.UserId,
+                Name = leader.Name
+            };
+        }
     }
 }
 

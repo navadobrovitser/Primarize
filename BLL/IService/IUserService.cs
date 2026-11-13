@@ -1,4 +1,5 @@
-﻿using DTO.Security;
+﻿using DAL.Entities;
+using DTO.Security;
 using DTO.Users;
 using GenerativeAI.Types;
 using System.Collections.Generic;
@@ -21,6 +22,7 @@ namespace BLL.IServices
         IEnumerable<UserDto> GetPendingUsers();
         bool ApproveUser(int userId);
         bool SetPassword(SetPasswordDto dto);
+        UserDto? GetPartyLeader();
 
         IEnumerable<UserDto> GetUsersWaitingForPassword();
 

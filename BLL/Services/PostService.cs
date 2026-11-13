@@ -1,12 +1,13 @@
-﻿using AutoMapper;
+﻿
+using AutoMapper;
 using BLL.IServices;
 using DAL.Entities;
 using DAL.IRepository;
 using DTO.Posts;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using BLL.Exceptions; // הוספת ה-using לחריגות שלנו
+using System.IO;
+using BLL.Exceptions;
 
 namespace BLL.Services
 {
@@ -35,32 +36,143 @@ namespace BLL.Services
             return _mapper.Map<IEnumerable<PostDto>>(posts);
         }
 
-        // 1. שליפת פוסט לפי מזהה - זריקת NotFoundException במקום null
         public PostDto GetPostById(int id)
         {
             var post = _postRepository.GetById(id);
+
             if (post == null)
             {
-                throw new NotFoundException($"Post with id {id} was not found");
+                throw new NotFoundException(
+                    $"Post with id {id} was not found"
+                );
             }
+
             return _mapper.Map<PostDto>(post);
         }
 
-        // 2. יצירת פוסט - זריקת NotFoundException במידה והמועמד לא קיים במערכת
-        public PostDto CreatePost(CreatePostDto model, int currentUserId)
+        // זיהוי סוג הקובץ לפי הסיומת
+        private static PostContentType GetMediaType(string fileName)
         {
-            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            var extension = Path
+                .GetExtension(fileName)
+                .ToLowerInvariant();
+
+            switch (extension)
+            {
+                case ".jpg":
+                case ".jpeg":
+                case ".png":
+                case ".webp":
+                    return PostContentType.Image;
+
+                case ".mp4":
+                case ".avi":
+                case ".mov":
+                    return PostContentType.Video;
+
+                default:
+                    throw new ArgumentException(
+                        "סוג הקובץ אינו נתמך."
+                    );
+            }
+        }
+
+        // שמירת המדיה בהתאם לסוג הקובץ
+        private string SaveMedia(
+            Microsoft.AspNetCore.Http.IFormFile file,
+            PostContentType type)
+        {
+            if (type == PostContentType.Image)
+            {
+                return _imageService.SaveImage(file);
+            }
+
+            if (type == PostContentType.Video)
+            {
+                return _imageService.SaveVideo(file);
+            }
+
+            throw new ArgumentException(
+                "לא ניתן לשמור מדיה מסוג זה."
+            );
+        }
+
+        // יצירת פוסט חדש
+        public PostDto CreatePost(
+            CreatePostDto model,
+            int currentUserId)
+        {
+            var candidate = _candidateRepository
+                .GetByUserId(currentUserId);
+
             if (candidate == null)
             {
-                throw new NotFoundException("המועמד המבוקש אינו קיים במערכת.");
+                throw new NotFoundException(
+                    "המועמד המבוקש אינו קיים במערכת."
+                );
+            }
+
+            if (string.IsNullOrWhiteSpace(model.Content) ||
+                model.Content.Trim().Length > 4000)
+            {
+                throw new ArgumentException(
+                    "תוכן הפוסט אינו תקין."
+                );
+            }
+
+            if (!Enum.TryParse<PostContentType>(
+                    model.ContentType,
+                    true,
+                    out var contentType) ||
+                !Enum.IsDefined(
+                    typeof(PostContentType),
+                    contentType))
+            {
+                throw new ArgumentException(
+                    "סוג הפוסט אינו תקין."
+                );
+            }
+
+            var hasMedia =
+                model.MediaFile != null &&
+                model.MediaFile.Length > 0;
+
+            if (hasMedia)
+            {
+                var actualType = GetMediaType(
+                    model.MediaFile!.FileName
+                );
+
+                if (contentType != actualType)
+                {
+                    throw new ArgumentException(
+                        "סוג הפוסט אינו תואם לסוג הקובץ."
+                    );
+                }
+            }
+            else if (contentType != PostContentType.Text)
+            {
+                throw new ArgumentException(
+                    "יש לצרף קובץ לפוסט מסוג תמונה או סרטון."
+                );
             }
 
             var post = _mapper.Map<Post>(model);
-            post.CandidateId = candidate.CandidateId;
 
-            if (model.MediaFile != null && model.MediaFile.Length > 0)
+            post.CandidateId = candidate.CandidateId;
+            post.Content = model.Content.Trim();
+            post.ContentType = contentType;
+
+            if (hasMedia)
             {
-                post.MediaUrl = _imageService.SaveVideo(model.MediaFile);
+                post.MediaUrl = SaveMedia(
+                    model.MediaFile!,
+                    contentType
+                );
+            }
+            else
+            {
+                post.MediaUrl = null;
             }
 
             _postRepository.Add(post);
@@ -68,19 +180,26 @@ namespace BLL.Services
             return _mapper.Map<PostDto>(post);
         }
 
-        // 3. עדכון פוסט - זריקת NotFoundException
-
-
-        public void UpdatePost(int id, UpdatePostDto model, int currentUserId)
+        // עדכון פוסט קיים
+        public void UpdatePost(
+            int id,
+            UpdatePostDto model,
+            int currentUserId)
         {
-            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            var candidate = _candidateRepository
+                .GetByUserId(currentUserId);
 
             if (candidate == null)
             {
-                throw new NotFoundException("המועמד לא נמצא.");
+                throw new NotFoundException(
+                    "המועמד לא נמצא."
+                );
             }
 
-            var post = _postRepository.GetOwned(id, candidate.CandidateId);
+            var post = _postRepository.GetOwned(
+                id,
+                candidate.CandidateId
+            );
 
             if (post == null)
             {
@@ -92,36 +211,55 @@ namespace BLL.Services
             if (string.IsNullOrWhiteSpace(model.Content) ||
                 model.Content.Trim().Length > 4000)
             {
-                throw new ArgumentException("תוכן הפוסט אינו תקין.");
+                throw new ArgumentException(
+                    "תוכן הפוסט אינו תקין."
+                );
             }
 
             if (!Enum.TryParse<PostContentType>(
                     model.ContentType,
                     true,
                     out var contentType) ||
-                !Enum.IsDefined(typeof(PostContentType), contentType))
+                !Enum.IsDefined(
+                    typeof(PostContentType),
+                    contentType))
             {
-                throw new ArgumentException("סוג הפוסט אינו תקין.");
+                throw new ArgumentException(
+                    "סוג הפוסט אינו תקין."
+                );
             }
 
-            // עדכון התוכן בלי לשנות מזהים, לייקים או תגובות
-            post.Content = model.Content.Trim();
+            var hasNewMedia =
+                model.MediaFile != null &&
+                model.MediaFile.Length > 0;
 
-            // שמירת סרטון חדש, אם נבחר
-            if (model.MediaFile != null && model.MediaFile.Length > 0)
+            if (hasNewMedia)
             {
-                post.MediaUrl = _imageService.SaveVideo(model.MediaFile);
-                post.ContentType = PostContentType.Video;
+                var actualType = GetMediaType(
+                    model.MediaFile!.FileName
+                );
+
+                if (contentType != actualType)
+                {
+                    throw new ArgumentException(
+                        "סוג הפוסט אינו תואם לסוג הקובץ."
+                    );
+                }
+
+                post.MediaUrl = SaveMedia(
+                    model.MediaFile!,
+                    contentType
+                );
+
+                post.ContentType = contentType;
             }
             else
             {
-                // לא מאפשרים לשנות את סוג הפוסט
-                // בלי להחליף את המדיה הקיימת
                 if (post.MediaUrl != null &&
                     contentType != post.ContentType)
                 {
                     throw new ArgumentException(
-                        "לא ניתן לשנות סוג פוסט עם מדיה קיימת ללא העלאת מדיה חדשה."
+                        "לא ניתן לשנות את סוג הפוסט בלי להחליף את המדיה."
                     );
                 }
 
@@ -136,38 +274,54 @@ namespace BLL.Services
                 post.ContentType = contentType;
             }
 
+            post.Content = model.Content.Trim();
+
             _postRepository.Update(post);
         }
 
-
-        // 4. מחיקת פוסט - זריקת NotFoundException
+        // מחיקת פוסט
         public void DeletePost(int id, int currentUserId)
         {
-            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            var candidate = _candidateRepository
+                .GetByUserId(currentUserId);
+
             if (candidate == null)
             {
-                throw new NotFoundException("הפוסט לא נמצא.");
+                throw new NotFoundException(
+                    "הפוסט לא נמצא."
+                );
             }
 
-            var post = _postRepository.GetOwned(id, candidate.CandidateId);
+            var post = _postRepository.GetOwned(
+                id,
+                candidate.CandidateId
+            );
+
             if (post == null)
             {
-                throw new NotFoundException("הפוסט לא נמצא.");
+                throw new NotFoundException(
+                    "הפוסט לא נמצא."
+                );
             }
 
             _postRepository.Delete(id);
         }
 
-        // 5. קבלת פוסטים לפי מזהה המועמד
-        public IEnumerable<PostDto> GetPostsByCandidateId(int currentUserId)
+        // הפוסטים של המועמד המחובר
+        public IEnumerable<PostDto> GetPostsByCandidateId(
+            int currentUserId)
         {
-            var candidate = _candidateRepository.GetByUserId(currentUserId);
+            var candidate = _candidateRepository
+                .GetByUserId(currentUserId);
+
             if (candidate == null)
             {
                 return new List<PostDto>();
             }
 
-            var posts = _postRepository.GetByCandidateId(candidate.CandidateId);
+            var posts = _postRepository
+                .GetByCandidateId(candidate.CandidateId);
+
             return _mapper.Map<IEnumerable<PostDto>>(posts);
         }
     }
