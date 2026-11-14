@@ -267,26 +267,27 @@ namespace BLL.Services
             var user = _userRepository.GetById(userId);
 
             if (user == null ||
-    user.Role == "Admin" ||
-    user.IsApproved ||
-    user.IsDeleted)
+                user.Role == "Admin" ||
+                user.IsApproved ||
+                user.IsDeleted)
             {
                 return false;
             }
 
-            // תאריך תחילת החברות הוא יום אישור המנהל
+            // תאריך תחילת החברות
             user.PartyJoinDate = DateTime.UtcNow;
 
-            // הפעלת החברות
+            // אישור המשתמש
             user.IsApproved = true;
 
-            // שמירת האישור במסד הנתונים הקיים
+            // שמירת האישור
             _userRepository.Update(user);
 
-            // שליחת קישור להגדרת סיסמה
-            // אם השליחה תיכשל, החברות עדיין מאושרת
-            // וניתן יהיה לשלוח קישור מחדש
+            // יצירת טוקן ושליחת מייל
             SendPasswordSetupLink(user);
+
+            // חשוב! שמירת פרטי הטוקן במסד הנתונים
+            _userRepository.Update(user);
 
             return true;
         }
@@ -307,15 +308,15 @@ namespace BLL.Services
                 return false;
             }
 
-            if (!user.PasswordSetupLinkSentAt.HasValue)
-                return false;
+            if (user.PasswordSetupLinkSentAt.HasValue)
+            {
+                DateTime expiresAt =
+                    user.PasswordSetupLinkSentAt.Value
+                        .Add(SetupLinkLifetime);
 
-            DateTime expiresAt =
-                user.PasswordSetupLinkSentAt.Value
-                    .Add(SetupLinkLifetime);
-
-            if (DateTime.UtcNow < expiresAt)
-                return false;
+                if (DateTime.UtcNow < expiresAt)
+                    return false;
+            }
 
             SendPasswordSetupLink(user);
 
