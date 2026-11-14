@@ -68,15 +68,13 @@ jobs:
         run: |
           $target = "${{ github.workspace }}/publish/wwwroot"
 
-          New-Item -ItemType Directory `
-            -Force -Path $target | Out-Null
+          New-Item -ItemType Directory -Force -Path $target | Out-Null
 
           Copy-Item `
             -Path "${{ github.workspace }}/frontend/dist/*" `
             -Destination $target `
             -Recurse -Force
 
-     
       - name: Deploy to MonsterASP.NET
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
@@ -84,5 +82,5 @@ jobs:
           server-computer-name: https://site107779.siteasp.net:8172
           server-username: site107779
           server-password: ${{ secrets.MONSTER_WEBDEPLOY_PASSWORD }}
-     source-path: 'publish'
+          source-path: 'publish'
           target-delete: false
