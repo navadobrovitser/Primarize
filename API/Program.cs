@@ -458,6 +458,16 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Images"
 });
 
+
+
+
+
+// =====================================================
+// React frontend static files
+// =====================================================
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
 // =====================================================
 // 16. Swagger
 // =====================================================
@@ -490,6 +500,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapFallbackToFile("index.html")
+   .AllowAnonymous();
 
 // =====================================================
 // 18. Start
