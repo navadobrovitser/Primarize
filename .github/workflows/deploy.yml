@@ -45,7 +45,7 @@ jobs:
       - name: Build React
         working-directory: frontend
         env:
-          VITE_API_ORIGIN: https://primerize.runasp.net
+          VITE_API_ORIGIN: http://primerize.runasp.net
         run: npm run build
 
       - name: Setup .NET 10
