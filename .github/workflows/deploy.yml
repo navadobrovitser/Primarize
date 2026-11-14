@@ -84,5 +84,5 @@ jobs:
           server-computer-name: https://site107779.siteasp.net:8172
           server-username: site107779
           server-password: ${{ secrets.MONSTER_WEBDEPLOY_PASSWORD }}
-          source-path: '${{ github.workspace }}\publish'
+     source-path: 'publish'
           target-delete: false
