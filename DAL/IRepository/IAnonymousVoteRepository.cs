@@ -13,5 +13,6 @@ namespace DAL.IRepository
         List<AnonymousVote> GetByCandidateId(int candidateId);
         int CountByCandidate(int candidateId);
         List<AnonymousVote> GetByRandomVoteId(string userRandomVoteId);
+        void AddRange(List<AnonymousVote> votes);
     }
 }

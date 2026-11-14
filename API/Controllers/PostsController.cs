@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using API.Extensions;
 using BLL.IServices;
 using DTO.Posts;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using System.Collections.Generic;
-using System;
 
 namespace API.Controllers
 {
@@ -17,66 +19,98 @@ namespace API.Controllers
             _postService = postService;
         }
 
+        // שליפת כל הפוסטים
+        // GET: api/Posts
         [HttpGet]
+        [AllowAnonymous]
         public ActionResult<IEnumerable<PostDto>> GetAllPosts()
         {
-            return Ok(_postService.GetAllPosts());
+            var posts = _postService.GetAllPosts();
+            return Ok(posts);
         }
 
-        [HttpGet("{id}")]
+        // שליפת פוסט לפי מזהה
+        // GET: api/Posts/5
+        [HttpGet("{id:int}")]
+        [AllowAnonymous]
         public ActionResult<PostDto> GetPostById(int id)
         {
             var post = _postService.GetPostById(id);
-            if (post == null) return NotFound(new { message = "הפוסט לא נמצא" });
             return Ok(post);
         }
 
+        // יצירת פוסט - רק משתמש מחובר שהוא מועמד
+        // POST: api/Posts
         [HttpPost]
-        public ActionResult CreatePost([FromForm] CreatePostDto model)
+        [Authorize]
+        public ActionResult CreatePost(
+            [FromForm] CreatePostDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            int currentUserId = User.GetUserId();
 
-            try
+            var result = _postService.CreatePost(
+                model,
+                currentUserId
+            );
+
+            return Ok(new
             {
-                var result = _postService.CreatePost(model);
-                return Ok(new { message = "הפוסט נוצר בהצלחה!", data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                message = "הפוסט נוצר בהצלחה!",
+                data = result
+            });
         }
 
-        [HttpDelete("{id}")]
+        // עדכון פוסט של המועמד המחובר
+        // PUT: api/Posts/5
+        [HttpPut("{id:int}")]
+        [Authorize]
+        public IActionResult UpdatePost(
+            int id,
+            [FromForm] UpdatePostDto model)
+        {
+            int currentUserId = User.GetUserId();
+
+            _postService.UpdatePost(
+                id,
+                model,
+                currentUserId
+            );
+
+            return NoContent();
+        }
+
+        // מחיקת פוסט של המועמד המחובר
+        // DELETE: api/Posts/5
+        [HttpDelete("{id:int}")]
+        [Authorize]
         public ActionResult DeletePost(int id)
         {
-            try
+            int currentUserId = User.GetUserId();
+
+            _postService.DeletePost(
+                id,
+                currentUserId
+            );
+
+            return Ok(new
             {
-                _postService.DeletePost(id);
-                return Ok(new { message = "הפוסט נמחק בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+                message = "הפוסט נמחק בהצלחה!"
+            });
         }
 
-        [HttpPut("{id}")]
-        public IActionResult UpdatePost(int id, [FromForm] UpdatePostDto model)
+        // שליפת הפוסטים של המועמד המחובר בלבד
+        // GET: api/Posts/my-posts
+        [HttpGet("my-posts")]
+        [Authorize]
+        public ActionResult<IEnumerable<PostDto>> GetMyPosts()
         {
-            try
-            {
-                _postService.UpdatePost(id, model);
-                return NoContent();
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(ex.Message);
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(ex.Message);
-            }
+            int currentUserId = User.GetUserId();
+
+            var posts = _postService.GetPostsByCandidateId(
+                currentUserId
+            );
+
+            return Ok(posts);
         }
     }
 }

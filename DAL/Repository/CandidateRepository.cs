@@ -60,5 +60,21 @@ namespace DAL.Repository
                 .Include(c => c.Posts)
                 .FirstOrDefault(c => c.UserId == userId);
         }
+        public Candidate? GetOwned(int candidateId, int userId)
+        {
+            return _context.Candidates
+                .FirstOrDefault(c => c.CandidateId == candidateId && c.UserId == userId);
+        }
+
+
+
+        public Candidate? GetByCandidateId(int candidateId)
+        {
+            return _context.Candidates
+                .AsNoTracking()
+                .Include(c => c.User)
+                .FirstOrDefault(c => c.CandidateId == candidateId);
+        }
+
     }
 }

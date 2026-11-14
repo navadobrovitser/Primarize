@@ -11,5 +11,9 @@ namespace DAL.IRepository
         void Delete(int id);
         void Update(Candidate candidate);
         Candidate? GetByUserId(int userId);
+        Candidate? GetOwned(int candidateId, int userId);
+
+        Candidate? GetByCandidateId(int candidateId);
+
     }
 }

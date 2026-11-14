@@ -1,94 +1,78 @@
-﻿using AutoMapper;
-using DAL.Entities;
-using DAL.IRepository;
-using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
+using BLL.IServices;
 using DTO.Comment;
-[Route("api/[controller]")]
-[ApiController]
-public class CommentsController : ControllerBase
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using System.Collections.Generic;
+
+namespace API.Controllers
 {
-    private readonly ICommentRepository _commentRepository;
-    private readonly IMapper _mapper;
-
-    public CommentsController(ICommentRepository commentRepository, IMapper mapper)
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    public class CommentsController : ControllerBase
     {
-        _commentRepository = commentRepository;
-        _mapper = mapper;
-    }
+        private readonly ICommentService _commentService;
 
-    // הוספת תגובה חדשה (מקשרת ל-PostId ולמשתמש)
-    [HttpPost]
-    public IActionResult CreateComment([FromBody] CreateCommentDto dto)
-    {
-        if (!ModelState.IsValid)
+        public CommentsController(ICommentService commentService)
         {
-            return BadRequest(ModelState);
+            _commentService = commentService;
         }
 
-        // מיפוי ה-DTO ישירות לישות ה-Comment
-        var comment = _mapper.Map<Comment>(dto);
-
-        // שיוך מזהה המשתמש (לצורכי בדיקה כרגע ניתן להגדיר ערך קבוע, למשל 1)
-        comment.UserId = 1;
-        comment.CreatedAt = DateTime.UtcNow;
-
-        _commentRepository.Add(comment);
-
-        return Ok(new { message = "התגובה נוספה בהצלחה!", data = comment });
-    }
-
-    // עדכון תגובה קיימת לפי מזהה
-    [HttpPut("{id}")]
-    public IActionResult UpdateComment(int id, [FromBody] UpdateCommentDto dto)
-    {
-        var existingComment = _commentRepository.GetById(id);
-        if (existingComment == null)
+        // GET: api/Comments
+        [HttpGet]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<CommentDto>> GetAllComments()
         {
-            return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
+            var comments = _commentService.GetAllComments();
+            return Ok(comments);
         }
 
-        // עדכון תוכן התגובה בלבד (או שדות רלוונטיים נוספים)
-        existingComment.Content = dto.Content;
-
-        _commentRepository.Update(existingComment);
-
-        return Ok(new { message = "התגובה עודכנה בהצלחה!" });
-    }
-
-    // מחיקת תגובה לפי מזהה
-    [HttpDelete("{id}")]
-    public IActionResult DeleteComment(int id)
-    {
-        var existingComment = _commentRepository.GetById(id);
-        if (existingComment == null)
+        // GET: api/Comments/{id}
+        [HttpGet("{id:int}")]
+        [AllowAnonymous]
+        public ActionResult<CommentDto> GetCommentById(int id)
         {
-            return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
+            var comment = _commentService.GetCommentById(id);
+            return Ok(comment);
         }
 
-        _commentRepository.Delete(id);
-
-        return Ok(new { message = "התגובה נמחקה בהצלחה!" });
-    }
-
-    // קבלת רשימת כל התגובות במערכת
-    [HttpGet]
-    public IActionResult GetAllComments()
-    {
-        var comments = _commentRepository.GetAll();
-        var commentDtos = _mapper.Map<List<CommentDto>>(comments);
-        return Ok(commentDtos);
-    }
-
-    [HttpGet("{id}")]
-    public IActionResult GetCommentById(int id)
-    {
-        var comment = _commentRepository.GetById(id);
-        if (comment == null)
+        // GET: api/Comments/post/{postId}
+        [HttpGet("post/{postId:int}")]
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<CommentDto>> GetCommentsByPostId(int postId)
         {
-            return NotFound(new { message = "התגובה המבוקשת לא נמצאה." });
+            var comments = _commentService.GetCommentsByPostId(postId);
+            return Ok(comments);
         }
 
-        var commentDto = _mapper.Map<CommentDto>(comment);
-        return Ok(commentDto);
+        // POST: api/Comments
+        [HttpPost]
+        public ActionResult<CommentDto> CreateComment([FromBody] CreateCommentDto dto)
+        {
+            int currentUserId = User.GetUserId();
+            var result = _commentService.AddComment(dto, currentUserId);
+            return Ok(new { message = "התגובה נוספה בהצלחה!", data = result });
+        }
+
+        // PUT: api/Comments/{id}
+        [HttpPut("{id:int}")]
+        public IActionResult UpdateComment(int id, [FromBody] UpdateCommentDto dto)
+        {
+            int currentUserId = User.GetUserId();
+            _commentService.UpdateComment(id, dto, currentUserId);
+            return Ok(new { message = "התגובה עודכנה בהצלחה!" });
+        }
+
+        // DELETE: api/Comments/{id}
+        [HttpDelete("{id:int}")]
+        public IActionResult DeleteComment(int id)
+        {
+            int currentUserId = User.GetUserId();
+            string currentUserRole = User.GetUserRole(); // או העברת Role במידה וקיים Extension method מתאים
+
+            _commentService.DeleteComment(id, currentUserId, currentUserRole);
+            return Ok(new { message = "התגובה נמחקה בהצלחה!" });
+        }
     }
 }

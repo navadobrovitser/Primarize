@@ -7,11 +7,14 @@ namespace DTO.Users
     public class UserDto
     {
         public int UserId { get; set; }
-        public string Id { get; set; } // הוספת שדה תעודת הזהות
+        public string Id { get; set; } // תעודת זהות
         public string Name { get; set; }
         public string Email { get; set; }
+        public string Password { get; set; } // ---> הוספת שדה הסיסמה
         public string Phone { get; set; }
         public string Gender { get; set; }
+        public bool IsDeleted { get; set; }
         public DateTime PartyJoinDate { get; set; }
+        public DateTime? PasswordSetupLinkSentAt { get; set; }
     }
 }

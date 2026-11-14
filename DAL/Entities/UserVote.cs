@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿
+using System;
 using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace DAL.Entities
 {
@@ -10,12 +9,11 @@ namespace DAL.Entities
         [Key]
         public int UserVoteId { get; set; }
 
-        // מפתח זר למשתמש
         public int UserId { get; set; }
 
-        public DateTime VoteDate { get; set; } = DateTime.UtcNow; // תאריך וזמן ההצבעה
+        // תאריך בלבד, ללא שעה מדויקת
+        public DateTime VoteDate { get; set; } = DateTime.UtcNow.Date;
 
-        // Navigation Property לקשר מול משתמש
         public User User { get; set; } = null!;
     }
 }

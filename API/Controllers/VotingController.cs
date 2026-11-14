@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using API.Extensions;
+using API.Services;
 using BLL.IServices;
 using DTO.Voting;
-using System;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 
 namespace API.Controllers
 {
@@ -10,46 +12,112 @@ namespace API.Controllers
     public class VotingController : ControllerBase
     {
         private readonly IVotingService _votingService;
+        private readonly ElectionStateService _electionState;
 
-        public VotingController(IVotingService votingService)
+        public VotingController(
+            IVotingService votingService,
+            ElectionStateService electionState)
         {
             _votingService = votingService;
+            _electionState = electionState;
         }
 
-        // 1. Post: שליחת פתק הצבעה
+        // שליחת הצבעה - רק כשהבחירות פתוחות
         [HttpPost("cast")]
-        public IActionResult CastVote([FromQuery] int userId, [FromBody] CastVoteDto model)
+        [Authorize]
+        public IActionResult CastVote([FromBody] CastVoteDto model)
         {
-            if (!ModelState.IsValid)
+            int currentUserId = User.GetUserId();
+
+            if (_electionState.IsClosed)
             {
-                return BadRequest(ModelState);
+                return Conflict(new
+                {
+                    message = "ההצבעה הסתיימה."
+                });
             }
 
             try
             {
-                _votingService.CastVote(userId, model);
-                return Ok(new { message = "ההצבעה נקלטה בהצלחה!" });
+                _electionState.ExecuteVote(() =>
+                    _votingService.CastVote(currentUserId, model));
             }
-            catch (Exception ex)
+            catch (InvalidOperationException)
+                when (_electionState.IsClosed)
             {
-                return BadRequest(new { message = ex.Message });
+                return Conflict(new
+                {
+                    message = "ההצבעה הסתיימה."
+                });
             }
+
+            return Ok(new
+            {
+                message = "ההצבעה נקלטה בהצלחה!"
+            });
         }
 
-        // 2. Get לפי ID של משתמש: בדיקת סטטוס הצבעה
-        [HttpGet("status/{userId}")]
-        public ActionResult<VoteStatusDto> GetVoteStatus(int userId)
+        // סטטוס ההצבעה של המשתמש
+        [HttpGet("status")]
+        [Authorize]
+        public ActionResult<VoteStatusDto> GetMyVoteStatus()
         {
-            var status = _votingService.GetVoteStatus(userId);
-            return Ok(status);
+            int currentUserId = User.GetUserId();
+
+            return Ok(
+                _votingService.GetVoteStatus(currentUserId));
         }
 
-        // 3. Get: הצגת תוצאות הבחירות הכלליות
+        // האם הבחירות פתוחות או סגורות?
+        [HttpGet("election-status")]
+        [Authorize]
+        public IActionResult GetElectionStatus()
+        {
+            return Ok(new
+            {
+                isClosed = _electionState.IsClosed
+            });
+        }
+
+        // צפייה בתוצאות - רק אחרי הסגירה
         [HttpGet("results")]
+        [Authorize]
         public ActionResult<ElectionResultsDto> GetElectionResults()
         {
-            var results = _votingService.GetElectionResults();
+            if (!_electionState.IsClosed)
+            {
+                return StatusCode(403, new
+                {
+                    message = "התוצאות יתפרסמו לאחר סגירת ההצבעה."
+                });
+            }
+
+            return Ok(_electionState.GetResults());
+        }
+
+        // סגירת הבחירות - למנהל בלבד
+        [HttpPost("close")]
+        [Authorize(Roles = "Admin")]
+        public ActionResult<ElectionResultsDto> CloseElection()
+        {
+            var results = _electionState.CloseElection(
+                () => _votingService.GetElectionResults());
+
             return Ok(results);
+        }
+
+        // פתיחת הבחירות מחדש - למנהל בלבד
+        [HttpPost("open")]
+        [Authorize(Roles = "Admin")]
+        public IActionResult OpenElection()
+        {
+            _electionState.OpenElection();
+
+            return Ok(new
+            {
+                message = "הבחירות נפתחו מחדש בהצלחה.",
+                isClosed = false
+            });
         }
     }
 }

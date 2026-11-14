@@ -12,5 +12,6 @@ namespace DAL.IRepository
         void Update(Post post);
         List<Post> GetByCandidateId(int candidateId);
         List<Post> GetByContentType(PostContentType type);
+        Post? GetOwned(int id, int candidateId);
     }
 }

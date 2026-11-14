@@ -15,5 +15,8 @@ namespace DAL.IRepository
         UserVote? GetByUserId(int userId);
         bool HasVoted(int userId);
         int CountVotes();
+        UserVote? GetOwned(int userId);
+
+        void AddWithoutSave(UserVote userVote);
     }
 }

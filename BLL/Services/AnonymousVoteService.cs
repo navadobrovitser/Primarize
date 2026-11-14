@@ -3,6 +3,7 @@ using DAL.IRepository;
 using DAL.Entities;
 using DTO.Voting;
 using AutoMapper;
+using BLL.Exceptions;
 using System.Collections.Generic;
 
 namespace BLL.Services
@@ -26,12 +27,12 @@ namespace BLL.Services
         }
 
         // שליפת הצבעה אנונימית לפי מזהה
-        public AnonymousVoteDto? GetById(int id)
+        public AnonymousVoteDto GetById(int id)
         {
             var vote = _anonymousVoteRepository.GetById(id); 
             if (vote == null)
             {
-                return null;
+                throw new NotFoundException($"Anonymous vote with id {id} was not found");
             }
             return _mapper.Map<AnonymousVoteDto>(vote);
         }

@@ -13,5 +13,7 @@ namespace DAL.IRepository
         User? GetByEmail(string email);
         User? GetByEmailAndPassword(string email, string password);
         public User? GetByIdNumber(string idNumber);
+        User? GetOwned(int userId);
+        User? GetPartyLeader();
     }
 }

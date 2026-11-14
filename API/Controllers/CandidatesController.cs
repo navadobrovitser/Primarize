@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using BLL.IServices;
 using DTO.Candidates;
 using System.Collections.Generic;
-using System;
+using API.Extensions;
 
 namespace API.Controllers
 {
@@ -12,67 +14,107 @@ namespace API.Controllers
     {
         private readonly ICandidateService _candidateService;
 
-        public CandidatesController(ICandidateService candidateService)
+        public CandidatesController(
+            ICandidateService candidateService)
         {
             _candidateService = candidateService;
         }
 
+        // GET: api/Candidates
         [HttpGet]
-        public ActionResult<IEnumerable<CandidateListItemDto>> GetAllCandidates()
+        [AllowAnonymous]
+        public ActionResult<IEnumerable<CandidateListItemDto>>
+            GetAllCandidates()
         {
-            return Ok(_candidateService.GetAllCandidates());
+            var candidates = _candidateService.GetAllCandidates();
+            return Ok(candidates);
         }
 
-        [HttpGet("{id}")]
-        public ActionResult<CandidateDto> GetCandidateById(string id)
+        // GET: api/Candidates/by-id/999999999
+        [HttpGet("by-id/{id}")]
+        public ActionResult<CandidateDto>
+            GetCandidateById(string id)
         {
             var candidate = _candidateService.GetCandidateById(id);
-            if (candidate == null) return NotFound(new { message = "המועמד לא נמצא" });
             return Ok(candidate);
         }
 
+        // GET: api/Candidates/eligibility
+        // בדיקת זכאות לפי המשתמש המחובר
+        [HttpGet("eligibility")]
+        [Authorize]
+        public ActionResult<CandidateEligibilityDto>
+            GetEligibility()
+        {
+            int currentUserId = User.GetUserId();
+
+            var eligibility =
+                _candidateService.CheckEligibility(currentUserId);
+
+            return Ok(eligibility);
+        }
+
+        // POST: api/Candidates
         [HttpPost]
-        public ActionResult CreateCandidate([FromForm] CreateCandidateDto model)
+        [Authorize]
+        public ActionResult CreateCandidate(
+            [FromForm] CreateCandidateDto model)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            int currentUserId = User.GetUserId();
 
-            try
+            var result = _candidateService.CreateCandidate(
+                currentUserId,
+                model
+            );
+
+            return Ok(new
             {
-                var result = _candidateService.CreateCandidate(model);
-                return Ok(new { message = "המועמד נוצר בהצלחה!", data = result });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+                message = "המועמדות הוגשה בהצלחה!",
+                data = result
+            });
         }
 
-        [HttpPut("{id}")]
-        public ActionResult UpdateCandidate(string id, [FromForm] UpdateCandidateDto model)
+        // PUT: api/Candidates
+        [HttpPut]
+        [Authorize]
+        public ActionResult UpdateCandidate(
+            [FromForm] UpdateCandidateDto model)
         {
-            try
+            int currentUserId = User.GetUserId();
+
+            _candidateService.UpdateCandidate(
+                currentUserId,
+                model
+            );
+
+            return Ok(new
             {
-                _candidateService.UpdateCandidate(id, model);
-                return Ok(new { message = "המועמד עודכן בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+                message = "המועמד עודכן בהצלחה!"
+            });
         }
 
-        [HttpDelete("{id}")]
-        public ActionResult DeleteCandidate(string id) // שינוי מ-int ל-string
+        // GET: api/Candidates/me
+        [HttpGet("me")]
+        [Authorize]
+        public ActionResult<CandidateDto>
+            GetMyCandidate()
         {
-            try
-            {
-                _candidateService.DeleteCandidate(id);
-                return Ok(new { message = "המועמד נמחק בהצלחה!" });
-            }
-            catch (KeyNotFoundException ex)
-            {
-                return NotFound(new { message = ex.Message });
-            }
+            int currentUserId = User.GetUserId();
+
+            var candidate =
+                _candidateService.GetMyCandidate(currentUserId);
+
+            return Ok(candidate);
         }
+
+
+        [HttpGet("profile/{candidateId:int}")]
+        [AllowAnonymous]
+        public ActionResult<CandidateDto> GetCandidateProfile(int candidateId)
+        {
+            var candidate = _candidateService.GetCandidateByCandidateId(candidateId);
+            return Ok(candidate);
+        }
+
     }
 }

@@ -25,14 +25,25 @@ namespace DAL.Repository
                 .FirstOrDefault(p => p.PostId == id);
         }
 
+
+
+
+
         public List<Post> GetAll()
         {
             return _context.Posts
+                .AsNoTracking()
                 .Include(p => p.Candidate)
+                    .ThenInclude(c => c.User)
                 .Include(p => p.PostLikes)
+                .Include(p => p.Comments)
                 .OrderByDescending(p => p.CreatedAt)
+                .ThenByDescending(p => p.PostId)
                 .ToList();
         }
+
+
+
 
         public void Add(Post post)
         {
@@ -72,6 +83,16 @@ namespace DAL.Repository
                 .Where(p => p.ContentType == type)
                 .OrderByDescending(p => p.CreatedAt)
                 .ToList();
+        }
+
+        public Post? GetOwned(int id, int candidateId)
+        {
+            return _context.Posts
+                .Include(p => p.Candidate)
+                .Include(p => p.PostLikes)
+                .Include(p => p.Comments)
+                    .ThenInclude(c => c.User)
+                .FirstOrDefault(p => p.PostId == id && p.CandidateId == candidateId);
         }
     }
 }
