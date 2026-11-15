@@ -156,7 +156,8 @@ builder.Services.AddScoped<
 // =====================================================
 // 6. Business services
 // =====================================================
-
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<PasswordResetTokenService>(); 
 builder.Services.AddScoped<
     IUserService,
     UserService
