@@ -211,21 +211,22 @@ namespace BLL.Services
         // שליחת קישור להגדרת סיסמה
         // ==========================================
 
+
         private void SendPasswordSetupLink(User user)
         {
-            // מזהה ייחודי לכל קישור
             Guid tokenId = Guid.NewGuid();
 
-            // יצירת טוקן אישי ל-24 שעות
             string token = _passwordSetupTokens.GenerateToken(
                 user.UserId,
                 user.Email,
-                tokenId);
+                tokenId
+            );
 
             string frontendUrl =
                 _configuration["Frontend:BaseUrl"]
                 ?? throw new InvalidOperationException(
-                    "Frontend:BaseUrl is missing");
+                    "Frontend:BaseUrl is missing"
+                );
 
             string setupLink =
                 $"{frontendUrl.TrimEnd('/')}/set-password" +
@@ -247,14 +248,16 @@ namespace BLL.Services
 בברכה,
 צוות תנופה";
 
+            user.PasswordSetupTokenId = tokenId;
+            user.PasswordSetupLinkSentAt = DateTime.UtcNow;
+
+            _userRepository.Update(user);
+
             _emailService.SendEmail(
                 user.Email,
                 subject,
-                body);
-
-            // שמירת פרטי הקישור האחרון
-            user.PasswordSetupTokenId = tokenId;
-            user.PasswordSetupLinkSentAt = DateTime.UtcNow;
+                body
+            );
         }
 
         // ==========================================

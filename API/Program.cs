@@ -156,7 +156,8 @@ builder.Services.AddScoped<
 // =====================================================
 // 6. Business services
 // =====================================================
-
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<PasswordResetTokenService>(); 
 builder.Services.AddScoped<
     IUserService,
     UserService
@@ -384,7 +385,7 @@ builder.Services.AddAuthorization(options =>
 });
 
 // =====================================================
-// 9. CORS
+// 9. CORS - Local + MonsterASP
 // =====================================================
 
 builder.Services.AddCors(options =>
@@ -396,7 +397,10 @@ builder.Services.AddCors(options =>
                 "http://localhost:5173",
                 "http://localhost:5174",
                 "http://localhost:5175",
-                "http://localhost:5176"
+                "http://localhost:5176",
+                "https://localhost:5173",
+                "https://primerize.runasp.net",
+                "http://primerize.runasp.net"
             )
             .AllowAnyHeader()
             .AllowAnyMethod();
@@ -461,9 +465,6 @@ app.UseHttpsRedirection();
 // 15. Static media files
 // =====================================================
 
-// קבצים שנשמרים בתיקיית Images נגישים דרך:
-// https://localhost:7227/Images/file.jpg
-
 var mediaProvider =
     new PhysicalFileProvider(imagesFolder);
 
@@ -481,8 +482,8 @@ var mediaExtensions =
         ".mov"
     };
 
-// תאימות לכתובות ישנות שמכילות רק שם קובץ.
-// אין צורך לשלוח JWT עבור קובצי מדיה ציבוריים.
+// Compatibility with old media URLs
+// Example: /photo.jpg -> /Images/photo.jpg
 
 app.Use(async (context, next) =>
 {
@@ -529,7 +530,8 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// הגשת הקבצים לפני מנגנון ההרשאות
+// Public images and videos
+// Served before authentication
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -538,8 +540,21 @@ app.UseStaticFiles(new StaticFileOptions
 });
 
 // =====================================================
-// 16. Swagger
+// 16. React frontend
 // =====================================================
+
+// Serves index.html and files from wwwroot.
+// The React dist contents must be published to wwwroot.
+
+app.UseDefaultFiles();
+app.UseStaticFiles();
+
+// =====================================================
+// 17. Swagger
+// =====================================================
+
+// Swagger is available locally in Development.
+// It remains disabled in Production.
 
 if (app.Environment.IsDevelopment())
 {
@@ -557,7 +572,7 @@ if (app.Environment.IsDevelopment())
 }
 
 // =====================================================
-// 17. Middleware
+// 18. Middleware
 // =====================================================
 
 app.UseRouting();
@@ -568,10 +583,23 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+// API controllers
+
 app.MapControllers();
 
+// Unknown API endpoints must return 404.
+// Do not return React's index.html for API errors.
+
+app.Map("/api/{**path}", () => Results.NotFound())
+   .AllowAnonymous();
+
+// React SPA fallback
+
+app.MapFallbackToFile("index.html")
+   .AllowAnonymous();
+
 // =====================================================
-// 18. Start
+// 19. Start
 // =====================================================
 
 app.Run();
