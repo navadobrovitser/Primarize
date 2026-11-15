@@ -8,7 +8,9 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using BLL.Exceptions;
 namespace API.Controllers
+
 {
     [Route("api/[controller]")]
     [ApiController]
@@ -153,19 +155,54 @@ namespace API.Controllers
         // הרשמה - יצירת בקשה שממתינה לאישור
         // ==========================================
 
-        // POST: api/Users/register
+
         [HttpPost("register")]
         [AllowAnonymous]
         public IActionResult Register(
             [FromBody] RegisterUserDto dto)
         {
-            _userService.Register(dto);
-
-            return Ok(new
+            if (dto == null)
             {
-                message = "בקשת ההצטרפות נשלחה בהצלחה וממתינה לאישור מנהל."
-            });
+                return BadRequest(new
+                {
+                    message = "יש למלא את פרטי ההרשמה."
+                });
+            }
+
+            try
+            {
+                bool success = _userService.Register(dto);
+
+                if (!success)
+                {
+                    return BadRequest(new
+                    {
+                        message = "לא ניתן לבצע את ההרשמה."
+                    });
+                }
+
+                return Ok(new
+                {
+                    message =
+                        "בקשת ההצטרפות נשלחה בהצלחה וממתינה לאישור מנהל."
+                });
+            }
+            catch (ConflictException ex)
+            {
+                return Conflict(new
+                {
+                    message = ex.Message
+                });
+            }
+            catch (BusinessRuleException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
         }
+
 
         // ==========================================
         // התחברות
