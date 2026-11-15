@@ -22,7 +22,7 @@ namespace API.Controllers
 
         // GET: api/Candidates
         [HttpGet]
-        [AllowAnonymous]
+      
         public ActionResult<IEnumerable<CandidateListItemDto>>
             GetAllCandidates()
         {
