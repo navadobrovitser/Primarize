@@ -208,7 +208,67 @@ builder.Services.AddScoped<
     IPasswordHasher<User>,
     PasswordHasher<User>
 >();
+builder.Services.AddScoped<
+    IRegulationImportService,
+    RegulationImportService
+>();
+// =====================================================
+// שירות Embeddings עבור צ'אט התקנון
+//
+// השירות משתמש במודל Gemini ייעודי ליצירת וקטורים.
+// הוא נפרד משירות Gemini הקיים ליצירת תשובות.
+//
+// HttpClient מאפשר לשלוח בקשות ל-Gemini API.
+// מפתח ה-API נלקח מההגדרות הקיימות של השרת.
+// =====================================================
 
+// רישום HttpClientFactory לניהול חיבורי HTTP.
+builder.Services.AddHttpClient();
+
+// רישום שירות ה-Embeddings באמצעות הממשק שלו.
+builder.Services.AddScoped<
+    IRegulationEmbeddingService,
+    RegulationEmbeddingService
+>(serviceProvider =>
+{
+    // קבלת HttpClient מתוך המנגנון של ASP.NET.
+    var httpClientFactory = serviceProvider
+        .GetRequiredService<IHttpClientFactory>();
+
+    var httpClient = httpClientFactory.CreateClient();
+
+    // הגבלת זמן ההמתנה לתשובת Gemini.
+    httpClient.Timeout = TimeSpan.FromSeconds(60);
+
+    // יצירת השירות עם HttpClient ומפתח Gemini הקיים.
+    return new RegulationEmbeddingService(
+        httpClient,
+        apiKey
+    );
+});
+// =====================================================
+// שירות בניית מאגר הווקטורים של התקנון
+//
+// עובר על סעיפי גרסת התקנון,
+// יוצר Embeddings ושומר אותם במסד הנתונים.
+// =====================================================
+
+builder.Services.AddScoped<
+    IRegulationIndexService,
+    RegulationIndexService
+>();
+
+// =====================================================
+// שירות חיפוש סמנטי בתקנון המפורסם
+//
+// ממיר שאלות לווקטורים ומשווה אותם לסעיפי התקנון.
+// מחזיר עד חמישה סעיפים רלוונטיים.
+// =====================================================
+
+builder.Services.AddScoped<
+    IRegulationSearchService,
+    RegulationSearchService
+>();
 // =====================================================
 // 7. JWT
 // =====================================================
