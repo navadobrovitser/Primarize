@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -15,6 +16,8 @@ namespace BLL.Services
         private readonly AppDbContext _dbContext;
         private readonly IRegulationEmbeddingService _embeddingService;
 
+        private const int MaxResults = 5;
+
         public RegulationSearchService(
             AppDbContext dbContext,
             IRegulationEmbeddingService embeddingService)
@@ -24,12 +27,13 @@ namespace BLL.Services
         }
 
         // =====================================================
-        // חיפוש סמנטי בתקנון המפורסם
+        // חיפוש משולב בתקנון
         //
-        // 1. מאתרים גרסה מפורסמת אחת.
-        // 2. יוצרים Embedding לשאלת המשתמש.
-        // 3. משווים לווקטורים של סעיפי התקנון.
-        // 4. מחזירים את חמש התוצאות הטובות ביותר.
+        // 1. בחירת הגרסה המפורסמת האחרונה.
+        // 2. זיהוי מספרי סעיפים מפורשים בשאלה.
+        // 3. איתור הסעיפים המבוקשים ישירות.
+        // 4. השלמת התוצאות באמצעות חיפוש סמנטי.
+        // 5. החזרת עד חמש תוצאות מאותה גרסה בלבד.
         // =====================================================
 
         public async Task<List<RegulationSearchResult>> SearchAsync(
@@ -45,8 +49,7 @@ namespace BLL.Services
             // =================================================
             // 1. בחירת הגרסה המפורסמת האחרונה
             //
-            // לא מחפשים בטיוטות!
-            // כל תוצאות החיפוש יהיו מאותה גרסה.
+            // טיוטות אינן משתתפות בחיפוש.
             // =================================================
 
             var version = await _dbContext.RegulationVersions
@@ -64,7 +67,7 @@ namespace BLL.Services
             }
 
             // =================================================
-            // 2. שליפת הסעיפים של הגרסה שנבחרה בלבד
+            // 2. שליפת סעיפי הגרסה המפורסמת בלבד
             // =================================================
 
             var chunks = await _dbContext.RegulationChunks
@@ -80,10 +83,64 @@ namespace BLL.Services
             }
 
             // =================================================
-            // 3. יצירת Embedding לשאלה
+            // 3. זיהוי מספרי סעיפים בשאלה
             //
-            // משתמשים ב-RETRIEVAL_QUERY,
-            // ולא ב-RETRIEVAL_DOCUMENT.
+            // לדוגמה:
+            // "מה קובע סעיף 1.1?"
+            // "מה ההבדל בין סעיף 4.16 לסעיף 5.2?"
+            //
+            // הביטוי מזהה מספר בפורמט X.Y
+            // ואינו מזהה מספרים רגילים.
+            // =================================================
+
+            var requestedSectionNumbers = Regex.Matches(
+                    question,
+                    @"(?<![\d.])\d+\.\d+(?![\d.])"
+                )
+                .Select(m => m.Value)
+                .Distinct()
+                .ToList();
+
+            // =================================================
+            // 4. איתור הסעיפים שצוינו במפורש
+            //
+            // נותנים להם עדיפות על פני החיפוש הסמנטי.
+            // לא מכניסים סעיפים שאינם קיימים.
+            // =================================================
+
+            var exactResults = new List<RegulationSearchResult>();
+
+            foreach (string sectionNumber in requestedSectionNumbers)
+            {
+                var chunk = chunks.FirstOrDefault(
+                    c => c.SectionNumber == sectionNumber);
+
+                if (chunk == null)
+                {
+                    continue;
+                }
+
+                exactResults.Add(new RegulationSearchResult
+                {
+                    VersionId = version.VersionId,
+                    SectionNumber = chunk.SectionNumber,
+                    Content = chunk.Content,
+
+                    // ערך עדיפות פנימי בלבד.
+                    // אינו ציון דמיון סמנטי אמיתי.
+                    Similarity = 2.0
+                });
+
+                if (exactResults.Count == MaxResults)
+                {
+                    return exactResults;
+                }
+            }
+
+            // =================================================
+            // 5. יצירת Embedding לשאלת המשתמש
+            //
+            // החיפוש הסמנטי ממשיך לפעול כרגיל.
             // =================================================
 
             float[] questionVector = await _embeddingService
@@ -92,17 +149,31 @@ namespace BLL.Services
                     cancellationToken);
 
             // =================================================
-            // 4. חישוב דמיון בין השאלה לכל סעיף
+            // 6. חישוב דמיון סמנטי
+            //
+            // לא מחשבים שוב סעיפים שכבר נמצאו
+            // באמצעות מספר הסעיף.
             // =================================================
 
-            var results = new List<RegulationSearchResult>();
+            var exactSectionNumbers = exactResults
+                .Select(r => r.SectionNumber)
+                .ToHashSet();
+
+            var semanticResults =
+                new List<RegulationSearchResult>();
 
             foreach (var chunk in chunks)
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
+                if (exactSectionNumbers.Contains(chunk.SectionNumber))
+                {
+                    continue;
+                }
+
                 float[]? documentVector =
-                    JsonSerializer.Deserialize<float[]>(chunk.Embedding!);
+                    JsonSerializer.Deserialize<float[]>(
+                        chunk.Embedding!);
 
                 if (documentVector == null ||
                     documentVector.Length != questionVector.Length)
@@ -115,7 +186,7 @@ namespace BLL.Services
                     questionVector,
                     documentVector);
 
-                results.Add(new RegulationSearchResult
+                semanticResults.Add(new RegulationSearchResult
                 {
                     VersionId = version.VersionId,
                     SectionNumber = chunk.SectionNumber,
@@ -125,20 +196,30 @@ namespace BLL.Services
             }
 
             // =================================================
-            // 5. החזרת חמש התוצאות בעלות הדמיון הגבוה ביותר
+            // 7. שילוב התוצאות
+            //
+            // קודם סעיפים מפורשים, ואחריהם התוצאות
+            // הסמנטיות הטובות ביותר.
+            //
+            // בכל מקרה מחזירים עד חמש תוצאות בלבד.
             // =================================================
 
-            return results
+            int remainingSlots = MaxResults - exactResults.Count;
+
+            var bestSemanticResults = semanticResults
                 .OrderByDescending(r => r.Similarity)
-                .Take(5)
+                .Take(remainingSlots)
+                .ToList();
+
+            return exactResults
+                .Concat(bestSemanticResults)
                 .ToList();
         }
 
         // =====================================================
-        // Cosine Similarity
+        // חישוב Cosine Similarity
         //
-        // מחשב את הדמיון בין שני וקטורים.
-        // ככל שהערך גבוה יותר, הכיוונים שלהם דומים יותר.
+        // מחשב את מידת הדמיון בין שני וקטורים.
         // =====================================================
 
         private static double CosineSimilarity(

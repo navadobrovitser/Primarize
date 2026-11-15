@@ -10,6 +10,7 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Linq;
+using DTO.RegulationManagement;
 namespace API.Controllers
 {
     [ApiController]
@@ -32,16 +33,20 @@ namespace API.Controllers
         // מאפשר לבדוק את הרשאות המשתמש
         // לפי הנתונים העדכניים במסד הנתונים.
         private readonly AppDbContext _dbContext;
-
+        // שירות לניהול טיוטות ועריכת סעיפי התקנון.
+        private readonly IRegulationManagementService _managementService;
         public RegulationController(
            IRegulationImportService regulationService,
            IRegulationIndexService indexService,
            IWebHostEnvironment environment,
+           IRegulationManagementService managementService,
+
            AppDbContext dbContext)
         {
             _regulationService = regulationService;
             _indexService = indexService;
             _environment = environment;
+            _managementService = managementService;
             _dbContext = dbContext;
         }
         // =====================================================
@@ -610,5 +615,232 @@ namespace API.Controllers
                 totalChunks
             });
         }
+        // =====================================================
+        // בדיקת הרשאת מנהל
+        //
+        // פונקציית עזר משותפת לפעולות ניהול הטיוטות.
+        // בודקים את התפקיד העדכני במסד ולא רק בטוקן.
+        // =====================================================
+
+        private async Task<bool> IsCurrentUserAdminAsync(
+            CancellationToken cancellationToken)
+        {
+            string? userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier
+            )?.Value;
+
+            if (!int.TryParse(userIdValue, out int userId))
+            {
+                return false;
+            }
+
+            return await _dbContext.Users
+                .AsNoTracking()
+                .AnyAsync(
+                    u => u.UserId == userId
+                         && u.Role == "Admin"
+                         && u.IsApproved
+                         && !u.IsDeleted,
+                    cancellationToken);
+        }
+
+        // =====================================================
+        // יצירת טיוטה מתוך הגרסה המפורסמת
+        //
+        // POST: api/regulation/create-draft?versionNumber=1.1
+        //
+        // מעתיקים את התקנון הקיים לגרסת טיוטה חדשה.
+        // הצ'אט ממשיך להשתמש בגרסה המפורסמת.
+        // =====================================================
+
+        [HttpPost("create-draft")]
+        public async Task<IActionResult> CreateDraft(
+            [FromQuery] string versionNumber,
+            CancellationToken cancellationToken)
+        {
+            if (!await IsCurrentUserAdminAsync(cancellationToken))
+            {
+                return StatusCode(403, new
+                {
+                    message = "רק מנהל האתר רשאי לנהל טיוטות."
+                });
+            }
+
+            try
+            {
+                int versionId = await _managementService
+                    .CreateDraftFromPublishedAsync(
+                        versionNumber,
+                        cancellationToken);
+
+                return Ok(new
+                {
+                    message = "טיוטת התקנון נוצרה בהצלחה.",
+                    versionId,
+                    versionNumber,
+                    status = "Draft"
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // =====================================================
+        // שליפת סעיפי גרסת תקנון
+        //
+        // GET: api/regulation/versions/2/sections
+        //
+        // מחזירים את כל הסעיפים לפי הסדר,
+        // כדי להציג אותם במסך עריכת התקנון.
+        // =====================================================
+
+        [HttpGet("versions/{versionId:int}/sections")]
+        public async Task<IActionResult> GetVersionSections(
+            int versionId,
+            CancellationToken cancellationToken)
+        {
+            if (!await IsCurrentUserAdminAsync(cancellationToken))
+            {
+                return StatusCode(403, new
+                {
+                    message = "רק מנהל האתר רשאי לצפות במסך הניהול."
+                });
+            }
+
+            try
+            {
+                var sections = await _managementService
+                    .GetSectionsAsync(
+                        versionId,
+                        cancellationToken);
+
+                return Ok(sections);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+        // =====================================================
+        // עדכון תוכן של סעיף בטיוטה
+        //
+        // PUT: api/regulation/versions/2/sections/4.16
+        //
+        // הפעולה מעדכנת את התוכן ומבטלת את ה-Embedding
+        // הישן, כדי שניצור וקטור חדש לפני הפרסום.
+        // =====================================================
+
+        [HttpPut("versions/{versionId:int}/sections/{sectionNumber}")]
+        public async Task<IActionResult> UpdateDraftSection(
+            int versionId,
+            string sectionNumber,
+            [FromBody] UpdateRegulationSectionRequest request,
+            CancellationToken cancellationToken)
+        {
+            if (!await IsCurrentUserAdminAsync(cancellationToken))
+            {
+                return StatusCode(403, new
+                {
+                    message = "רק מנהל האתר רשאי לערוך את התקנון."
+                });
+            }
+
+            if (request == null ||
+                string.IsNullOrWhiteSpace(request.Content))
+            {
+                return BadRequest(new
+                {
+                    message = "יש להזין תוכן לסעיף."
+                });
+            }
+
+            try
+            {
+                await _managementService.UpdateSectionAsync(
+                    versionId,
+                    sectionNumber,
+                    request.Content,
+                    cancellationToken);
+
+                return Ok(new
+                {
+                    message = "הסעיף עודכן בהצלחה.",
+                    versionId,
+                    sectionNumber
+                });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+        // =====================================================
+        // שליפת רשימת גרסאות התקנון
+        //
+        // GET: api/regulation/versions
+        //
+        // מחזירים את הגרסאות עם מספר הסעיפים
+        // ומספר ה-Embeddings שעדיין חסרים.
+        //
+        // רק מנהל פעיל רשאי לקבל את המידע.
+        // =====================================================
+
+        [HttpGet("versions")]
+        public async Task<IActionResult> GetVersions(
+            CancellationToken cancellationToken)
+        {
+            // =================================================
+            // 1. בדיקת הרשאת מנהל
+            // =================================================
+
+            if (!await IsCurrentUserAdminAsync(cancellationToken))
+            {
+                return StatusCode(403, new
+                {
+                    message = "רק מנהל האתר רשאי לצפות בגרסאות התקנון."
+                });
+            }
+
+            // =================================================
+            // 2. שליפת כל הגרסאות ומצב ההכנה שלהן
+            // =================================================
+
+            var versions = await _dbContext.RegulationVersions
+                .AsNoTracking()
+                .Select(v => new
+                {
+                    versionId = v.VersionId,
+                    versionNumber = v.VersionNumber,
+                    status = v.Status,
+                    publishedAt = v.PublishedAt,
+
+                    totalSections = _dbContext.RegulationChunks.Count(
+                        c => c.VersionId == v.VersionId),
+
+                    missingEmbeddings = _dbContext.RegulationChunks.Count(
+                        c => c.VersionId == v.VersionId &&
+                             (c.Embedding == null || c.Embedding == ""))
+                })
+                .OrderByDescending(v => v.versionId)
+                .ToListAsync(cancellationToken);
+
+            // =================================================
+            // 3. החזרת הרשימה ל-React
+            // =================================================
+
+            return Ok(versions);
+        }
     }
+
 }
