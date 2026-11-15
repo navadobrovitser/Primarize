@@ -24,6 +24,15 @@ namespace BLL.IServices
             string sectionNumber,
             string content,
             CancellationToken cancellationToken = default);
+        // =====================================================
+        // העתקת Embeddings מסעיפים זהים בגרסה המפורסמת
+        // אל טיוטה קיימת, ללא קריאה ל-Gemini.
+        // מחזירה את מספר הווקטורים שהועתקו.
+        // =====================================================
+
+        Task<int> ReuseEmbeddingsAsync(
+            int versionId,
+            CancellationToken cancellationToken = default);
     }
 
     // מידע על סעיף שמוצג במסך הניהול.
@@ -32,5 +41,7 @@ namespace BLL.IServices
         public string SectionNumber { get; set; } = string.Empty;
 
         public string Content { get; set; } = string.Empty;
+   
     }
+
 }

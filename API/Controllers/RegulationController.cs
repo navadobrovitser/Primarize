@@ -492,34 +492,30 @@ namespace API.Controllers
         // גרסאות קודמות נשמרות במסד לצורכי היסטוריה.
         // =====================================================
 
+        // =====================================================
+        // פרסום גרסת תקנון חדשה
+        //
+        // POST: api/regulation/publish?versionId=2
+        //
+        // 1. בדיקת הרשאת מנהל.
+        // 2. בדיקה שהגרסה היא טיוטה.
+        // 3. בדיקה שכל הסעיפים מכילים Embeddings.
+        // 4. העברת הגרסה המפורסמת הקודמת לארכיון.
+        // 5. פרסום הגרסה החדשה.
+        //
+        // השינויים מתבצעים באותה טרנזקציה.
+        // =====================================================
+
         [HttpPost("publish")]
         public async Task<IActionResult> PublishRegulation(
             [FromQuery] int versionId,
             CancellationToken cancellationToken)
         {
             // =================================================
-            // 1. בדיקת זהות והרשאת מנהל
+            // 1. בדיקת הרשאת מנהל
             // =================================================
 
-            string? userIdValue = User.FindFirst(
-                ClaimTypes.NameIdentifier
-            )?.Value;
-
-            if (!int.TryParse(userIdValue, out int userId))
-            {
-                return Unauthorized();
-            }
-
-            bool isAdmin = await _dbContext.Users
-                .AsNoTracking()
-                .AnyAsync(
-                    u => u.UserId == userId
-                         && u.Role == "Admin"
-                         && u.IsApproved
-                         && !u.IsDeleted,
-                    cancellationToken);
-
-            if (!isAdmin)
+            if (!await IsCurrentUserAdminAsync(cancellationToken))
             {
                 return StatusCode(403, new
                 {
@@ -530,8 +526,8 @@ namespace API.Controllers
             // =================================================
             // 2. פתיחת טרנזקציה
             //
-            // הבדיקות והפרסום מתבצעים יחד,
-            // כדי לצמצם סיכון לשינוי מקביל בנתונים.
+            // כל שינויי הסטטוס נשמרים יחד.
+            // אם השמירה נכשלת, לא יבוצע פרסום חלקי.
             // =================================================
 
             await using var transaction =
@@ -540,7 +536,7 @@ namespace API.Controllers
                     cancellationToken);
 
             // =================================================
-            // 3. איתור גרסת התקנון
+            // 3. איתור הטיוטה
             // =================================================
 
             var version = await _dbContext.RegulationVersions
@@ -565,7 +561,7 @@ namespace API.Controllers
             }
 
             // =================================================
-            // 4. בדיקה שכל יחידות המידע מוכנות
+            // 4. בדיקה שכל סעיפי הטיוטה מוכנים
             // =================================================
 
             int totalChunks = await _dbContext.RegulationChunks
@@ -590,29 +586,52 @@ namespace API.Controllers
             }
 
             // =================================================
-            // 5. פרסום הגרסה
+            // 5. איתור הגרסאות המפורסמות הקיימות
             //
-            // רק עכשיו, אחרי שכל הבדיקות עברו,
-            // משנים את סטטוס הגרסה.
+            // מעבירים אותן לארכיון.
+            // הסעיפים וה-Embeddings שלהן נשמרים במסד.
+            // =================================================
+
+            var previousPublishedVersions =
+                await _dbContext.RegulationVersions
+                    .Where(v =>
+                        v.Status == "Published" &&
+                        v.VersionId != versionId)
+                    .ToListAsync(cancellationToken);
+
+            foreach (var previousVersion in previousPublishedVersions)
+            {
+                previousVersion.Status = "Archived";
+            }
+
+            // =================================================
+            // 6. פרסום הגרסה החדשה
             // =================================================
 
             version.Status = "Published";
             version.PublishedAt = DateTime.UtcNow;
 
-            await _dbContext.SaveChangesAsync(
-                cancellationToken);
+            // =================================================
+            // 7. שמירת כל השינויים יחד
+            // =================================================
 
-            await transaction.CommitAsync(
-                cancellationToken);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+
+            await transaction.CommitAsync(cancellationToken);
+
+            // =================================================
+            // 8. החזרת תוצאה ל-React
+            // =================================================
 
             return Ok(new
             {
                 message = "גרסת התקנון פורסמה בהצלחה.",
-                version.VersionId,
-                version.VersionNumber,
-                version.Status,
-                version.PublishedAt,
-                totalChunks
+                versionId = version.VersionId,
+                versionNumber = version.VersionNumber,
+                status = version.Status,
+                publishedAt = version.PublishedAt,
+                totalChunks,
+                archivedVersions = previousPublishedVersions.Count
             });
         }
         // =====================================================
@@ -840,6 +859,61 @@ namespace API.Controllers
             // =================================================
 
             return Ok(versions);
+        }
+
+        // =====================================================
+        // שימוש חוזר ב-Embeddings של סעיפים שלא השתנו
+        //
+        // POST: api/regulation/reuse-embeddings?versionId=2
+        //
+        // הפעולה זמינה למנהל בלבד.
+        // אינה שולחת בקשות ל-Gemini.
+        // =====================================================
+
+        [HttpPost("reuse-embeddings")]
+        public async Task<IActionResult> ReuseEmbeddings(
+            [FromQuery] int versionId,
+            CancellationToken cancellationToken)
+        {
+            // בדיקת הרשאת מנהל.
+            if (!await IsCurrentUserAdminAsync(cancellationToken))
+            {
+                return StatusCode(403, new
+                {
+                    message = "רק מנהל האתר רשאי להכין את התקנון."
+                });
+            }
+
+            try
+            {
+                // העתקת הווקטורים של הסעיפים הזהים.
+                int reusedCount =
+                    await _managementService.ReuseEmbeddingsAsync(
+                        versionId,
+                        cancellationToken);
+
+                // ספירת הסעיפים שעדיין חסרים להם וקטורים.
+                int remaining = await _dbContext.RegulationChunks
+                    .CountAsync(
+                        c => c.VersionId == versionId &&
+                             (c.Embedding == null || c.Embedding == ""),
+                        cancellationToken);
+
+                return Ok(new
+                {
+                    message = "בדיקת השימוש החוזר ב-Embeddings הסתיימה.",
+                    versionId,
+                    reusedCount,
+                    remaining
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new
+                {
+                    message = ex.Message
+                });
+            }
         }
     }
 

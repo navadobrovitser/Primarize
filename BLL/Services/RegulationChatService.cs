@@ -94,14 +94,44 @@ namespace BLL.Services
             // לדוגמה: "ומה קורה אם מצטרף מועמד חדש?"
             // =================================================
 
+            // =====================================================
+            // 3. הכנת טקסט לחיפוש הסמנטי
+            //
+            // השאלה הנוכחית היא העיקר.
+            //
+            // אם זו שאלת המשך שתלויה בהקשר קודם,
+            // נוסיף את שאלת המשתמש הקודמת בלבד.
+            //
+            // לא מוסיפים תשובות קודמות של Gemini,
+            // כדי שלא יכניסו לחיפוש מידע מיותר.
+            // =====================================================
+
             var searchText = new StringBuilder();
 
-            foreach (var message in recentMessages)
-            {
-                searchText.AppendLine(message.Text);
-            }
+            // השאלה הנוכחית תמיד נכללת בחיפוש.
+            searchText.AppendLine(request.Question.Trim());
 
-            searchText.AppendLine(request.Question);
+            // זיהוי בסיסי של שאלת המשך קצרה.
+            // לדוגמה: "ומה במקרה כזה?"
+            bool isFollowUp =
+                request.Question.Trim().Length < 45 &&
+                Regex.IsMatch(
+                    request.Question.Trim(),
+                    @"^(ומה|ואם|ומה לגבי|האם גם|אז|ובמקרה|למה|איך|מתי)\b");
+
+            // אם זו שאלת המשך, מוסיפים את שאלת המשתמש
+            // האחרונה מתוך היסטוריית השיחה.
+            if (isFollowUp)
+            {
+                var previousUserQuestion = recentMessages
+                    .LastOrDefault(m => m.Role == "user");
+
+                if (previousUserQuestion != null)
+                {
+                    searchText.AppendLine(
+                        previousUserQuestion.Text);
+                }
+            }
 
             // =================================================
             // 4. חיפוש סמנטי בתקנון
@@ -110,9 +140,20 @@ namespace BLL.Services
             // הוא מחזיר עד חמישה סעיפים רלוונטיים.
             // =================================================
 
+            // =====================================================
+            // החיפוש מקבל שני טקסטים:
+            //
+            // searchText — השאלה יחד עם הקשר השיחה,
+            // לצורך חיפוש סמנטי.
+            //
+            // request.Question — השאלה הנוכחית בלבד,
+            // לצורך זיהוי מספרי סעיפים מפורשים.
+            // =====================================================
+
             var results = await _searchService.SearchAsync(
                 searchText.ToString(),
-                cancellationToken);
+                cancellationToken,
+                request.Question);
 
             if (results.Count == 0)
             {
@@ -265,12 +306,46 @@ namespace BLL.Services
             // משתמשים ב-IChatClient שכבר רשום בפרויקט.
             // =================================================
 
-            var response = await _chatClient.GetResponseAsync(
-                messages,
-                cancellationToken: cancellationToken);
 
-            string answer = response.Text
-                ?? "לא ניתן להפיק תשובה כרגע.";
+            // =====================================================
+            // 10. קבלת תשובה ממודל Gemini
+            //
+            // אם Gemini אינו זמין או שהמכסה הסתיימה,
+            // מעבירים ל-Controller חריגה ייעודית.
+            //
+            // ביטול בקשה מצד המשתמש אינו נחשב לתקלה.
+            // =====================================================
+
+            string answer;
+
+            try
+            {
+                var response = await _chatClient.GetResponseAsync(
+                    messages,
+                    cancellationToken: cancellationToken);
+
+                answer = response.Text
+                    ?? "לא ניתן להפיק תשובה כרגע.";
+            }
+            catch (OperationCanceledException)
+                when (cancellationToken.IsCancellationRequested)
+            {
+                // הבקשה בוטלה על ידי המשתמש.
+                throw;
+            }
+            catch (Exception ex)
+            {
+                // שומרים את פרטי התקלה בחלון Debug.
+                System.Diagnostics.Debug.WriteLine(
+                    $"RAG Gemini error: {ex}");
+
+                // ה-Controller יתפוס את החריגה הזאת
+                // ויחזיר למשתמש הודעה ידידותית.
+                throw new RegulationAiUnavailableException(
+                    "שירות הבינה המלאכותית אינו זמין כרגע.",
+                    ex);
+            }
+
 
             // =================================================
             // 11. זיהוי מספרי הסעיפים שמופיעים בתשובה
@@ -282,12 +357,42 @@ namespace BLL.Services
             // מספר פרק . מספר סעיף
             // =================================================
 
+            // =====================================================
+            // 11. זיהוי מספרי הסעיפים בתשובת Gemini
+            //
+            // לדוגמה:
+            // "לפי סעיפים 5.11, 5.22 ו-4.14"
+            // =====================================================
+
             var mentionedSectionNumbers = Regex.Matches(
                     answer,
                     @"(?<![\d.])\d{1,2}\.\d{1,3}(?![\d.])"
                 )
                 .Select(match => match.Value)
                 .ToHashSet(StringComparer.Ordinal);
+
+            // =====================================================
+            // בדיקה אילו מספרי סעיפים נשלחו ל-Gemini
+            //
+            // אלה הסעיפים שמותר למודל לצטט בתשובה.
+            // =====================================================
+
+            var allowedSectionNumbers = results
+                .Select(r => r.SectionNumber)
+                .ToHashSet(StringComparer.Ordinal);
+
+            // =====================================================
+            // זיהוי הפניות לא תקינות
+            //
+            // אם Gemini הזכיר סעיף שלא נשלח אליו,
+            // המשתנה יהיה true.
+            // =====================================================
+
+            bool hasInvalidReferences = mentionedSectionNumbers
+                .Any(sectionNumber =>
+                    !allowedSectionNumbers.Contains(sectionNumber));
+
+
 
             // =================================================
             // 12. סינון המקורות
@@ -300,16 +405,29 @@ namespace BLL.Services
             // או סעיף לא קשור שלא הוזכר בתשובה.
             // =================================================
 
+
+            // =====================================================
+            // 12. בניית מקורות התשובה
+            //
+            // מחזירים את כל הסעיפים שהוזכרו בתשובה
+            // ושנמצאים במקורות המאושרים.
+            //
+            // כל מספר סעיף יופיע פעם אחת בלבד.
+            // =====================================================
+
             var sources = results
                 .Where(r =>
                     mentionedSectionNumbers.Contains(
                         r.SectionNumber))
+                .GroupBy(r => r.SectionNumber)
+                .Select(group => group.First())
                 .Select(r => new RegulationChatSourceDto
                 {
                     SectionNumber = r.SectionNumber,
                     Content = r.Content
                 })
                 .ToList();
+
 
             // =================================================
             // 13. טיפול בתשובה ללא מקורות
@@ -324,10 +442,29 @@ namespace BLL.Services
             const string noInformationMessage =
                 "לא מצאתי בתקנון מידע מספיק כדי לענות על השאלה.";
 
-            if (sources.Count == 0)
+            // אם אין מקורות מאומתים, או ש-Gemini ציין
+            // מספר סעיף שלא נכלל במקורות שקיבל,
+            // לא מציגים את התשובה הלא מאומתת.
+
+            if (sources.Count == 0 || hasInvalidReferences)
             {
                 answer = noInformationMessage;
+                sources.Clear();
             }
+
+            System.Diagnostics.Debug.WriteLine(
+                "RAG - Mentioned: " +
+                string.Join(", ", mentionedSectionNumbers));
+
+            System.Diagnostics.Debug.WriteLine(
+                "RAG - Search results: " +
+                string.Join(", ",
+                    results.Select(r => r.SectionNumber)));
+
+            System.Diagnostics.Debug.WriteLine(
+                "RAG - Displayed sources: " +
+                string.Join(", ",
+                    sources.Select(s => s.SectionNumber)));
 
             // =================================================
             // 14. החזרת התשובה והמקורות ללקוח

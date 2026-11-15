@@ -1,4 +1,6 @@
-﻿using BLL.IServices;
+﻿
+using BLL.IServices;
+using BLL.Services;
 using DTO.RegulationChat;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -47,6 +49,7 @@ namespace API.Controllers
         {
             try
             {
+                // הפעלת שירות ה-RAG
                 var response = await _chatService.AskAsync(
                     request,
                     cancellationToken);
@@ -55,13 +58,25 @@ namespace API.Controllers
             }
             catch (ArgumentException ex)
             {
+                // שאלה או היסטוריית שיחה לא תקינה
                 return BadRequest(new
                 {
                     message = ex.Message
                 });
             }
+            catch (RegulationAiUnavailableException)
+            {
+                // תקלה בשירות Gemini
+                // מחזירים 503 במקום שגיאת 500 כללית.
+                return StatusCode(503, new
+                {
+                    message =
+                        "שירות הצ'אט אינו זמין כרגע. נסי שוב מאוחר יותר."
+                });
+            }
             catch (InvalidOperationException)
             {
+                // תקלה במאגר התקנון
                 return StatusCode(503, new
                 {
                     message =

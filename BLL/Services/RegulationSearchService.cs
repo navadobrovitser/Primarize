@@ -37,8 +37,9 @@ namespace BLL.Services
         // =====================================================
 
         public async Task<List<RegulationSearchResult>> SearchAsync(
-            string question,
-            CancellationToken cancellationToken = default)
+      string question,
+      CancellationToken cancellationToken = default,
+      string? currentQuestion = null)
         {
             if (string.IsNullOrWhiteSpace(question))
             {
@@ -93,8 +94,20 @@ namespace BLL.Services
             // ואינו מזהה מספרים רגילים.
             // =================================================
 
+            // =====================================================
+            // זיהוי סעיפים מפורשים רק מתוך השאלה הנוכחית.
+            //
+            // question מכיל גם את ההיסטוריה לצורך חיפוש סמנטי.
+            // currentQuestion מכיל רק את שאלת המשתמש החדשה.
+            //
+            // כך סעיפים שהוזכרו בשיחה קודמת לא יקבלו
+            // עדיפות אוטומטית בחיפוש החדש.
+            // =====================================================
+
+            string textForExactSearch = currentQuestion ?? question;
+
             var requestedSectionNumbers = Regex.Matches(
-                    question,
+                    textForExactSearch,
                     @"(?<![\d.])\d+\.\d+(?![\d.])"
                 )
                 .Select(m => m.Value)

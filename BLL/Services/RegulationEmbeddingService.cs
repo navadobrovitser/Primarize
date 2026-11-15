@@ -1,4 +1,5 @@
-﻿using BLL.IServices;
+﻿
+using BLL.IServices;
 using System;
 using System.Collections.Generic;
 using System.Net.Http;
@@ -17,8 +18,13 @@ namespace BLL.Services
 
         private const string ModelName = "gemini-embedding-001";
 
-        // נשמור וקטורים בעלי 768 ממדים.
-        // בהמשך גם השאלות ייווצרו באותו מספר ממדים.
+        // =====================================================
+        // מספר הממדים של ה-Embeddings
+        //
+        // חשוב לשמור על 768, כי גם הווקטורים
+        // הקיימים במסד הנתונים נוצרו בגודל הזה.
+        // =====================================================
+
         private const int VectorDimensions = 768;
 
         public RegulationEmbeddingService(
@@ -30,7 +36,7 @@ namespace BLL.Services
         }
 
         // =====================================================
-        // יצירת Embedding עבור סעיף מהתקנון
+        // 1. יצירת Embedding עבור סעיף מהתקנון
         // =====================================================
 
         public Task<float[]> GenerateDocumentEmbeddingAsync(
@@ -44,7 +50,7 @@ namespace BLL.Services
         }
 
         // =====================================================
-        // יצירת Embedding עבור שאלת משתמש
+        // 2. יצירת Embedding עבור שאלת משתמש
         // =====================================================
 
         public Task<float[]> GenerateQueryEmbeddingAsync(
@@ -58,7 +64,10 @@ namespace BLL.Services
         }
 
         // =====================================================
-        // שליחת הטקסט ל-Gemini וקבלת הווקטור
+        // 3. שליחת הטקסט ל-Gemini וקבלת Embedding
+        //
+        // במקרה של תקלה בתקשורת עם Gemini,
+        // נזרוק חריגה ייעודית שה-Controller מזהה.
         // =====================================================
 
         private async Task<float[]> GenerateEmbeddingAsync(
@@ -66,17 +75,28 @@ namespace BLL.Services
             string taskType,
             CancellationToken cancellationToken)
         {
+            // =============================================
+            // בדיקת תקינות הטקסט
+            // =============================================
+
             if (string.IsNullOrWhiteSpace(text))
             {
                 throw new ArgumentException(
                     "לא ניתן ליצור Embedding לטקסט ריק.");
             }
 
+            // =============================================
+            // כתובת השירות של Gemini
+            // =============================================
+
             string url =
-                $"https://generativelanguage.googleapis.com/" +
+                "https://generativelanguage.googleapis.com/" +
                 $"v1beta/models/{ModelName}:embedContent";
 
-            // גוף הבקשה בהתאם למבנה של Gemini API.
+            // =============================================
+            // בניית גוף הבקשה
+            // =============================================
+
             var requestBody = new
             {
                 model = $"models/{ModelName}",
@@ -98,46 +118,102 @@ namespace BLL.Services
                 HttpMethod.Post,
                 url);
 
-            // מפתח ה-API מועבר בכותרת ולא בכתובת.
+            // מפתח ה-API מועבר בכותרת הבקשה.
             request.Headers.Add(
                 "x-goog-api-key",
                 _apiKey);
 
             request.Content = JsonContent.Create(requestBody);
 
-            using var response = await _httpClient.SendAsync(
-                request,
-                cancellationToken);
+            // =============================================
+            // 4. שליחת הבקשה ל-Gemini
+            //
+            // כאן מטפלים בשגיאות HTTP,
+            // כולל 429 - חריגה ממכסת השימוש.
+            // =============================================
 
-            // אם Gemini החזיר שגיאה, לא נשמור וקטור שגוי.
-            response.EnsureSuccessStatusCode();
+            HttpResponseMessage response;
 
-            using var stream = await response.Content
-                .ReadAsStreamAsync(cancellationToken);
-
-            using var json = await JsonDocument.ParseAsync(
-                stream,
-                cancellationToken: cancellationToken);
-
-            // חילוץ רשימת המספרים מתשובת Gemini.
-            JsonElement values = json.RootElement
-                .GetProperty("embedding")
-                .GetProperty("values");
-
-            var vector = new List<float>();
-
-            foreach (JsonElement value in values.EnumerateArray())
+            try
             {
-                vector.Add(value.GetSingle());
+                response = await _httpClient.SendAsync(
+                    request,
+                    cancellationToken);
+
+                // בדיקה שהתקבלה תשובת HTTP תקינה.
+                response.EnsureSuccessStatusCode();
+            }
+            catch (OperationCanceledException)
+                when (cancellationToken.IsCancellationRequested)
+            {
+                // המשתמש ביטל את הבקשה.
+                throw;
+            }
+            catch (HttpRequestException ex)
+            {
+                // שגיאת HTTP, כולל 429.
+                System.Diagnostics.Debug.WriteLine(
+                    $"RAG Embedding HTTP error: {ex}");
+
+                throw new RegulationAiUnavailableException(
+                    "שירות יצירת ה-Embeddings אינו זמין כרגע.",
+                    ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                // Timeout בזמן התקשורת עם Gemini.
+                System.Diagnostics.Debug.WriteLine(
+                    $"RAG Embedding timeout: {ex}");
+
+                throw new RegulationAiUnavailableException(
+                    "שירות יצירת ה-Embeddings אינו זמין כרגע.",
+                    ex);
             }
 
-            if (vector.Count != VectorDimensions)
-            {
-                throw new InvalidOperationException(
-                    "Gemini החזיר וקטור באורך לא צפוי.");
-            }
+            // =============================================
+            // 5. קריאת התשובה שהתקבלה
+            //
+            // מחלצים את הווקטור מתוך ה-JSON.
+            // =============================================
 
-            return vector.ToArray();
+            using (response)
+            {
+                using var stream = await response.Content
+                    .ReadAsStreamAsync(cancellationToken);
+
+                using var json = await JsonDocument.ParseAsync(
+                    stream,
+                    cancellationToken: cancellationToken);
+
+                JsonElement values = json.RootElement
+                    .GetProperty("embedding")
+                    .GetProperty("values");
+
+                var vector = new List<float>();
+
+                foreach (JsonElement value in values.EnumerateArray())
+                {
+                    vector.Add(value.GetSingle());
+                }
+
+                // =========================================
+                // 6. בדיקת מספר הממדים
+                //
+                // לא מחזירים וקטור באורך שגוי.
+                // =========================================
+
+                if (vector.Count != VectorDimensions)
+                {
+                    throw new InvalidOperationException(
+                        "Gemini החזיר וקטור באורך לא צפוי.");
+                }
+
+                // =========================================
+                // 7. החזרת ה-Embedding
+                // =========================================
+
+                return vector.ToArray();
+            }
         }
     }
 }

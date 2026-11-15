@@ -9,8 +9,9 @@ namespace BLL.IServices
         // מחפש עד חמישה קטעים רלוונטיים
         // בגרסת התקנון המפורסמת והפעילה.
         Task<List<RegulationSearchResult>> SearchAsync(
-            string question,
-            CancellationToken cancellationToken = default);
+     string question,
+     CancellationToken cancellationToken = default,
+     string? currentQuestion = null);
     }
 
     public class RegulationSearchResult
