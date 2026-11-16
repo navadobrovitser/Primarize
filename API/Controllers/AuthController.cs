@@ -27,8 +27,8 @@ namespace API.Controllers
         }
 
         [HttpPost("login-step1")]
-        public IActionResult LoginStep1(
-            [FromBody] LoginRequestDto dto)
+        //שלב ראישון בהתחברות תז+סיסימא
+        public IActionResult LoginStep1([FromBody] LoginRequestDto dto)
         {
             if (dto == null ||
                 string.IsNullOrWhiteSpace(dto.IdNumber) ||
@@ -89,7 +89,7 @@ namespace API.Controllers
 
             return Ok(result);
         }
-
+        [AllowAnonymous]
         [HttpPost("forgot-password")]
         public IActionResult ForgotPassword(
             [FromBody] ForgotPasswordDto dto)

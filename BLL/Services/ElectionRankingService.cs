@@ -10,6 +10,13 @@ namespace BLL.Services
 {
     public class ElectionRankingService
     {
+        // =====================================================
+        // 1. חישוב הדירוג הסופי של המועמדים
+        //
+        // האלגוריתם מבוסס על Instant Runoff Voting (IRV).
+        // בכל שלב נבחר המועמד המוביל מבין המועמדים שנותרו.
+        // =====================================================
+
         public List<int> CalculateRanking(
             List<Candidate> candidates,
             List<AnonymousVote> votes,
@@ -21,7 +28,7 @@ namespace BLL.Services
             if (votes == null)
                 throw new ArgumentNullException(nameof(votes));
 
-            // אם לא סופק מפתח, נוצר מפתח חדש להרצה
+            // מפתח המשמש להכרעה עקבית במקרי שוויון
             tieBreakSeed ??= Guid.NewGuid().ToString("N");
 
             var candidateIds = candidates
@@ -33,7 +40,13 @@ namespace BLL.Services
 
             var validCandidateIds = candidateIds.ToHashSet();
 
-            // בדיקת תקינות פתקי ההצבעה
+            // =====================================================
+            // 2. אימות תקינות נתוני ההצבעה
+            //
+            // בדיקת קיום מועמדים, טווח העדיפויות
+            // ותקינות המזהה האנונימי של כל פתק.
+            // =====================================================
+
             foreach (var vote in votes)
             {
                 if (!validCandidateIds.Contains(vote.CandidateId))
@@ -45,6 +58,13 @@ namespace BLL.Services
                 if (string.IsNullOrWhiteSpace(vote.UserRandomVoteId))
                     throw new ArgumentException("נמצא פתק ללא מזהה.");
             }
+
+            // =====================================================
+            // 3. בניית פתקי הצבעה מדורגים
+            //
+            // קיבוץ הרשומות לפי מזהה פתק אנונימי.
+            // כל פתק מיוצג כרשימת מועמדים לפי סדר העדיפות.
+            // =====================================================
 
             var ballots = votes
                 .GroupBy(v => v.UserRandomVoteId)
@@ -75,6 +95,13 @@ namespace BLL.Services
                 })
                 .ToList();
 
+            // =====================================================
+            // 4. בניית הדירוג הסופי
+            //
+            // בחירה חוזרת של המועמד המוביל והסרתו
+            // מרשימת המועמדים לצורך קביעת המקום הבא.
+            // =====================================================
+
             var ranking = new List<int>();
 
             var remaining = candidateIds
@@ -97,7 +124,7 @@ namespace BLL.Services
                 remaining.Remove(winner);
             }
 
-            // מועמדים שלא הופיעו באף פתק
+            // מועמדים שלא דורגו באף פתק משובצים בסוף הרשימה
             var withoutVotes = candidateIds
                 .Except(ranking)
                 .OrderBy(id => id)
@@ -115,6 +142,14 @@ namespace BLL.Services
 
             return ranking;
         }
+
+        // =====================================================
+        // 5. מציאת המועמד המוביל - IRV
+        //
+        // בכל סבב נספרת ההעדפה הגבוהה ביותר שעדיין פעילה.
+        // מועמד בעל רוב מוחלט נבחר.
+        // אחרת, המועמד בעל מספר הקולות הנמוך ביותר מודח.
+        // =====================================================
 
         private int FindWinner(
             List<int> remainingCandidates,
@@ -149,7 +184,7 @@ namespace BLL.Services
                     }
                 }
 
-                // אין יותר פתקים פעילים
+                // טיפול במקרה שלא נותרו פתקים פעילים
                 if (activeBallots == 0)
                 {
                     return ResolveByOriginalPriorities(
@@ -159,7 +194,7 @@ namespace BLL.Services
                         position);
                 }
 
-                // רוב מוחלט מתוך הפתקים הפעילים
+                // בחירת מועמד שקיבל יותר ממחצית הקולות הפעילים
                 foreach (var item in counts.OrderBy(x => x.Key))
                 {
                     if (item.Value * 2 > activeBallots)
@@ -199,6 +234,14 @@ namespace BLL.Services
             return active.Single();
         }
 
+        // =====================================================
+        // 6. הכרעה בשוויון בין מועמדים להדחה
+        //
+        // תחילה נבדקות תוצאות הסבבים הקודמים.
+        // אם השוויון נמשך, ההכרעה מתבצעת באמצעות SHA256
+        // ומפתח קבוע המאפשר לשחזר את התוצאה.
+        // =====================================================
+
         private int ResolveEliminationTie(
             List<int> tiedCandidates,
             List<Dictionary<int, int>> previousRounds,
@@ -222,7 +265,7 @@ namespace BLL.Services
                     return tied[0];
             }
 
-            // הגרלה ניתנת לשחזור באמצעות מפתח קבוע
+            // הכרעה פסאודו-אקראית הניתנת לשחזור
             return tied
                 .OrderBy(id => TieBreakValue(
                     seed,
@@ -231,6 +274,13 @@ namespace BLL.Services
                 .ThenBy(id => id)
                 .First();
         }
+
+        // =====================================================
+        // 7. הכרעה לפי העדיפויות המקוריות
+        //
+        // כאשר אין פתקים פעילים, נבדקת כמות הדירוגים
+        // שקיבל כל מועמד בכל רמת עדיפות, מהגבוהה לנמוכה.
+        // =====================================================
 
         private int ResolveByOriginalPriorities(
             HashSet<int> candidates,
@@ -268,6 +318,13 @@ namespace BLL.Services
                 .ThenBy(id => id)
                 .First();
         }
+
+        // =====================================================
+        // 8. יצירת ערך להכרעה בשוויון
+        //
+        // שימוש ב-SHA256 ליצירת ערך דטרמיניסטי
+        // המבוסס על המפתח, ההקשר ומזהה המועמד.
+        // =====================================================
 
         private string TieBreakValue(
             string seed,

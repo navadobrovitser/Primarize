@@ -9,8 +9,16 @@ namespace BLL.Services
     {
         private readonly ITimeLimitedDataProtector _protector;
 
+        // תוקף קישור איפוס הסיסמה
         private static readonly TimeSpan Lifetime =
             TimeSpan.FromMinutes(30);
+
+        // =====================================================
+        // 1. אתחול מנגנון Data Protection
+        //
+        // יצירת מנגנון להגנה על טוקנים בעלי תוקף מוגבל.
+        // שימוש ב-Purpose ייעודי לטוקנים של איפוס סיסמה.
+        // =====================================================
 
         public PasswordResetTokenService(
             IDataProtectionProvider provider)
@@ -19,6 +27,13 @@ namespace BLL.Services
                 .CreateProtector("Tenufa.PasswordReset.v1")
                 .ToTimeLimitedDataProtector();
         }
+
+        // =====================================================
+        // 2. יצירת טוקן לאיפוס סיסמה
+        //
+        // הגנה על פרטי המשתמש באמצעות Data Protection.
+        // הטוקן תקף למשך 30 דקות מרגע יצירתו.
+        // =====================================================
 
         public string GenerateToken(
             int userId,
@@ -45,6 +60,13 @@ namespace BLL.Services
                 Lifetime
             );
         }
+
+        // =====================================================
+        // 3. אימות טוקן לאיפוס סיסמה
+        //
+        // פענוח הטוקן, בדיקת תקפותו ואימות מבנה הנתונים.
+        // טוקן פג תוקף או לא תקין נדחה.
+        // =====================================================
 
         public bool TryValidateToken(
             string token,
@@ -85,6 +107,13 @@ namespace BLL.Services
                 return false;
             }
         }
+
+        // =====================================================
+        // 4. מבנה הנתונים המוגן בטוקן
+        //
+        // שמירת מזהה המשתמש, כתובת המייל
+        // ומזהה ייחודי של בקשת האיפוס.
+        // =====================================================
 
         private class ResetPayload
         {

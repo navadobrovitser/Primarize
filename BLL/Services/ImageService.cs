@@ -7,6 +7,12 @@ using System.Linq;
 
 namespace BLL.Services
 {
+    // =====================================================
+    // 1. ממשק לניהול קובצי מדיה
+    //
+    // הגדרת פעולות לשמירה ומחיקה של תמונות וסרטונים.
+    // =====================================================
+
     public interface IImageService
     {
         string Save(IFormFile file);
@@ -19,6 +25,12 @@ namespace BLL.Services
     {
         private readonly string _folder;
 
+        // =====================================================
+        // 2. אתחול תיקיית האחסון
+        //
+        // קבלת נתיב האחסון ויצירת התיקייה במידת הצורך.
+        // =====================================================
+
         public ImageService(string folder)
         {
             _folder = folder;
@@ -29,13 +41,22 @@ namespace BLL.Services
             }
         }
 
-        // שמירת תמונה - המתודה הקיימת
+        // =====================================================
+        // 3. תאימות לממשק השמירה הקיים
+        // =====================================================
+
         public string Save(IFormFile file)
         {
             return SaveImage(file);
         }
 
-        // שמירת תמונה
+        // =====================================================
+        // 4. שמירת תמונות
+        //
+        // אימות סוג הקובץ וגודלו לפני שמירה.
+        // הגבלת העלאה לפורמטים מאושרים בלבד.
+        // =====================================================
+
         public string SaveImage(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -71,7 +92,13 @@ namespace BLL.Services
                 );
             }
 
-            // בדיקת חתימת הקובץ
+            // =====================================================
+            // 5. אימות חתימת קובץ (Magic Bytes)
+            //
+            // בדיקת תוכן הקובץ ולא רק הסיומת שלו,
+            // לצמצום האפשרות להעלאת קובץ מסוג שגוי.
+            // =====================================================
+
             using (var stream = file.OpenReadStream())
             {
                 var header = new byte[12];
@@ -125,6 +152,7 @@ namespace BLL.Services
                 }
             }
 
+            // יצירת שם ייחודי למניעת התנגשויות בין קבצים
             var fileName = Guid.NewGuid() + ext;
             var fullPath = Path.Combine(
                 _folder,
@@ -139,7 +167,13 @@ namespace BLL.Services
             return fileName;
         }
 
-        // שמירת סרטון
+        // =====================================================
+        // 6. שמירת סרטונים
+        //
+        // בדיקת סיומת וגודל הקובץ לפני שמירה.
+        // יצירת שם קובץ ייחודי באמצעות GUID.
+        // =====================================================
+
         public string SaveVideo(IFormFile file)
         {
             if (file == null || file.Length == 0)
@@ -188,7 +222,13 @@ namespace BLL.Services
             return fileName;
         }
 
-        // מחיקת קובץ
+        // =====================================================
+        // 7. מחיקת קובצי מדיה
+        //
+        // אימות שם הקובץ למניעת Path Traversal
+        // ומחיקה מתיקיית האחסון המוגדרת בלבד.
+        // =====================================================
+
         public void Delete(string fileName)
         {
             if (string.IsNullOrWhiteSpace(fileName))
@@ -196,7 +236,6 @@ namespace BLL.Services
                 return;
             }
 
-            // מניעת שימוש בנתיבים חיצוניים
             var safeFileName = Path.GetFileName(fileName);
 
             if (safeFileName != fileName)

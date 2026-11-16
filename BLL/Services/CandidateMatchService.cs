@@ -17,6 +17,12 @@ namespace BLL.Services
         private readonly ICandidateService _candidateService;
         private readonly IPostService _postService;
 
+        // =====================================================
+        // 1. הגדרות חיפוש ועיבוד JSON
+        //
+        // הגדרת מילים לא משמעותיות לסינון ומבנה פענוח תשובות המודל.
+        // =====================================================
+
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNameCaseInsensitive = true
@@ -34,6 +40,12 @@ namespace BLL.Services
             "בנושא", "נושא", "מישהו", "משהו"
         };
 
+        // =====================================================
+        // 2. הזרקת תלויות
+        //
+        // שילוב מודל השפה עם שירותי המועמדים והפוסטים.
+        // =====================================================
+
         public CandidateMatchService(
             IChatClient chatClient,
             ICandidateService candidateService,
@@ -43,6 +55,12 @@ namespace BLL.Services
             _candidateService = candidateService;
             _postService = postService;
         }
+
+        // =====================================================
+        // 3. ביצוע חיפוש והתאמת מקורות
+        //
+        // איסוף מידע מקורות החיים, הסלוגנים והפוסטים של המועמדים.
+        // =====================================================
 
         public async Task<CandidateMatchResponse> MatchAsync(
             string query,
@@ -112,6 +130,12 @@ namespace BLL.Services
 
             var keywords = GetKeywords(query);
 
+            // =====================================================
+            // 4. חיפוש טקסטואלי
+            //
+            // איתור ביטויים מדויקים ומילות מפתח לפני הפנייה למודל השפה.
+            // =====================================================
+
             // שלב 1: חיפוש מדויק וחיפוש מילות מפתח
             foreach (var document in documents)
             {
@@ -158,6 +182,12 @@ namespace BLL.Services
                         index,
                         keyword.Length));
             }
+
+            // =====================================================
+            // 5. חיפוש סמנטי באמצעות AI
+            //
+            // עיבוד המסמכים באצוות לזיהוי ניסוחים שונים של אותו נושא.
+            // =====================================================
 
             // שלב 2: חיפוש סמנטי במסמכים
             // עיבוד באצוות כדי לא לפספס מסמכים אחרי ה-100 הראשונים
@@ -237,6 +267,12 @@ namespace BLL.Services
                         raw,
                         JsonOptions);
 
+                    // =====================================================
+                    // 6. אימות ממצאי המודל
+                    //
+                    // התאמת המקור, אימות ציטוט מילולי ובדיקת רלוונטיות נוספת.
+                    // =====================================================
+
                     foreach (var finding in
                         (parsed?.Findings ?? new List<AiFinding>()).Take(40))
                     {
@@ -289,6 +325,12 @@ namespace BLL.Services
                 }
             }
 
+            // =====================================================
+            // 7. בניית תוצאות החיפוש
+            //
+            // קיבוץ המקורות לפי מועמד, הגבלת מספר הממצאים והחזרת ציטוטים.
+            // =====================================================
+
             var results = candidates.Select(candidate =>
             {
                 var matches = documents
@@ -329,6 +371,12 @@ namespace BLL.Services
                 Results = results
             };
         }
+
+        // =====================================================
+        // 8. בדיקת רלוונטיות נוספת
+        //
+        // בקשה נפרדת מהמודל לאימות הקשר הישיר בין הציטוט לשאילתה.
+        // =====================================================
 
         private async Task<bool> IsRelevantAsync(
             string query,
@@ -383,6 +431,12 @@ namespace BLL.Services
             }
         }
 
+        // =====================================================
+        // 9. חילוץ מילות מפתח
+        //
+        // פיצול השאילתה וסינון מילים כלליות שאינן מועילות לחיפוש.
+        // =====================================================
+
         private static List<string> GetKeywords(string query)
         {
             return Regex.Split(query, @"[^\p{L}\p{N}]+")
@@ -392,6 +446,12 @@ namespace BLL.Services
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
+
+        // =====================================================
+        // 10. התאמת מילים שלמות
+        //
+        // שימוש בביטוי רגולרי כדי להימנע מהתאמות בתוך מילים אחרות.
+        // =====================================================
 
         private static bool ContainsWholeWord(
             string text,
@@ -403,6 +463,12 @@ namespace BLL.Services
                 RegexOptions.IgnoreCase);
         }
 
+        // =====================================================
+        // 11. יצירת קטע מקור
+        //
+        // חילוץ טקסט סביב הביטוי שנמצא לצורך הצגת הקשר.
+        // =====================================================
+
         private static string GetExcerpt(
             string text,
             int index,
@@ -413,6 +479,12 @@ namespace BLL.Services
 
             return text.Substring(start, end - start).Trim();
         }
+
+        // =====================================================
+        // 12. זיהוי וסידור ממצאים
+        //
+        // יצירת מזהה מקור ייחודי, סיווג התאמות והצגת סוג המקור.
+        // =====================================================
 
         private static string GetKey(SourceDocument document)
         {
@@ -455,6 +527,12 @@ namespace BLL.Services
             };
         }
 
+        // =====================================================
+        // 13. ניקוי תשובת JSON
+        //
+        // הסרת סימוני Markdown לפני פענוח תשובת המודל.
+        // =====================================================
+
         private static string CleanJson(string raw)
         {
             return Regex.Replace(
@@ -463,6 +541,12 @@ namespace BLL.Services
                 "",
                 RegexOptions.IgnoreCase).Trim();
         }
+
+        // =====================================================
+        // 14. מבני נתונים פנימיים
+        //
+        // ייצוג מסמכי המקור, ממצאי ה-AI ותשובת בדיקת הרלוונטיות.
+        // =====================================================
 
         private sealed record SourceDocument(
             int CandidateId,
