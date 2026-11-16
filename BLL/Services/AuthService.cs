@@ -137,9 +137,7 @@ namespace BLL.Services
         // =====================================
         // התחברות - שלב שני
         // =====================================
-        public AuthResponseDto? VerifyOtpAndLogin(
-            string idNumber,
-            string enteredCode)
+        public AuthResponseDto? VerifyOtpAndLogin( string idNumber,string enteredCode)
         {
             if (string.IsNullOrWhiteSpace(idNumber) ||
                 string.IsNullOrWhiteSpace(enteredCode))
@@ -254,7 +252,7 @@ namespace BLL.Services
                 user.Email,
                 tokenId
             );
-
+            //בניית קישור לאיפוס הסיסמה
             string resetLink =
                 $"{frontendUrl.TrimEnd('/')}/?resetToken=" +
                 Uri.EscapeDataString(token);

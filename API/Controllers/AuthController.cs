@@ -70,7 +70,7 @@ namespace API.Controllers
             {
                 return BadRequest(new
                 {
-                    message = "חובה להזין תעודת זהות וקוד אימות"
+                    message = "חובה להזין קוד אימות"
                 });
             }
 
