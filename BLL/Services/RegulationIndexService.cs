@@ -8,7 +8,8 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace BLL.Services
-{
+{///מפעיל את האימבידינג רק במקומות שעדין הם NULL
+//שומר במסד
     public class RegulationIndexService : IRegulationIndexService
     {
         private readonly AppDbContext _dbContext;
@@ -106,7 +107,7 @@ namespace BLL.Services
 
                 generatedCount++;
             }
-
+            //מחזיר את מב הוקטורים שהצליח ליצר ונשמרו
             return generatedCount;
         }
     }

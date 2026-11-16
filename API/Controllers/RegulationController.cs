@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using DTO.RegulationManagement;
 namespace API.Controllers
-{
+{///ניהול גרסאות ותקנון
     [ApiController]
     [Route("api/regulation")]
     [Authorize]

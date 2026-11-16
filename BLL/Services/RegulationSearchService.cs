@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace BLL.Services
-{
+{//מתאים בין 2 וקטורים שונים  שעונים על אותו שאלה
     public class RegulationSearchService : IRegulationSearchService
     {
         private readonly AppDbContext _dbContext;
@@ -194,7 +194,7 @@ namespace BLL.Services
                     throw new InvalidOperationException(
                         $"Embedding לא תקין בסעיף {chunk.SectionNumber}.");
                 }
-
+                //שימוש בנוסחה
                 double similarity = CosineSimilarity(
                     questionVector,
                     documentVector);

@@ -51,7 +51,7 @@ namespace BLL.Services
             string pattern =
                 @"(?m)^[ \t]*(\d+\.\d+)[ \t]*[–-][ \t]*[^\r\n]+";
 
-            MatchCollection matches = Regex.Matches(content, pattern);
+            MatchCollection matches = Regex.Matches(content, pattern);///אוסףהסעיפים
 
             if (matches.Count == 0)
             {
@@ -162,6 +162,8 @@ namespace BLL.Services
 
             return sections;
         }
+
+        //יצרת גרסת תקנון חדשה
         public async Task<int> ImportDraftAsync(
             string filePath,
             string versionNumber,
@@ -180,7 +182,7 @@ namespace BLL.Services
                 throw new ArgumentException(
                     "מספר הגרסה ארוך מדי.");
             }
-
+            //מפעילם את הפונקציה כמו מקודם התוצאה הוא רשימת הסעיפים
             var sections = await ReadSectionsAsync(filePath);
 
             bool versionExists = await _dbContext.RegulationVersions
@@ -193,7 +195,7 @@ namespace BLL.Services
                 throw new InvalidOperationException(
                     "כבר קיימת גרסת תקנון עם מספר זה.");
             }
-
+            ///יוצר תקנון חדש בלי להתקיק כלום ממקודם
             var version = new RegulationVersion
             {
                 VersionNumber = versionNumber,
@@ -206,7 +208,7 @@ namespace BLL.Services
                     Embedding = null
                 }).ToList()
             };
-
+            //שמירה במסד
             _dbContext.RegulationVersions.Add(version);
 
             await _dbContext.SaveChangesAsync(cancellationToken);

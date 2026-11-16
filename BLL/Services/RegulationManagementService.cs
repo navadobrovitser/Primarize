@@ -9,7 +9,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace BLL.Services
-{
+{//מאפשר למנהל לשנות ולכתוב טיוטה של התקנון
     public class RegulationManagementService
         : IRegulationManagementService
     {

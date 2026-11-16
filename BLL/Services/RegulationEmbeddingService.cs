@@ -50,7 +50,7 @@ namespace BLL.Services
         }
 
         // =====================================================
-        // 2. יצירת Embedding עבור שאלת משתמש
+        // 2. עבור שאלת משתמש  Embeddingיצירתמ
         // =====================================================
 
         public Task<float[]> GenerateQueryEmbeddingAsync(
