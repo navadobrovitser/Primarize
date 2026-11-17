@@ -564,8 +564,7 @@ app.UseStaticFiles();
 // Swagger is available locally in Development.
 // It remains disabled in Production.
 
-if (app.Environment.IsDevelopment())
-{
+
     app.UseSwagger();
 
     app.UseSwaggerUI(c =>
@@ -577,7 +576,6 @@ if (app.Environment.IsDevelopment())
 
         c.RoutePrefix = string.Empty;
     });
-}
 
 // =====================================================
 // 17. Middleware
