@@ -577,7 +577,7 @@ if (app.Environment.IsDevelopment())
 
         c.RoutePrefix = string.Empty;
     });
-//}
+}
 
 // =====================================================
 // 17. Middleware
