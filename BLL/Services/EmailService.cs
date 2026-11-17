@@ -70,7 +70,7 @@ namespace BLL.Services
 
             await smtp.ConnectAsync(
                 "smtp.gmail.com",
-                587,
+                465,
                 SecureSocketOptions.StartTls
             );
 
