@@ -66,6 +66,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddDataProtection();
 
 builder.Services.AddScoped<PasswordSetupTokenService>();
+builder.Services.AddScoped<PasswordResetTokenService>();
 
 // =====================================================
 // 4. Controllers + Swagger
@@ -85,10 +86,12 @@ builder.Services.AddSwaggerGen(options =>
         new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
             Name = "Authorization",
-            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Type =
+                Microsoft.OpenApi.Models.SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            In =
+                Microsoft.OpenApi.Models.ParameterLocation.Header,
             Description = "Enter your JWT token"
         }
     );
@@ -156,8 +159,7 @@ builder.Services.AddScoped<
 // =====================================================
 // 6. Business services
 // =====================================================
-builder.Services.AddDataProtection();
-builder.Services.AddScoped<PasswordResetTokenService>(); 
+
 builder.Services.AddScoped<
     IUserService,
     UserService
@@ -209,10 +211,12 @@ builder.Services.AddScoped<
     IPasswordHasher<User>,
     PasswordHasher<User>
 >();
+
 builder.Services.AddScoped<
     IRegulationImportService,
     RegulationImportService
 >();
+
 // =====================================================
 // שירות Embeddings עבור צ'אט התקנון
 //
@@ -224,29 +228,29 @@ builder.Services.AddScoped<
 // =====================================================
 
 // רישום HttpClientFactory לניהול חיבורי HTTP.
+
 builder.Services.AddHttpClient();
 
 // רישום שירות ה-Embeddings באמצעות הממשק שלו.
+
 builder.Services.AddScoped<
     IRegulationEmbeddingService,
     RegulationEmbeddingService
 >(serviceProvider =>
 {
-    // קבלת HttpClient מתוך המנגנון של ASP.NET.
     var httpClientFactory = serviceProvider
         .GetRequiredService<IHttpClientFactory>();
 
     var httpClient = httpClientFactory.CreateClient();
 
-    // הגבלת זמן ההמתנה לתשובת Gemini.
     httpClient.Timeout = TimeSpan.FromSeconds(60);
 
-    // יצירת השירות עם HttpClient ומפתח Gemini הקיים.
     return new RegulationEmbeddingService(
         httpClient,
         apiKey
     );
 });
+
 // =====================================================
 // שירות בניית מאגר הווקטורים של התקנון
 //
@@ -263,24 +267,22 @@ builder.Services.AddScoped<
 // שירות חיפוש סמנטי בתקנון המפורסם
 //
 // ממיר שאלות לווקטורים ומשווה אותם לסעיפי התקנון.
-// מחזיר עד חמישה סעיפים רלוונטיים.
 // =====================================================
 
 builder.Services.AddScoped<
     IRegulationSearchService,
     RegulationSearchService
 >();
+
 // =====================================================
 // שירות צ'אט RAG של התקנון
-//
-// משתמש בחיפוש הסמנטי וב-Gemini כדי ליצור
-// תשובות המבוססות על התקנון המפורסם בלבד.
 // =====================================================
 
 builder.Services.AddScoped<
     IRegulationChatService,
     RegulationChatService
 >();
+
 // =====================================================
 // ניהול גרסאות וטיוטות של התקנון
 // =====================================================
@@ -289,6 +291,7 @@ builder.Services.AddScoped<
     IRegulationManagementService,
     RegulationManagementService
 >();
+
 // =====================================================
 // 7. JWT
 // =====================================================
@@ -376,6 +379,10 @@ builder.Services
 // 8. Authorization
 // =====================================================
 
+// כל Endpoint מוגן כברירת מחדל.
+// גישה ללא Token מותרת רק כאשר הוגדר
+// AllowAnonymous במפורש.
+
 builder.Services.AddAuthorization(options =>
 {
     options.FallbackPolicy =
@@ -406,7 +413,6 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-
 
 // =====================================================
 // 10. Image and video storage
@@ -457,17 +463,27 @@ builder.Services.Configure<IISServerOptions>(options =>
 var app = builder.Build();
 
 // =====================================================
-// 14. HTTPS
+// 14. HTTP / HTTPS
 // =====================================================
 
-app.UseHttpRedirection();
+// כרגע השרת שלך מוגדר לפעול ב-HTTP.
+//
+// לא מפעילים הפניית HTTPS כפויה כל עוד
+// לא הוגדר HTTPS תקין באתר האחסון.
+//
+// לשימוש אמיתי עם סיסמאות ו-JWT
+// יש להגדיר HTTPS ולהפעיל הפניה אליו.
+
+// app.UseHttpsRedirection();
 
 // =====================================================
 // 15. Static media files
 // =====================================================
 
 // קבצים שנשמרים בתיקיית Images נגישים דרך:
-// https://localhost:7227/Images/file.jpg
+// /Images/file.jpg
+//
+// הם ציבוריים ואינם דורשים JWT.
 
 var mediaProvider =
     new PhysicalFileProvider(imagesFolder);
@@ -536,7 +552,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// הגשת הקבצים לפני מנגנון ההרשאות
+// הגשת התמונות והסרטונים לפני מנגנון ההרשאות.
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -544,38 +560,25 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Images"
 });
 
-
-
-
-
-// =====================================================
-// React frontend static files
-// =====================================================
-
-// Serves index.html and files from wwwroot.
-// The React dist contents must be published to wwwroot.
-
-app.UseDefaultFiles();
-app.UseStaticFiles();
 // =====================================================
 // 16. Swagger
 // =====================================================
 
-// Swagger is available locally in Development.
-// It remains disabled in Production.
+// נגיש לצורך בדיקות הפרויקט.
+// לפני שימוש ציבורי אמיתי יש להגביל את הגישה.
 
+app.UseSwagger();
 
-    app.UseSwagger();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint(
+        "/swagger/v1/swagger.json",
+        "Primerize API V1"
+    );
 
-    app.UseSwaggerUI(c =>
-    {
-        c.SwaggerEndpoint(
-            "/swagger/v1/swagger.json",
-            "Primerize API V1"
-        );
-
-        c.RoutePrefix = string.Empty;
-    });
+    // פתיחת כתובת השרת תציג Swagger.
+    c.RoutePrefix = string.Empty;
+});
 
 // =====================================================
 // 17. Middleware
@@ -589,23 +592,58 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
-// API controllers
+// =====================================================
+// 18. API controllers
+// =====================================================
+
+// שומרים על כל ה-Controllers וההרשאות
+// שמוגדרות על כל פעולה.
 
 app.MapControllers();
 
-// Unknown API endpoints must return 404.
-// Do not return React's index.html for API errors.
+// =====================================================
+// 19. Health check
+// =====================================================
 
-app.Map("/api/{**path}", () => Results.NotFound())
-   .AllowAnonymous();
+// Endpoint ציבורי לבדיקת זמינות השרת.
+// לא דורש JWT ולא ניגש למסד הנתונים.
 
-// React SPA fallback
-
-app.MapFallbackToFile("index.html")
-   .AllowAnonymous();
+app.MapGet("/health", () =>
+    Results.Ok(new
+    {
+        status = "ok",
+        service = "Primerize API"
+    })
+).AllowAnonymous();
 
 // =====================================================
-// 18. Start
+// 20. Unknown API endpoints
+// =====================================================
+
+// כתובת API שאינה קיימת מחזירה 404
+// ולא 401 רק בגלל שהיא אינה מוכרת.
+
+app.Map("/api/{**path}", () =>
+    Results.NotFound()
+).AllowAnonymous();
+
+// =====================================================
+// 21. Unknown routes
+// =====================================================
+
+// השרת הזה מיועד ל-API בלבד.
+// אתר React נפרס באתר נפרד.
+//
+// כתובת שלא קיימת מחזירה 404.
+// לא מחזירים בטעות קובץ JavaScript
+// או את index.html של React.
+
+app.MapFallback(() =>
+    Results.NotFound()
+).AllowAnonymous();
+
+// =====================================================
+// 22. Start
 // =====================================================
 
 app.Run();
