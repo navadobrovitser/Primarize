@@ -1,7 +1,8 @@
-﻿
+
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
 using System.Threading.Tasks;
@@ -10,11 +11,16 @@ namespace BLL.Services
 {
     public class EmailService
     {
+        //גישה להגדרות
         private readonly IConfiguration _configuration;
+        private readonly ILogger<EmailService> _logger;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(
+            IConfiguration configuration,
+            ILogger<EmailService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         // =====================================
@@ -43,6 +49,30 @@ namespace BLL.Services
                 );
             }
 
+            // הגדרות SMTP מתוך השרת
+            var smtpServer =
+                _configuration["Email:SmtpServer"]
+                ?? "smtp.gmail.com";
+
+            var portValue = _configuration["Email:Port"];
+
+            int port = int.TryParse(
+                portValue,
+                out int configuredPort
+            ) ? configuredPort : 465;
+
+            // תמיכה בפורטים מאובטחים של Gmail
+            if (port != 465 && port != 587)
+            {
+                throw new InvalidOperationException(
+                    "SMTP port must be 465 or 587."
+                );
+            }
+
+            var security = port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
+
             var email = new MimeMessage();
 
             email.From.Add(
@@ -63,24 +93,67 @@ namespace BLL.Services
                 Text = body
             };
 
-            using var smtp = new SmtpClient();
-            smtp.ServerCertificateValidationCallback =
-    (s, c, ch, e) => true;
+            string stage = "Connect";
 
-            await smtp.ConnectAsync(
-                "smtp.gmail.com",
-                587,
-                SecureSocketOptions.StartTls
-            );
+            try
+            {
+                using var smtp = new SmtpClient();
 
-            await smtp.AuthenticateAsync(
-                username,
-                password
-            );
+                // משתמשים באימות תעודת SSL הרגיל
+                // אין לעקוף את בדיקות האבטחה
 
-            await smtp.SendAsync(email);
+                _logger.LogInformation(
+                    "SMTP connecting to {Server}:{Port}",
+                    smtpServer,
+                    port
+                );
 
-            await smtp.DisconnectAsync(true);
+                await smtp.ConnectAsync(
+                    smtpServer,
+                    port,
+                    security
+                );
+
+                _logger.LogInformation(
+                    "SMTP connected successfully"
+                );
+
+                stage = "Authenticate";
+
+                await smtp.AuthenticateAsync(
+                    username,
+                    password
+                );
+
+                _logger.LogInformation(
+                    "SMTP authentication successful"
+                );
+
+                stage = "Send";
+
+                await smtp.SendAsync(email);
+
+                _logger.LogInformation(
+                    "SMTP email sent successfully"
+                );
+
+                stage = "Disconnect";
+
+                await smtp.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "SMTP failed at stage {Stage}, " +
+                    "server {Server}, port {Port}",
+                    stage,
+                    smtpServer,
+                    port
+                );
+
+                throw;
+            }
         }
 
         // =====================================
