@@ -124,7 +124,10 @@ namespace BLL.Services
                     username,
                     password
                 );
-
+_logger.LogInformation(
+    "SMTP supported auth mechanisms: {Mechanisms}",
+    string.Join(", ", smtp.AuthenticationMechanisms)
+);
                 _logger.LogInformation(
                     "SMTP authentication successful"
                 );
