@@ -5,6 +5,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BLL.Services
@@ -54,7 +55,8 @@ namespace BLL.Services
                 _configuration["Email:SmtpServer"]
                 ?? "smtp.gmail.com";
 
-            var portValue = _configuration["Email:Port"];
+            var portValue =
+                _configuration["Email:Port"];
 
             int port = int.TryParse(
                 portValue,
@@ -118,19 +120,53 @@ namespace BLL.Services
                     "SMTP connected successfully"
                 );
 
+                // =====================================
+                // בדיקת שיטות ההזדהות הנתמכות
+                // =====================================
+
+                stage = "CheckAuthentication";
+
+                _logger.LogInformation(
+                    "SMTP supported authentication: {Mechanisms}",
+                    string.Join(
+                        ", ",
+                        smtp.AuthenticationMechanisms
+                    )
+                );
+
+                // =====================================
+                // הזדהות באמצעות PLAIN
+                // =====================================
+
+                if (!smtp.AuthenticationMechanisms.Contains("PLAIN"))
+                {
+                    throw new InvalidOperationException(
+                        "SMTP server does not support PLAIN authentication."
+                    );
+                }
+
                 stage = "Authenticate";
 
-                await smtp.AuthenticateAsync(
+                _logger.LogInformation(
+                    "SMTP starting PLAIN authentication"
+                );
+
+                var mechanism = new SaslMechanismPlain(
                     username,
                     password
                 );
-_logger.LogInformation(
-    "SMTP supported auth mechanisms: {Mechanisms}",
-    string.Join(", ", smtp.AuthenticationMechanisms)
-);
+
+                await smtp.AuthenticateAsync(
+                    mechanism
+                );
+
                 _logger.LogInformation(
                     "SMTP authentication successful"
                 );
+
+                // =====================================
+                // שליחת ההודעה
+                // =====================================
 
                 stage = "Send";
 
@@ -140,9 +176,17 @@ _logger.LogInformation(
                     "SMTP email sent successfully"
                 );
 
+                // =====================================
+                // סגירת החיבור
+                // =====================================
+
                 stage = "Disconnect";
 
                 await smtp.DisconnectAsync(true);
+
+                _logger.LogInformation(
+                    "SMTP disconnected successfully"
+                );
             }
             catch (Exception ex)
             {
