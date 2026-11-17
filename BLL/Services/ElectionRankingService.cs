@@ -28,7 +28,7 @@ namespace BLL.Services
             if (votes == null)
                 throw new ArgumentNullException(nameof(votes));
 
-            // מפתח המשמש להכרעה עקבית במקרי שוויון
+            // מפתח המשמש להכרעה עקבית במקרי שוויון אם הוא לא התקבל בפונקציה
             tieBreakSeed ??= Guid.NewGuid().ToString("N");
 
             var candidateIds = candidates
@@ -102,13 +102,14 @@ namespace BLL.Services
             // מרשימת המועמדים לצורך קביעת המקום הבא.
             // =====================================================
 
+            //הרשימה הסופית שתחזור בסוף
             var ranking = new List<int>();
-
+            // רשימת המועמדים שעדין  אפשר לדרג  כלומר שמשהו בחר בהם
             var remaining = candidateIds
                 .Where(id => votes.Any(v => v.CandidateId == id))
                 .OrderBy(id => id)
                 .ToList();
-
+///זה האופן הלולאתי של IRV
             while (remaining.Count > 0)
             {
                 int position = ranking.Count + 1;
@@ -150,7 +151,7 @@ namespace BLL.Services
         // מועמד בעל רוב מוחלט נבחר.
         // אחרת, המועמד בעל מספר הקולות הנמוך ביותר מודח.
         // =====================================================
-
+        
         private int FindWinner(
             List<int> remainingCandidates,
             List<List<int>> ballots,

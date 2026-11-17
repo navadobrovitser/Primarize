@@ -10,6 +10,7 @@ namespace BLL.Services
 {
     public class EmailService
     {
+        //גישה להגדרות
         private readonly IConfiguration _configuration;
 
         public EmailService(IConfiguration configuration)
