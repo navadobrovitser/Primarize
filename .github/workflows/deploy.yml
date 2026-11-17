@@ -1,86 +1,33 @@
-
-name: Deploy Primerize
-
-on:
-  push:
-    branches:
-      - main
-  workflow_dispatch:
-
-permissions:
-  contents: read
-
-concurrency:
-  group: primerize-production
-  cancel-in-progress: false
+name: Build, publish and deploy to MonsterASP.NET
+on: [push]
 
 jobs:
-  deploy:
+  build_and_deploy:
     runs-on: windows-latest
-
     steps:
-      - name: Checkout C# backend
-        uses: actions/checkout@v4
-        with:
-          path: backend
-
-      - name: Checkout React frontend
-        uses: actions/checkout@v4
-        with:
-          repository: navadobrovitser/PrimerizeReact
-          ref: main
-          path: frontend
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '24'
-          cache: npm
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install React dependencies
-        working-directory: frontend
-        run: npm ci
-
-      - name: Build React
-        working-directory: frontend
-        env:
-          VITE_API_ORIGIN: http://primerize.runasp.net
-        run: npm run build
+      - uses: actions/checkout@v4
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: 10.0
 
-      - name: Restore backend
-        run: dotnet restore backend/API/API.csproj
+      - name: Install dependencies
+        run: dotnet restore
 
-      - name: Publish backend
-        run: >
-          dotnet publish backend/API/API.csproj
-          --configuration Release
-          --no-restore
-          --output "${{ github.workspace }}/publish"
+      - name: Build
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Copy React into published website
-        shell: pwsh
-        run: |
-          $target = "${{ github.workspace }}/publish/wwwroot"
+      - name: Publish
+        run: dotnet publish --configuration Release --output ./publish --runtime win-x86
 
-          New-Item -ItemType Directory -Force -Path $target | Out-Null
+      - name: Test with .NET
+        run: dotnet test
 
-          Copy-Item `
-            -Path "${{ github.workspace }}/frontend/dist/*" `
-            -Destination $target `
-            -Recurse -Force
-
-      - name: Deploy to MonsterASP.NET
+      - name: Deploy to MonsterASP.NET via WebDeploy
         uses: rasmusbuchholdt/simply-web-deploy@2.1.0
         with:
-          website-name: site107779
-          server-computer-name: https://site107779.siteasp.net:8172
-          server-username: site107779
-          server-password: ${{ secrets.MONSTER_WEBDEPLOY_PASSWORD }}
-          source-path: 'publish'
-          target-delete: false
+          website-name: ${{ secrets.WEBSITE_NAME }}
+          server-computer-name: ${{ secrets.SERVER_COMPUTER_NAME }}
+          server-username: ${{ secrets.SERVER_USERNAME }}
+          server-password: ${{ secrets.SERVER_PASSWORD }}
