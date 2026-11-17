@@ -472,8 +472,8 @@ app.UseStaticFiles();
 // 16. Swagger
 // =====================================================
 
-if (app.Environment.IsDevelopment())
-{
+//if (app.Environment.IsDevelopment())
+//{
     app.UseSwagger();
 
     app.UseSwaggerUI(c =>
@@ -485,7 +485,7 @@ if (app.Environment.IsDevelopment())
 
         c.RoutePrefix = string.Empty;
     });
-}
+//}
 
 // =====================================================
 // 17. Middleware
