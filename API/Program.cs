@@ -156,7 +156,8 @@ builder.Services.AddScoped<
 // =====================================================
 // 6. Business services
 // =====================================================
-
+builder.Services.AddDataProtection();
+builder.Services.AddScoped<PasswordResetTokenService>(); 
 builder.Services.AddScoped<
     IUserService,
     UserService
@@ -208,7 +209,86 @@ builder.Services.AddScoped<
     IPasswordHasher<User>,
     PasswordHasher<User>
 >();
+builder.Services.AddScoped<
+    IRegulationImportService,
+    RegulationImportService
+>();
+// =====================================================
+// שירות Embeddings עבור צ'אט התקנון
+//
+// השירות משתמש במודל Gemini ייעודי ליצירת וקטורים.
+// הוא נפרד משירות Gemini הקיים ליצירת תשובות.
+//
+// HttpClient מאפשר לשלוח בקשות ל-Gemini API.
+// מפתח ה-API נלקח מההגדרות הקיימות של השרת.
+// =====================================================
 
+// רישום HttpClientFactory לניהול חיבורי HTTP.
+builder.Services.AddHttpClient();
+
+// רישום שירות ה-Embeddings באמצעות הממשק שלו.
+builder.Services.AddScoped<
+    IRegulationEmbeddingService,
+    RegulationEmbeddingService
+>(serviceProvider =>
+{
+    // קבלת HttpClient מתוך המנגנון של ASP.NET.
+    var httpClientFactory = serviceProvider
+        .GetRequiredService<IHttpClientFactory>();
+
+    var httpClient = httpClientFactory.CreateClient();
+
+    // הגבלת זמן ההמתנה לתשובת Gemini.
+    httpClient.Timeout = TimeSpan.FromSeconds(60);
+
+    // יצירת השירות עם HttpClient ומפתח Gemini הקיים.
+    return new RegulationEmbeddingService(
+        httpClient,
+        apiKey
+    );
+});
+// =====================================================
+// שירות בניית מאגר הווקטורים של התקנון
+//
+// עובר על סעיפי גרסת התקנון,
+// יוצר Embeddings ושומר אותם במסד הנתונים.
+// =====================================================
+
+builder.Services.AddScoped<
+    IRegulationIndexService,
+    RegulationIndexService
+>();
+
+// =====================================================
+// שירות חיפוש סמנטי בתקנון המפורסם
+//
+// ממיר שאלות לווקטורים ומשווה אותם לסעיפי התקנון.
+// מחזיר עד חמישה סעיפים רלוונטיים.
+// =====================================================
+
+builder.Services.AddScoped<
+    IRegulationSearchService,
+    RegulationSearchService
+>();
+// =====================================================
+// שירות צ'אט RAG של התקנון
+//
+// משתמש בחיפוש הסמנטי וב-Gemini כדי ליצור
+// תשובות המבוססות על התקנון המפורסם בלבד.
+// =====================================================
+
+builder.Services.AddScoped<
+    IRegulationChatService,
+    RegulationChatService
+>();
+// =====================================================
+// ניהול גרסאות וטיוטות של התקנון
+// =====================================================
+
+builder.Services.AddScoped<
+    IRegulationManagementService,
+    RegulationManagementService
+>();
 // =====================================================
 // 7. JWT
 // =====================================================
@@ -305,9 +385,8 @@ builder.Services.AddAuthorization(options =>
 });
 
 // =====================================================
-// 9. CORS
+// 9. CORS - Local + MonsterASP
 // =====================================================
-
 
 builder.Services.AddCors(options =>
 {
@@ -319,6 +398,7 @@ builder.Services.AddCors(options =>
                 "http://localhost:5174",
                 "http://localhost:5175",
                 "http://localhost:5176",
+                "https://localhost:5173",
                 "https://primerize.runasp.net",
                 "http://primerize.runasp.net"
             )
@@ -380,7 +460,7 @@ var app = builder.Build();
 // 14. HTTPS
 // =====================================================
 
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 // =====================================================
 // 15. Static media files
@@ -406,6 +486,8 @@ var mediaExtensions =
         ".mov"
     };
 
+// Compatibility with old media URLs
+// Example: /photo.jpg -> /Images/photo.jpg
 // תאימות לכתובות ישנות שמכילות רק שם קובץ.
 // אין צורך לשלוח JWT עבור קובצי מדיה ציבוריים.
 
@@ -470,14 +552,20 @@ app.UseStaticFiles(new StaticFileOptions
 // React frontend static files
 // =====================================================
 
+// Serves index.html and files from wwwroot.
+// The React dist contents must be published to wwwroot.
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 // =====================================================
 // 16. Swagger
 // =====================================================
 
-//if (app.Environment.IsDevelopment())
-//{
+// Swagger is available locally in Development.
+// It remains disabled in Production.
+
+if (app.Environment.IsDevelopment())
+{
     app.UseSwagger();
 
     app.UseSwaggerUI(c =>
@@ -489,7 +577,7 @@ app.UseStaticFiles();
 
         c.RoutePrefix = string.Empty;
     });
-//}
+}
 
 // =====================================================
 // 17. Middleware
@@ -503,7 +591,18 @@ app.UseAuthentication();
 
 app.UseAuthorization();
 
+// API controllers
+
 app.MapControllers();
+
+// Unknown API endpoints must return 404.
+// Do not return React's index.html for API errors.
+
+app.Map("/api/{**path}", () => Results.NotFound())
+   .AllowAnonymous();
+
+// React SPA fallback
+
 app.MapFallbackToFile("index.html")
    .AllowAnonymous();
 

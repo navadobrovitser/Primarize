@@ -18,7 +18,7 @@ namespace API.Controllers
         }
 
         // GET: api/AnonymousVotes
-        [HttpGet]
+        [HttpGet]//מחזירה רשימת הצבעות אנונימית
         [Authorize(Roles = "Admin")]
         public ActionResult<IEnumerable<AnonymousVoteDto>> GetAllAnonymousVotes()
         {
@@ -27,7 +27,7 @@ namespace API.Controllers
         }
 
         // GET: api/AnonymousVotes/{id}
-        [HttpGet("{id}")]
+        [HttpGet("{id}")]///מחזירה רשימתת הצבעות של ID מסוים
         [Authorize(Roles = "Admin")]
         public ActionResult<AnonymousVoteDto> GetAnonymousVoteById(int id)
         {
@@ -37,14 +37,5 @@ namespace API.Controllers
         }
 
 
-        //אי אפשר לעשות מילוי כזה ידני של הוספה נוגד אבטחה
-        //// POST: api/AnonymousVotes
-        //[HttpPost]
-        //public ActionResult AddAnonymousVote([FromBody] CreateAnonymousVoteDto model)
-        //{
-        //    // ה-Filter וה-[ApiController] מטפלים בשגיאות ובשדות לא תקינים
-        //    _anonymousVoteService.AddAnonymousVote(model);
-        //    return Ok(new { message = "ההצבעה האנונימית נקלטה בהצלחה!", data = model });
-        //}
     }
 }

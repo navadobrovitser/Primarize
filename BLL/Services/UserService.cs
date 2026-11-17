@@ -46,58 +46,158 @@ namespace BLL.Services
         }
 
         // ==========================================
+        // בדיקות כפילות - רק משתמשים שלא נמחקו
+        // ==========================================
+
+        private User? FindActiveUserByEmail(string email)
+        {
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            string normalizedEmail =
+                email.Trim().ToLowerInvariant();
+
+            return _userRepository.GetAll()
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    !string.IsNullOrWhiteSpace(u.Email) &&
+                    string.Equals(
+                        u.Email.Trim(),
+                        normalizedEmail,
+                        StringComparison.OrdinalIgnoreCase));
+        }
+
+        private User? FindActiveUserByIdNumber(string idNumber)
+        {
+            if (string.IsNullOrWhiteSpace(idNumber))
+                return null;
+
+            string normalizedId = idNumber.Trim();
+
+            return _userRepository.GetAll()
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    u.Id != null &&
+                    u.Id.Trim() == normalizedId);
+        }
+
+        // ==========================================
         // שליפת משתמשים
         // ==========================================
 
         public IEnumerable<UserDto> GetAllUsers()
         {
             var users = _userRepository.GetAll();
+
             return _mapper.Map<IEnumerable<UserDto>>(users);
         }
 
         public UserDto GetUserById(string id)
         {
-            var user = _userRepository.GetByIdNumber(id);
+            var user = FindActiveUserByIdNumber(id);
 
             if (user == null)
-                throw new NotFoundException("המשתמש לא נמצא.");
+            {
+                throw new NotFoundException(
+                    "המשתמש לא נמצא.");
+            }
 
             return _mapper.Map<UserDto>(user);
         }
 
         // ==========================================
-        // עדכון ומחיקת משתמש
+        // עדכון משתמש
         // ==========================================
 
         public void UpdateUser(
             int currentUserId,
             RegisterUserDto model)
         {
-            var user = _userRepository.GetOwned(currentUserId);
+            var user =
+                _userRepository.GetOwned(currentUserId);
 
-            if (user == null)
-                throw new NotFoundException("המשתמש לא נמצא.");
+            if (user == null || user.IsDeleted)
+            {
+                throw new NotFoundException(
+                    "המשתמש לא נמצא.");
+            }
+
+            // בדיקה אם המייל החדש שייך למשתמש אחר
+            if (!string.IsNullOrWhiteSpace(model.Email))
+            {
+                var existingEmail =
+                    FindActiveUserByEmail(model.Email);
+
+                if (existingEmail != null &&
+                    existingEmail.UserId != user.UserId)
+                {
+                    throw new ConflictException(
+                        "כתובת האימייל כבר רשומה במערכת.");
+                }
+            }
+
+            // בדיקה אם תעודת הזהות שייכת למשתמש אחר
+            if (!string.IsNullOrWhiteSpace(model.Id))
+            {
+                var existingId =
+                    FindActiveUserByIdNumber(model.Id);
+
+                if (existingId != null &&
+                    existingId.UserId != user.UserId)
+                {
+                    throw new ConflictException(
+                        "תעודת הזהות כבר רשומה במערכת.");
+                }
+            }
 
             _mapper.Map(model, user);
+
+            if (!string.IsNullOrWhiteSpace(user.Email))
+            {
+                user.Email =
+                    user.Email.Trim().ToLowerInvariant();
+            }
+
+            if (!string.IsNullOrWhiteSpace(user.Id))
+            {
+                user.Id = user.Id.Trim();
+            }
+
             _userRepository.Update(user);
         }
 
+        // ==========================================
+        // מחיקת משתמש מחובר - מחיקה לוגית
+        // ==========================================
+
         public void DeleteUser(int currentUserId)
         {
-            var user = _userRepository.GetOwned(currentUserId);
+            var user =
+                _userRepository.GetOwned(currentUserId);
 
             if (user == null)
-                throw new NotFoundException("המשתמש לא נמצא.");
+            {
+                throw new NotFoundException(
+                    "המשתמש לא נמצא.");
+            }
 
             if (user.Role == "Admin")
+            {
                 throw new BusinessRuleException(
                     "לא ניתן להסיר חשבון מנהל.");
+            }
 
             if (user.IsDeleted)
+            {
                 throw new BusinessRuleException(
                     "המשתמש כבר הוסר מהמערכת.");
+            }
 
             user.IsDeleted = true;
+
+            // ביטול קישורי סיסמה ישנים
+            user.PasswordSetupTokenId = null;
+            user.PasswordSetupLinkSentAt = null;
 
             _userRepository.Update(user);
         }
@@ -108,21 +208,61 @@ namespace BLL.Services
 
         public bool Register(RegisterUserDto dto)
         {
-            var email = dto.Email.Trim().ToLowerInvariant();
-            var idNumber = dto.Id.Trim();
-
-            if (_userRepository.GetByEmail(email) != null)
+            if (dto == null ||
+                string.IsNullOrWhiteSpace(dto.Email) ||
+                string.IsNullOrWhiteSpace(dto.Id) ||
+                string.IsNullOrWhiteSpace(dto.Name))
             {
-                throw new ConflictException(
-                    "כתובת האימייל כבר רשומה במערכת.");
+                throw new BusinessRuleException(
+                    "חובה למלא את פרטי ההרשמה.");
             }
 
-            if (_userRepository.GetByIdNumber(idNumber) != null)
+            string email =
+                dto.Email.Trim().ToLowerInvariant();
+
+            string idNumber = dto.Id.Trim();
+
+            // בדיקת תעודת זהות בת 9 ספרות
+            if (!System.Text.RegularExpressions.Regex.IsMatch(
+                idNumber, @"^\d{9}$"))
             {
-                throw new ConflictException(
-                    "תעודת הזהות כבר רשומה במערכת.");
+                throw new BusinessRuleException(
+                    "תעודת הזהות חייבת להכיל 9 ספרות.");
             }
 
+            // ======================================
+            // חדש: משתמש שנמחק אינו חוסם הרשמה
+            // ======================================
+
+            var existingEmailUser = _userRepository.GetAll()
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    string.Equals(
+                        u.Email.Trim(),
+                        email,
+                        StringComparison.OrdinalIgnoreCase));
+
+            if (existingEmailUser != null)
+            {
+                throw new ConflictException(
+                    "כתובת המייל כבר רשומה במערכת. יש להזין כתובת אחרת.");
+            }
+
+            var existingIdUser = _userRepository.GetAll()
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    u.Id.Trim() == idNumber);
+
+            if (existingIdUser != null)
+            {
+                throw new ConflictException(
+                    "תעודת הזהות כבר רשומה במערכת. לא ניתן להירשם פעמיים.");
+            }
+
+
+
+
+            // יצירת חשבון חדש עם UserId חדש
             var user = new User
             {
                 Id = idNumber,
@@ -133,6 +273,7 @@ namespace BLL.Services
                 Role = "User",
                 PartyJoinDate = DateTime.UtcNow,
                 IsApproved = false,
+                IsDeleted = false,
                 Password = string.Empty,
                 PasswordSetupLinkSentAt = null,
                 PasswordSetupTokenId = null
@@ -144,26 +285,48 @@ namespace BLL.Services
         }
 
         // ==========================================
-        // התחברות
+        // התחברות--לא שמיש
         // ==========================================
 
         public AuthResponseDto Login(LoginDto dto)
         {
-            var email = dto.Email.Trim().ToLowerInvariant();
-            var user = _userRepository.GetByEmail(email);
-
-            if (user == null ||
-     !user.IsApproved ||
-     user.IsDeleted ||
-     string.IsNullOrEmpty(user.Password))
+            if (dto == null ||
+                string.IsNullOrWhiteSpace(dto.Email) ||
+                string.IsNullOrWhiteSpace(dto.Password))
             {
                 throw new BusinessRuleException(
                     "אימייל או סיסמה שגויים.");
             }
-            var result = _hasher.VerifyHashedPassword(
-                user,
-                user.Password,
-                dto.Password);
+
+            string email =
+                dto.Email.Trim().ToLowerInvariant();
+
+            // מחפשים רק חשבון שלא נמחק
+            var user = FindActiveUserByEmail(email);
+
+            if (user == null ||
+                !user.IsApproved ||
+                user.IsDeleted ||
+                string.IsNullOrWhiteSpace(user.Password))
+            {
+                throw new BusinessRuleException(
+                    "אימייל או סיסמה שגויים.");
+            }
+
+            PasswordVerificationResult result;
+
+            try
+            {
+                result = _hasher.VerifyHashedPassword(
+                    user,
+                    user.Password,
+                    dto.Password);
+            }
+            catch (FormatException)
+            {
+                throw new BusinessRuleException(
+                    "אימייל או סיסמה שגויים.");
+            }
 
             if (result == PasswordVerificationResult.Failed)
             {
@@ -198,10 +361,10 @@ namespace BLL.Services
         {
             var users = _userRepository.GetAll()
                 .Where(u =>
-    u.Role != "Admin" &&
-    u.IsApproved &&
-    !u.IsDeleted &&
-    string.IsNullOrEmpty(u.Password))
+                    u.Role != "Admin" &&
+                    u.IsApproved &&
+                    !u.IsDeleted &&
+                    string.IsNullOrEmpty(u.Password))
                 .ToList();
 
             return _mapper.Map<IEnumerable<UserDto>>(users);
@@ -213,19 +376,18 @@ namespace BLL.Services
 
         private void SendPasswordSetupLink(User user)
         {
-            // מזהה ייחודי לכל קישור
             Guid tokenId = Guid.NewGuid();
 
-            // יצירת טוקן אישי ל-24 שעות
             string token = _passwordSetupTokens.GenerateToken(
                 user.UserId,
                 user.Email,
                 tokenId);
-
+            //מייצר קישור לריאקט
             string frontendUrl =
                 _configuration["Frontend:BaseUrl"]
                 ?? throw new InvalidOperationException(
                     "Frontend:BaseUrl is missing");
+            //מייצר קישור לריאקט באמת עם טוקן
 
             string setupLink =
                 $"{frontendUrl.TrimEnd('/')}/set-password" +
@@ -247,20 +409,22 @@ namespace BLL.Services
 בברכה,
 צוות תנופה";
 
+            // קודם שומרים את פרטי הקישור במסד
+            user.PasswordSetupTokenId = tokenId;
+            user.PasswordSetupLinkSentAt = DateTime.UtcNow;
+
+            _userRepository.Update(user);
+
+            // לאחר מכן שולחים מייל
             _emailService.SendEmail(
                 user.Email,
                 subject,
                 body);
-
-            // שמירת פרטי הקישור האחרון
-            user.PasswordSetupTokenId = tokenId;
-            user.PasswordSetupLinkSentAt = DateTime.UtcNow;
         }
 
         // ==========================================
         // אישור משתמש על ידי מנהל
         // ==========================================
-
 
         public bool ApproveUser(int userId)
         {
@@ -274,26 +438,18 @@ namespace BLL.Services
                 return false;
             }
 
-            // תאריך תחילת החברות
             user.PartyJoinDate = DateTime.UtcNow;
-
-            // אישור המשתמש
             user.IsApproved = true;
 
-            // שמירת האישור
             _userRepository.Update(user);
 
-            // יצירת טוקן ושליחת מייל
             SendPasswordSetupLink(user);
-
-            // חשוב! שמירת פרטי הטוקן במסד הנתונים
-            _userRepository.Update(user);
 
             return true;
         }
 
         // ==========================================
-        // שליחה חוזרת לאחר 24 שעות
+        // שליחה חוזרת של קישור לאחר 24 שעות
         // ==========================================
 
         public bool ResendPasswordSetupLink(int userId)
@@ -302,7 +458,8 @@ namespace BLL.Services
 
             if (user == null ||
                 user.Role == "Admin" ||
-                !user.IsApproved || user.IsDeleted ||
+                !user.IsApproved ||
+                user.IsDeleted ||
                 !string.IsNullOrEmpty(user.Password))
             {
                 return false;
@@ -315,12 +472,12 @@ namespace BLL.Services
                         .Add(SetupLinkLifetime);
 
                 if (DateTime.UtcNow < expiresAt)
+                {
                     return false;
+                }
             }
 
             SendPasswordSetupLink(user);
-
-            _userRepository.Update(user);
 
             return true;
         }
@@ -333,24 +490,37 @@ namespace BLL.Services
         {
             var user = _userRepository.GetById(userId);
 
-            if (user == null || user.Role == "Admin")
+            if (user == null ||
+                user.Role == "Admin" ||
+                user.IsDeleted)
+            {
                 return false;
+            }
 
             if (!string.IsNullOrEmpty(user.Password))
+            {
                 return false;
+            }
 
-            _userRepository.Delete(user.Id);
+            // מחיקה לוגית כדי לשמור היסטוריה
+            user.IsDeleted = true;
+            user.PasswordSetupTokenId = null;
+            user.PasswordSetupLinkSentAt = null;
+
+            _userRepository.Update(user);
 
             return true;
         }
 
         // ==========================================
-        // הגדרת סיסמה
+        // הגדרת סיסמה ראשונית
         // ==========================================
 
         public bool SetPassword(SetPasswordDto dto)
         {
-            // בדיקת תקינות הטוקן
+            if (dto == null)
+                return false;
+
             bool valid = _passwordSetupTokens.TryValidateToken(
                 dto.Token,
                 out int userId,
@@ -362,12 +532,13 @@ namespace BLL.Services
 
             var user = _userRepository.GetById(userId);
 
-            if (user == null)
+            if (user == null ||
+                user.IsDeleted ||
+                !user.IsApproved)
+            {
                 return false;
-            if (user.IsDeleted)
-                return false;
+            }
 
-            // בדיקת התאמה בין הטוקן למשתמש
             if (!string.Equals(
                 user.Email,
                 email,
@@ -376,44 +547,43 @@ namespace BLL.Services
                 return false;
             }
 
-            // רק הקישור האחרון תקף
             if (!user.PasswordSetupTokenId.HasValue ||
                 user.PasswordSetupTokenId.Value != tokenId)
             {
                 return false;
             }
 
-            if (!user.IsApproved)
-                return false;
-
-            // מניעת שימוש חוזר
+            // סיסמה ראשונית בלבד
             if (!string.IsNullOrEmpty(user.Password))
-                return false;
-
-            if (!user.PasswordSetupLinkSentAt.HasValue)
-                return false;
-
-            // בדיקת תוקף 24 שעות
-            if (DateTime.UtcNow >=
-                user.PasswordSetupLinkSentAt.Value
-                    .Add(SetupLinkLifetime))
             {
                 return false;
             }
 
-            // בדיקת סיסמה
+            if (!user.PasswordSetupLinkSentAt.HasValue)
+            {
+                return false;
+            }
+
+            DateTime sentAt =
+                user.PasswordSetupLinkSentAt.Value;
+
+            if (sentAt > DateTime.UtcNow ||
+                DateTime.UtcNow >=
+                    sentAt.Add(SetupLinkLifetime))
+            {
+                return false;
+            }
+
             if (string.IsNullOrWhiteSpace(dto.Password) ||
                 dto.Password.Length < 8)
             {
                 return false;
             }
 
-            // הצפנת הסיסמה באמצעות Hash
             user.Password = _hasher.HashPassword(
                 user,
                 dto.Password);
 
-            // ביטול הקישור לאחר שימוש
             user.PasswordSetupTokenId = null;
             user.PasswordSetupLinkSentAt = null;
 
@@ -421,9 +591,11 @@ namespace BLL.Services
 
             return true;
         }
+
         // ==========================================
-        // מחיקה לוגית של משתמש על ידי מנהל
+        // מחיקה לוגית על ידי מנהל
         // ==========================================
+
         public bool SoftDeleteUser(int userId)
         {
             var user = _userRepository.GetById(userId);
@@ -436,14 +608,19 @@ namespace BLL.Services
             }
 
             user.IsDeleted = true;
+
+            user.PasswordSetupTokenId = null;
+            user.PasswordSetupLinkSentAt = null;
+
             _userRepository.Update(user);
 
             return true;
         }
 
         // ==========================================
-        // שחזור משתמש שהוסר
+        // שחזור משתמש מחוק
         // ==========================================
+
         public bool RestoreUser(int userId)
         {
             var user = _userRepository.GetById(userId);
@@ -455,11 +632,40 @@ namespace BLL.Services
                 return false;
             }
 
+            // אין לשחזר אם המייל כבר בשימוש
+            var existingEmail =
+                FindActiveUserByEmail(user.Email);
+
+            if (existingEmail != null &&
+                existingEmail.UserId != user.UserId)
+            {
+                throw new ConflictException(
+                    "לא ניתן לשחזר את המשתמש. " +
+                    "כתובת המייל כבר שייכת לחשבון אחר.");
+            }
+
+            // אין לשחזר אם תעודת הזהות כבר בשימוש
+            var existingId =
+                FindActiveUserByIdNumber(user.Id);
+
+            if (existingId != null &&
+                existingId.UserId != user.UserId)
+            {
+                throw new ConflictException(
+                    "לא ניתן לשחזר את המשתמש. " +
+                    "תעודת הזהות כבר שייכת לחשבון אחר.");
+            }
+
             user.IsDeleted = false;
+
             _userRepository.Update(user);
 
             return true;
         }
+
+        // ==========================================
+        // מנהל המפלגה
+        // ==========================================
 
         public UserDto? GetPartyLeader()
         {
@@ -476,4 +682,3 @@ namespace BLL.Services
         }
     }
 }
-

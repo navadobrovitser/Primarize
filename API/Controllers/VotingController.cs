@@ -1,4 +1,5 @@
-﻿using API.Extensions;
+﻿
+using API.Extensions;
 using API.Services;
 using BLL.IServices;
 using DTO.Voting;
@@ -14,6 +15,7 @@ namespace API.Controllers
         private readonly IVotingService _votingService;
         private readonly ElectionStateService _electionState;
 
+        // Dependency Injection
         public VotingController(
             IVotingService votingService,
             ElectionStateService electionState)
@@ -22,7 +24,13 @@ namespace API.Controllers
             _electionState = electionState;
         }
 
-        // שליחת הצבעה - רק כשהבחירות פתוחות
+        // =====================================================
+        // 1. ביצוע הצבעה
+        //
+        // מאפשר למשתמש מחובר להצביע כל עוד הבחירות פתוחות.
+        // ביצוע ההצבעה מתואם עם מנגנון סגירת הבחירות.
+        // =====================================================
+
         [HttpPost("cast")]
         [Authorize]
         public IActionResult CastVote([FromBody] CastVoteDto model)
@@ -57,7 +65,13 @@ namespace API.Controllers
             });
         }
 
-        // סטטוס ההצבעה של המשתמש
+        // =====================================================
+        // 2. סטטוס הצבעה אישי
+        //
+        // בודק האם המשתמש המחובר כבר הצביע.
+        // הזיהוי מתבצע לפי ה-JWT ולא לפי מזהה שנשלח מהלקוח.
+        // =====================================================
+
         [HttpGet("status")]
         [Authorize]
         public ActionResult<VoteStatusDto> GetMyVoteStatus()
@@ -68,7 +82,13 @@ namespace API.Controllers
                 _votingService.GetVoteStatus(currentUserId));
         }
 
-        // האם הבחירות פתוחות או סגורות?
+        // =====================================================
+        // 3. מצב הבחירות
+        //
+        // מחזיר האם הבחירות פתוחות או סגורות.
+        // משמש את צד הלקוח להתאמת הממשק למצב הבחירות.
+        // =====================================================
+
         [HttpGet("election-status")]
         [Authorize]
         public IActionResult GetElectionStatus()
@@ -79,7 +99,12 @@ namespace API.Controllers
             });
         }
 
-        // צפייה בתוצאות - רק אחרי הסגירה
+        // =====================================================
+        // 4. הצגת תוצאות הבחירות
+        //
+        // התוצאות נחשפות למשתמשים רק לאחר סגירת הבחירות.
+        // =====================================================
+
         [HttpGet("results")]
         [Authorize]
         public ActionResult<ElectionResultsDto> GetElectionResults()
@@ -95,7 +120,13 @@ namespace API.Controllers
             return Ok(_electionState.GetResults());
         }
 
-        // סגירת הבחירות - למנהל בלבד
+        // =====================================================
+        // 5. סגירת הבחירות - מנהל בלבד
+        //
+        // סגירת ההצבעה וחישוב התוצאות מתבצעים
+        // באמצעות ElectionStateService ו-VotingService.
+        // =====================================================
+
         [HttpPost("close")]
         [Authorize(Roles = "Admin")]
         public ActionResult<ElectionResultsDto> CloseElection()
@@ -106,7 +137,12 @@ namespace API.Controllers
             return Ok(results);
         }
 
-        // פתיחת הבחירות מחדש - למנהל בלבד
+        // =====================================================
+        // 6. פתיחת הבחירות מחדש - מנהל בלבד
+        //
+        // מאפשר למנהל לשנות את מצב הבחירות לפתוחות.
+        // =====================================================
+
         [HttpPost("open")]
         [Authorize(Roles = "Admin")]
         public IActionResult OpenElection()

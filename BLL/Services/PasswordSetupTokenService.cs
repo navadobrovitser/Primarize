@@ -4,7 +4,7 @@ using System;
 using System.Text.Json;
 
 namespace BLL.Services
-{
+{//כשנרשם
     public class PasswordSetupTokenService
     {
         private readonly ITimeLimitedDataProtector _protector;

@@ -168,6 +168,66 @@ namespace DAL.Migrations
                     b.ToTable("PostLikes");
                 });
 
+            modelBuilder.Entity("DAL.Entities.RegulationChunk", b =>
+                {
+                    b.Property<int>("ChunkId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("ChunkId"));
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Embedding")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("SectionNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int>("VersionId")
+                        .HasColumnType("int");
+
+                    b.HasKey("ChunkId");
+
+                    b.HasIndex("VersionId", "SectionNumber")
+                        .IsUnique();
+
+                    b.ToTable("RegulationChunks");
+                });
+
+            modelBuilder.Entity("DAL.Entities.RegulationVersion", b =>
+                {
+                    b.Property<int>("VersionId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("VersionId"));
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("VersionNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.HasKey("VersionId");
+
+                    b.HasIndex("VersionNumber")
+                        .IsUnique();
+
+                    b.ToTable("RegulationVersions");
+                });
+
             modelBuilder.Entity("DAL.Entities.User", b =>
                 {
                     b.Property<int>("UserId")
@@ -321,6 +381,17 @@ namespace DAL.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("DAL.Entities.RegulationChunk", b =>
+                {
+                    b.HasOne("DAL.Entities.RegulationVersion", "Version")
+                        .WithMany("Chunks")
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Version");
+                });
+
             modelBuilder.Entity("DAL.Entities.UserVote", b =>
                 {
                     b.HasOne("DAL.Entities.User", "User")
@@ -342,6 +413,11 @@ namespace DAL.Migrations
                     b.Navigation("Comments");
 
                     b.Navigation("PostLikes");
+                });
+
+            modelBuilder.Entity("DAL.Entities.RegulationVersion", b =>
+                {
+                    b.Navigation("Chunks");
                 });
 
             modelBuilder.Entity("DAL.Entities.User", b =>

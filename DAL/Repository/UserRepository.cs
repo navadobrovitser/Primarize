@@ -1,6 +1,8 @@
-﻿using DAL.Entities;
+﻿
+using DAL.Entities;
 using DAL.IRepository;
 using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -15,11 +17,14 @@ namespace DAL.Repository
             _context = context;
         }
 
+        // שליפה לפי UserId - כולל משתמשים מחוקים
         public User? GetById(int id)
         {
-            return _context.Users.FirstOrDefault(u => u.UserId == id);
+            return _context.Users
+                .FirstOrDefault(u => u.UserId == id);
         }
 
+        // כל המשתמשים, כולל היסטוריים
         public List<User> GetAll()
         {
             return _context.Users.ToList();
@@ -31,49 +36,79 @@ namespace DAL.Repository
             _context.SaveChanges();
         }
 
+        // שימור ההתנהגות הקיימת של Delete
         public void Delete(string idNumber)
         {
             var user = GetByIdNumber(idNumber);
+
             if (user != null)
             {
                 _context.Users.Remove(user);
                 _context.SaveChanges();
             }
         }
+
         public void Update(User user)
         {
             _context.Users.Update(user);
             _context.SaveChanges();
         }
 
+        // רק משתמשים שלא נמחקו
         public User? GetByEmail(string email)
         {
-            return _context.Users.FirstOrDefault(u => u.Email == email);
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            string normalizedEmail =
+                email.Trim().ToLowerInvariant();
+
+            return _context.Users
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    u.Email != null &&
+                    u.Email.Trim().ToLower() == normalizedEmail);
         }
 
+        // רק משתמשים שלא נמחקו
         public User? GetByIdNumber(string idNumber)
         {
-            var allUsers = _context.Users.ToList();
+            if (string.IsNullOrWhiteSpace(idNumber))
+                return null;
 
-            var matchingUsers = allUsers
-                .Where(u => u.Id != null &&
-                            u.Id.Trim() == idNumber.Trim())
-                .ToList();
+            string normalizedId = idNumber.Trim();
 
-            return matchingUsers.FirstOrDefault();
+            return _context.Users
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    u.Id != null &&
+                    u.Id.Trim() == normalizedId);
         }
-        //public User? GetByIdNumber(string idNumber)
-        //{
-        //    return _context.Users.FirstOrDefault(u => u.Id == idNumber);
-        //}
 
-        public User? GetByEmailAndPassword(string email, string password)
+        // נשמרת החתימה הקיימת
+        public User? GetByEmailAndPassword(
+            string email,
+            string password)
         {
-            return _context.Users.FirstOrDefault(u => u.Email == email && u.Password == password);
+            if (string.IsNullOrWhiteSpace(email))
+                return null;
+
+            string normalizedEmail =
+                email.Trim().ToLowerInvariant();
+
+            return _context.Users
+                .FirstOrDefault(u =>
+                    !u.IsDeleted &&
+                    u.Email.Trim().ToLower() == normalizedEmail &&
+                    u.Password == password);
         }
+
         public User? GetOwned(int userId)
         {
-            return _context.Users.FirstOrDefault(u => u.UserId == userId);
+            return _context.Users
+                .FirstOrDefault(u =>
+                    u.UserId == userId &&
+                    !u.IsDeleted);
         }
 
         public User? GetPartyLeader()
