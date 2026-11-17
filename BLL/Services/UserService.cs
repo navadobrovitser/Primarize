@@ -285,7 +285,7 @@ namespace BLL.Services
         }
 
         // ==========================================
-        // התחברות
+        // התחברות--לא שמיש
         // ==========================================
 
         public AuthResponseDto Login(LoginDto dto)
@@ -382,11 +382,12 @@ namespace BLL.Services
                 user.UserId,
                 user.Email,
                 tokenId);
-
+            //מייצר קישור לריאקט
             string frontendUrl =
                 _configuration["Frontend:BaseUrl"]
                 ?? throw new InvalidOperationException(
                     "Frontend:BaseUrl is missing");
+            //מייצר קישור לריאקט באמת עם טוקן
 
             string setupLink =
                 $"{frontendUrl.TrimEnd('/')}/set-password" +

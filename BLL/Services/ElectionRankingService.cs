@@ -7,7 +7,7 @@ using System.Security.Cryptography;
 using System.Text;
 
 namespace BLL.Services
-{
+{//האלגוריתם
     public class ElectionRankingService
     {
         // =====================================================

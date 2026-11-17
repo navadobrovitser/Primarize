@@ -411,14 +411,33 @@ builder.Services.AddCors(options =>
 // 10. Image and video storage
 // =====================================================
 
-var imagesFolder = Path.GetFullPath(
-    Path.Combine(
-        builder.Environment.ContentRootPath,
-        builder.Configuration["ImagesFolder"] ?? "../Images"
-    )
-);
+
+// =====================================================
+// 10. Image and video storage
+// =====================================================
+
+
+// =====================================================
+// 10. Image and video storage
+// =====================================================
+
+var imagesFolder =
+    @"C:\Users\user1\Desktop\PrimerizeServer\Images";
 
 Directory.CreateDirectory(imagesFolder);
+
+Console.WriteLine("===================================");
+Console.WriteLine("IMAGES FOLDER: " + imagesFolder);
+
+var testImage =
+    "130c2d63-0e58-411b-b45e-c85e6d658c39.jpg";
+
+Console.WriteLine(
+    "IMAGE EXISTS: " +
+    File.Exists(Path.Combine(imagesFolder, testImage))
+);
+
+Console.WriteLine("===================================");
 
 builder.Services.AddScoped<IImageService>(
     _ => new ImageService(imagesFolder)
