@@ -460,7 +460,7 @@ var app = builder.Build();
 // 14. HTTPS
 // =====================================================
 
-app.UseHttpsRedirection();
+app.UseHttpRedirection();
 
 // =====================================================
 // 15. Static media files
