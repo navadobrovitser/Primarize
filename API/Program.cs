@@ -407,37 +407,19 @@ builder.Services.AddCors(options =>
     });
 });
 
-// =====================================================
-// 10. Image and video storage
-// =====================================================
-
 
 // =====================================================
 // 10. Image and video storage
 // =====================================================
 
-
-// =====================================================
-// 10. Image and video storage
-// =====================================================
-
-var imagesFolder =
-    @"C:\Users\user1\Desktop\PrimerizeServer\Images";
-
-Directory.CreateDirectory(imagesFolder);
-
-Console.WriteLine("===================================");
-Console.WriteLine("IMAGES FOLDER: " + imagesFolder);
-
-var testImage =
-    "130c2d63-0e58-411b-b45e-c85e6d658c39.jpg";
-
-Console.WriteLine(
-    "IMAGE EXISTS: " +
-    File.Exists(Path.Combine(imagesFolder, testImage))
+var imagesFolder = Path.GetFullPath(
+    Path.Combine(
+        builder.Environment.ContentRootPath,
+        builder.Configuration["ImagesFolder"] ?? "../Images"
+    )
 );
 
-Console.WriteLine("===================================");
+Directory.CreateDirectory(imagesFolder);
 
 builder.Services.AddScoped<IImageService>(
     _ => new ImageService(imagesFolder)
@@ -484,6 +466,9 @@ app.UseHttpsRedirection();
 // 15. Static media files
 // =====================================================
 
+// קבצים שנשמרים בתיקיית Images נגישים דרך:
+// https://localhost:7227/Images/file.jpg
+
 var mediaProvider =
     new PhysicalFileProvider(imagesFolder);
 
@@ -503,6 +488,8 @@ var mediaExtensions =
 
 // Compatibility with old media URLs
 // Example: /photo.jpg -> /Images/photo.jpg
+// תאימות לכתובות ישנות שמכילות רק שם קובץ.
+// אין צורך לשלוח JWT עבור קובצי מדיה ציבוריים.
 
 app.Use(async (context, next) =>
 {
@@ -549,8 +536,7 @@ app.Use(async (context, next) =>
     await next();
 });
 
-// Public images and videos
-// Served before authentication
+// הגשת הקבצים לפני מנגנון ההרשאות
 
 app.UseStaticFiles(new StaticFileOptions
 {
@@ -558,8 +544,12 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/Images"
 });
 
+
+
+
+
 // =====================================================
-// 16. React frontend
+// React frontend static files
 // =====================================================
 
 // Serves index.html and files from wwwroot.
@@ -567,9 +557,8 @@ app.UseStaticFiles(new StaticFileOptions
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-
 // =====================================================
-// 17. Swagger
+// 16. Swagger
 // =====================================================
 
 // Swagger is available locally in Development.
@@ -588,10 +577,10 @@ if (app.Environment.IsDevelopment())
 
         c.RoutePrefix = string.Empty;
     });
-}
+//}
 
 // =====================================================
-// 18. Middleware
+// 17. Middleware
 // =====================================================
 
 app.UseRouting();
@@ -618,7 +607,7 @@ app.MapFallbackToFile("index.html")
    .AllowAnonymous();
 
 // =====================================================
-// 19. Start
+// 18. Start
 // =====================================================
 
 app.Run();

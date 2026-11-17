@@ -1,9 +1,11 @@
-﻿
+
 using MailKit.Net.Smtp;
 using MailKit.Security;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using MimeKit;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BLL.Services
@@ -12,10 +14,14 @@ namespace BLL.Services
     {
         //גישה להגדרות
         private readonly IConfiguration _configuration;
+        private readonly ILogger<EmailService> _logger;
 
-        public EmailService(IConfiguration configuration)
+        public EmailService(
+            IConfiguration configuration,
+            ILogger<EmailService> logger)
         {
             _configuration = configuration;
+            _logger = logger;
         }
 
         // =====================================
@@ -44,6 +50,31 @@ namespace BLL.Services
                 );
             }
 
+            // הגדרות SMTP מתוך השרת
+            var smtpServer =
+                _configuration["Email:SmtpServer"]
+                ?? "smtp.gmail.com";
+
+            var portValue =
+                _configuration["Email:Port"];
+
+            int port = int.TryParse(
+                portValue,
+                out int configuredPort
+            ) ? configuredPort : 465;
+
+            // תמיכה בפורטים מאובטחים של Gmail
+            if (port != 465 && port != 587)
+            {
+                throw new InvalidOperationException(
+                    "SMTP port must be 465 or 587."
+                );
+            }
+
+            var security = port == 465
+                ? SecureSocketOptions.SslOnConnect
+                : SecureSocketOptions.StartTls;
+
             var email = new MimeMessage();
 
             email.From.Add(
@@ -64,24 +95,112 @@ namespace BLL.Services
                 Text = body
             };
 
-            using var smtp = new SmtpClient();
-            smtp.ServerCertificateValidationCallback =
-    (s, c, ch, e) => true;
+            string stage = "Connect";
 
-            await smtp.ConnectAsync(
-                "smtp.gmail.com",
-                465,
-                SecureSocketOptions.StartTls
-            );
+            try
+            {
+                using var smtp = new SmtpClient();
 
-            await smtp.AuthenticateAsync(
-                username,
-                password
-            );
+                // משתמשים באימות תעודת SSL הרגיל
+                // אין לעקוף את בדיקות האבטחה
 
-            await smtp.SendAsync(email);
+                _logger.LogInformation(
+                    "SMTP connecting to {Server}:{Port}",
+                    smtpServer,
+                    port
+                );
 
-            await smtp.DisconnectAsync(true);
+                await smtp.ConnectAsync(
+                    smtpServer,
+                    port,
+                    security
+                );
+
+                _logger.LogInformation(
+                    "SMTP connected successfully"
+                );
+
+                // =====================================
+                // בדיקת שיטות ההזדהות הנתמכות
+                // =====================================
+
+                stage = "CheckAuthentication";
+
+                _logger.LogInformation(
+                    "SMTP supported authentication: {Mechanisms}",
+                    string.Join(
+                        ", ",
+                        smtp.AuthenticationMechanisms
+                    )
+                );
+
+                // =====================================
+                // הזדהות באמצעות PLAIN
+                // =====================================
+
+                if (!smtp.AuthenticationMechanisms.Contains("PLAIN"))
+                {
+                    throw new InvalidOperationException(
+                        "SMTP server does not support PLAIN authentication."
+                    );
+                }
+
+                stage = "Authenticate";
+
+                _logger.LogInformation(
+                    "SMTP starting PLAIN authentication"
+                );
+
+                var mechanism = new SaslMechanismPlain(
+                    username,
+                    password
+                );
+
+                await smtp.AuthenticateAsync(
+                    mechanism
+                );
+
+                _logger.LogInformation(
+                    "SMTP authentication successful"
+                );
+
+                // =====================================
+                // שליחת ההודעה
+                // =====================================
+
+                stage = "Send";
+
+                await smtp.SendAsync(email);
+
+                _logger.LogInformation(
+                    "SMTP email sent successfully"
+                );
+
+                // =====================================
+                // סגירת החיבור
+                // =====================================
+
+                stage = "Disconnect";
+
+                await smtp.DisconnectAsync(true);
+
+                _logger.LogInformation(
+                    "SMTP disconnected successfully"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "SMTP failed at stage {Stage}, " +
+                    "server {Server}, port {Port}",
+                    stage,
+                    smtpServer,
+                    port
+                );
+
+                throw;
+            }
         }
 
         // =====================================
