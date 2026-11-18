@@ -100,19 +100,7 @@ namespace BLL.Services
                 }
             }
 
-            foreach (var post in posts)
-            {
-                if (!string.IsNullOrWhiteSpace(post.Content))
-                {
-                    sources.Add(new SearchSource
-                    {
-                        CandidateId = post.CandidateId,
-                        SourceType = "post",
-                        PostId = post.PostId,
-                        Text = post.Content.Trim()
-                    });
-                }
-            }
+           
 
             int totalCharacters = sources.Sum(s => s.Text.Length);
 
