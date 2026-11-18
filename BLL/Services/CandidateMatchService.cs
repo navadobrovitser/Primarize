@@ -1,4 +1,4 @@
-﻿
+
 using BLL.IServices;
 using Microsoft.Extensions.AI;
 using System;
@@ -17,11 +17,10 @@ namespace BLL.Services
         private readonly ICandidateService _candidateService;
         private readonly IPostService _postService;
 
-        // =====================================================
-        // 1. הגדרות חיפוש ועיבוד JSON
-        //
-        // הגדרת מילים לא משמעותיות לסינון ומבנה פענוח תשובות המודל.
-        // =====================================================
+        // המשקלים מהגרסה הישנה
+        private const double TopicWeight = 60;
+        private const double ResumeWeight = 30;
+        private const double SloganWeight = 10;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -40,12 +39,6 @@ namespace BLL.Services
             "בנושא", "נושא", "מישהו", "משהו"
         };
 
-        // =====================================================
-        // 2. הזרקת תלויות
-        //
-        // שילוב מודל השפה עם שירותי המועמדים והפוסטים.
-        // =====================================================
-
         public CandidateMatchService(
             IChatClient chatClient,
             ICandidateService candidateService,
@@ -55,12 +48,6 @@ namespace BLL.Services
             _candidateService = candidateService;
             _postService = postService;
         }
-
-        // =====================================================
-        // 3. ביצוע חיפוש והתאמת מקורות
-        //
-        // איסוף מידע מקורות החיים, הסלוגנים והפוסטים של המועמדים.
-        // =====================================================
 
         public async Task<CandidateMatchResponse> MatchAsync(
             string query,
@@ -76,6 +63,7 @@ namespace BLL.Services
 
             ct.ThrowIfCancellationRequested();
 
+            // שליפת המועמדים והפוסטים
             var candidates = _candidateService
                 .GetCandidatesForMatch()
                 .ToList();
@@ -90,6 +78,7 @@ namespace BLL.Services
 
             var documents = new List<SourceDocument>();
 
+            // קורות חיים וסלוגנים
             foreach (var candidate in candidates)
             {
                 if (!string.IsNullOrWhiteSpace(candidate.Resume))
@@ -111,6 +100,7 @@ namespace BLL.Services
                 }
             }
 
+            // פוסטים
             foreach (var post in posts)
             {
                 if (!candidateIds.Contains(post.CandidateId))
@@ -126,17 +116,15 @@ namespace BLL.Services
                     post.Content));
             }
 
-            var found = new Dictionary<string, CandidateMatchSource>();
+            var found =
+                new Dictionary<string, CandidateMatchSource>();
 
             var keywords = GetKeywords(query);
 
-            // =====================================================
-            // 4. חיפוש טקסטואלי
-            //
-            // איתור ביטויים מדויקים ומילות מפתח לפני הפנייה למודל השפה.
-            // =====================================================
+            // ==========================================
+            // שלב 1: חיפוש מדויק ומילות מפתח
+            // ==========================================
 
-            // שלב 1: חיפוש מדויק וחיפוש מילות מפתח
             foreach (var document in documents)
             {
                 ct.ThrowIfCancellationRequested();
@@ -160,7 +148,6 @@ namespace BLL.Services
                     continue;
                 }
 
-                // חיפוש לפי מילה משמעותית מתוך המשפט
                 var keyword = keywords.FirstOrDefault(word =>
                     ContainsWholeWord(document.Text, word));
 
@@ -183,19 +170,14 @@ namespace BLL.Services
                         keyword.Length));
             }
 
-            // =====================================================
-            // 5. חיפוש סמנטי באמצעות AI
-            //
-            // עיבוד המסמכים באצוות לזיהוי ניסוחים שונים של אותו נושא.
-            // =====================================================
+            // ==========================================
+            // שלב 2: חיפוש סמנטי באמצעות AI
+            // ==========================================
 
-            // שלב 2: חיפוש סמנטי במסמכים
-            // עיבוד באצוות כדי לא לפספס מסמכים אחרי ה-100 הראשונים
             foreach (var batch in documents.Chunk(40))
             {
                 ct.ThrowIfCancellationRequested();
 
-                // אין צורך לשלוח ל-AI מקורות שכבר נמצאו
                 var remaining = batch
                     .Where(d => !found.ContainsKey(GetKey(d)))
                     .ToList();
@@ -263,18 +245,14 @@ namespace BLL.Services
 
                     var raw = CleanJson(response.Text ?? "");
 
-                    var parsed = JsonSerializer.Deserialize<AiResponse>(
-                        raw,
-                        JsonOptions);
-
-                    // =====================================================
-                    // 6. אימות ממצאי המודל
-                    //
-                    // התאמת המקור, אימות ציטוט מילולי ובדיקת רלוונטיות נוספת.
-                    // =====================================================
+                    var parsed =
+                        JsonSerializer.Deserialize<AiResponse>(
+                            raw,
+                            JsonOptions);
 
                     foreach (var finding in
-                        (parsed?.Findings ?? new List<AiFinding>()).Take(40))
+                        (parsed?.Findings ??
+                         new List<AiFinding>()).Take(40))
                     {
                         ct.ThrowIfCancellationRequested();
 
@@ -303,7 +281,6 @@ namespace BLL.Services
                         if (found.ContainsKey(key))
                             continue;
 
-                        // בדיקה נוספת לרלוונטיות הציטוט
                         if (!await IsRelevantAsync(query, quote, ct))
                             continue;
 
@@ -321,31 +298,40 @@ namespace BLL.Services
                 catch (Exception)
                 {
                     // במקרה של תקלה ב-AI,
-                    // ההתאמות הדטרמיניסטיות נשמרות.
+                    // נשמרות ההתאמות שנמצאו בחיפוש הטקסטואלי.
                 }
             }
 
-            // =====================================================
-            // 7. בניית תוצאות החיפוש
-            //
-            // קיבוץ המקורות לפי מועמד, הגבלת מספר הממצאים והחזרת ציטוטים.
-            // =====================================================
+            // ==========================================
+            // שלב 3: בניית תוצאות + ציון רלוונטיות
+            // ==========================================
 
             var results = candidates.Select(candidate =>
             {
-                var matches = documents
-                    .Where(d => d.CandidateId == candidate.CandidateId)
+                // משתמשים בכל המקורות לחישוב הציון,
+                // גם אם מציגים רק 12 מהם.
+                var allMatches = documents
+                    .Where(d =>
+                        d.CandidateId == candidate.CandidateId)
                     .Select(d =>
                         found.TryGetValue(GetKey(d), out var match)
                             ? match
                             : null)
                     .Where(m => m != null)
                     .Cast<CandidateMatchSource>()
+                    .ToList();
+
+                var displayMatches = allMatches
                     .OrderBy(m => MatchPriority(m.MatchType))
                     .ThenBy(m => m.SourceType)
                     .ThenBy(m => m.PostId)
                     .Take(12)
                     .ToList();
+
+                var score = CalculateScore(
+                    query,
+                    keywords,
+                    allMatches);
 
                 return new CandidateMatchItem
                 {
@@ -353,16 +339,20 @@ namespace BLL.Services
                     Name = candidate.Name ?? "",
                     Slogan = candidate.Slogan ?? "",
                     ProfileImageUrl = candidate.ProfileImageUrl,
-                    Score = 0,
+
+                    Score = score,
+
                     MatchedTopics = new List<string> { query },
-                    Sources = matches,
+                    Sources = displayMatches,
+
                     Explanation = string.Join(" | ",
-                        matches.Select(m =>
+                        displayMatches.Select(m =>
                             $"{SourceLabel(m)}: \"{m.Quote}\""))
                 };
             })
             .Where(item => item.Sources.Count > 0)
-            .OrderBy(item => item.Name)
+            .OrderByDescending(item => item.Score)
+            .ThenBy(item => item.Name)
             .ToList();
 
             return new CandidateMatchResponse
@@ -372,11 +362,126 @@ namespace BLL.Services
             };
         }
 
-        // =====================================================
-        // 8. בדיקת רלוונטיות נוספת
-        //
-        // בקשה נפרדת מהמודל לאימות הקשר הישיר בין הציטוט לשאילתה.
-        // =====================================================
+        // ==========================================
+        // שלב 4: חישוב ציון לפי המשקלים הישנים
+        // ==========================================
+
+        private static int CalculateScore(
+            string query,
+            List<string> keywords,
+            List<CandidateMatchSource> matches)
+        {
+            if (matches.Count == 0)
+                return 0;
+
+            // התאמה לנושאים: עד 60 נקודות.
+            // כולל מקורות מפוסטים, קורות חיים וסלוגנים.
+            double topicScore = CalculateTopicScore(
+                query,
+                keywords,
+                matches);
+
+            // קורות חיים: עד 30 נקודות.
+            double resumeScore = CalculateSourceScore(
+                matches,
+                "resume");
+
+            // סלוגן: עד 10 נקודות.
+            double sloganScore = CalculateSourceScore(
+                matches,
+                "slogan");
+
+            double totalScore =
+                topicScore * TopicWeight +
+                resumeScore * ResumeWeight +
+                sloganScore * SloganWeight;
+
+            return Math.Clamp(
+                (int)Math.Round(
+                    totalScore,
+                    MidpointRounding.AwayFromZero),
+                0,
+                100);
+        }
+
+        private static double CalculateTopicScore(
+            string query,
+            List<string> keywords,
+            List<CandidateMatchSource> matches)
+        {
+            // התאמה מלאה לביטוי החיפוש
+            if (matches.Any(m =>
+                m.MatchType == "exact"))
+            {
+                return 1;
+            }
+
+            // אם אין מילות מפתח שימושיות,
+            // התאמה סמנטית מאומתת היא ראיה חלקית.
+            if (keywords.Count == 0)
+            {
+                return matches.Any(m =>
+                    m.MatchType == "semantic") ? 0.5 : 0;
+            }
+
+            var matchedKeywords = keywords.Count(keyword =>
+                matches.Any(m =>
+                    ContainsWholeWord(m.Quote, keyword)));
+
+            double coverage =
+                (double)matchedKeywords / keywords.Count;
+
+            // התאמה סמנטית יכולה להוסיף ראיה
+            // גם כאשר הניסוח אינו זהה מילולית.
+            double semanticScore = matches.Any(m =>
+                m.MatchType == "semantic") ? 0.5 : 0;
+
+            return Math.Clamp(
+                Math.Max(coverage, semanticScore),
+                0,
+                1);
+        }
+
+        private static double CalculateSourceScore(
+            List<CandidateMatchSource> matches,
+            string sourceType)
+        {
+            var sourceMatches = matches
+                .Where(m => m.SourceType == sourceType)
+                .ToList();
+
+            if (sourceMatches.Count == 0)
+                return 0;
+
+            // רמות ההתאמה מהמודל הישן:
+            // 0 = אין התאמה
+            // 0.5 = התאמה חלקית
+            // 1 = התאמה מלאה
+
+            if (sourceMatches.Any(m =>
+                m.MatchType == "exact"))
+            {
+                return 1;
+            }
+
+            if (sourceMatches.Any(m =>
+                m.MatchType == "semantic"))
+            {
+                return 1;
+            }
+
+            if (sourceMatches.Any(m =>
+                m.MatchType == "keyword"))
+            {
+                return 0.5;
+            }
+
+            return 0;
+        }
+
+        // ==========================================
+        // בדיקת רלוונטיות נוספת באמצעות AI
+        // ==========================================
 
         private async Task<bool> IsRelevantAsync(
             string query,
@@ -414,9 +519,10 @@ namespace BLL.Services
                     },
                     cancellationToken: ct);
 
-                var parsed = JsonSerializer.Deserialize<RelevanceResponse>(
-                    CleanJson(response.Text ?? ""),
-                    JsonOptions);
+                var parsed =
+                    JsonSerializer.Deserialize<RelevanceResponse>(
+                        CleanJson(response.Text ?? ""),
+                        JsonOptions);
 
                 return parsed?.Relevant == true;
             }
@@ -431,12 +537,6 @@ namespace BLL.Services
             }
         }
 
-        // =====================================================
-        // 9. חילוץ מילות מפתח
-        //
-        // פיצול השאילתה וסינון מילים כלליות שאינן מועילות לחיפוש.
-        // =====================================================
-
         private static List<string> GetKeywords(string query)
         {
             return Regex.Split(query, @"[^\p{L}\p{N}]+")
@@ -446,12 +546,6 @@ namespace BLL.Services
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToList();
         }
-
-        // =====================================================
-        // 10. התאמת מילים שלמות
-        //
-        // שימוש בביטוי רגולרי כדי להימנע מהתאמות בתוך מילים אחרות.
-        // =====================================================
 
         private static bool ContainsWholeWord(
             string text,
@@ -463,30 +557,23 @@ namespace BLL.Services
                 RegexOptions.IgnoreCase);
         }
 
-        // =====================================================
-        // 11. יצירת קטע מקור
-        //
-        // חילוץ טקסט סביב הביטוי שנמצא לצורך הצגת הקשר.
-        // =====================================================
-
         private static string GetExcerpt(
             string text,
             int index,
             int length)
         {
             var start = Math.Max(0, index - 75);
-            var end = Math.Min(text.Length, index + length + 105);
+            var end = Math.Min(
+                text.Length,
+                index + length + 105);
 
-            return text.Substring(start, end - start).Trim();
+            return text.Substring(
+                start,
+                end - start).Trim();
         }
 
-        // =====================================================
-        // 12. זיהוי וסידור ממצאים
-        //
-        // יצירת מזהה מקור ייחודי, סיווג התאמות והצגת סוג המקור.
-        // =====================================================
-
-        private static string GetKey(SourceDocument document)
+        private static string GetKey(
+            SourceDocument document)
         {
             return $"{document.CandidateId}:{document.Type}:{document.PostId}";
         }
@@ -516,7 +603,8 @@ namespace BLL.Services
             };
         }
 
-        private static string SourceLabel(CandidateMatchSource source)
+        private static string SourceLabel(
+            CandidateMatchSource source)
         {
             return source.SourceType switch
             {
@@ -527,12 +615,6 @@ namespace BLL.Services
             };
         }
 
-        // =====================================================
-        // 13. ניקוי תשובת JSON
-        //
-        // הסרת סימוני Markdown לפני פענוח תשובת המודל.
-        // =====================================================
-
         private static string CleanJson(string raw)
         {
             return Regex.Replace(
@@ -542,11 +624,9 @@ namespace BLL.Services
                 RegexOptions.IgnoreCase).Trim();
         }
 
-        // =====================================================
-        // 14. מבני נתונים פנימיים
-        //
-        // ייצוג מסמכי המקור, ממצאי ה-AI ותשובת בדיקת הרלוונטיות.
-        // =====================================================
+        // ==========================================
+        // מבני נתונים פנימיים
+        // ==========================================
 
         private sealed record SourceDocument(
             int CandidateId,
