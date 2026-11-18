@@ -37,7 +37,7 @@ namespace BLL.Services
             _candidateService = candidateService;
             _logger = logger;
         }
-
+        //מנהלת את כל תהליך ההתאמה: שליפת מועמדים, שליחה ל־Gemini, עיבוד התוצאות ודירוגן.
         public async Task<CandidateMatchResponse> MatchAsync(
             string query,
             CancellationToken ct)
@@ -319,7 +319,7 @@ namespace BLL.Services
 
             return response;
         }
-
+//	בודקת אם הציטוט שהחזיר Gemini באמת מופיע בקורות החיים לאחר נרמול.
         private static bool ContainsNormalized(
             string source,
             string value)
@@ -328,7 +328,7 @@ namespace BLL.Services
                 Normalize(value),
                 StringComparison.OrdinalIgnoreCase);
         }
-
+//מאחדת רווחים וסימנים בטקסט כדי לאפשר השוואה מדויקת יותר.
         private static string Normalize(string text)
         {
             text = text.Replace('־', '-')
@@ -339,7 +339,7 @@ namespace BLL.Services
 
             return Regex.Replace(text, @"\s+", " ").Trim();
         }
-
+	מסירה סימוני Markdown מתשובת Gemini כדי שניתן יהיה לפענח אותה כ־JSON.
         private static string CleanJson(string raw)
         {
             raw = raw.Trim();
